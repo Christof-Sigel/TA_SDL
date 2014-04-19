@@ -1,12 +1,13 @@
-LDWIN = -mwindows -mconsole -lmingw32 -lSDL2main
+LDWIN = -mwindows -mconsole -lmingw32 -lSDL2main -lglew32 -lglu32 -lopengl32
 LDSDL = -lSDL2
-LDFLAGS = $(LDSDL)
+LDFLAGS = $(LDSDL) 
+LDLIN = -lGLEW -lGLU -lGL
 
 W32XX = i686-w64-mingw32-g++
 W64XX = x86_64-w64-mingw32-g++
 CXX=clang++
 
-SOURCES=main.cpp
+SOURCES=main.cpp lib/Shader.cpp lib/TriangleMesh.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
 W32OBJECTS = $(SOURCES:.cpp=.w32o)
@@ -17,13 +18,13 @@ CFLAGS=-Wall -std=c++11
 all: $(EXECUTABLES)
 
 w32/ta_sdl.exe: $(W32OBJECTS)
-	$(W32XX) $< $(LDWIN) $(LDFLAGS) -o $@
+	$(W32XX) $(W32OBJECTS) $(LDWIN) $(LDFLAGS) -o $@
 
 w64/ta_sdl_64.exe: $(W64OBJECTS)
-	$(W64XX) $< $(LDWIN) $(LDFLAGS) -o $@
+	$(W64XX) $(W64OBJECTS) $(LDWIN) $(LDFLAGS) -o $@
 
 ta_sdl: $(OBJECTS)
-	$(CXX) $< $(LDFLAGS) -o $@
+	$(CXX) $(OBJECTS) $(LDLIN) $(LDFLAGS) -o $@
 
 %.w64o: %.cpp Makefile
 	$(W64XX) $(CFLAGS) -c $< -o $@
@@ -35,7 +36,7 @@ ta_sdl: $(OBJECTS)
 	$(CXX) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o *.w32o *.w64o $(EXECUTABLES)
+	rm -f $(OBJECTS) $(W32OBJECTS) $(W64OBJECTS) $(EXECUTABLES)
 
 rebuild:clean all
 
