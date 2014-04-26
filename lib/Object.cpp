@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include "Object.hpp"
 
 const float Object::BlackOutLine[]={0.0f,0.0f,0.0f};

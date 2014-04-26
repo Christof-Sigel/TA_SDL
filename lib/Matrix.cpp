@@ -1,4 +1,5 @@
-#include <GL/glxew.h>
+#include <GL/glew.h>
+
 #include <cmath>
 #include "Matrix.hpp"
 #include <string.h>
