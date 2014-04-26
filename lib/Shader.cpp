@@ -30,6 +30,7 @@ Shader::Shader(std::ifstream & ShaderFile,GLuint ProgramID,int Type,std::string 
 	std::cout<<"Successfully compiled "<<name<<std::endl;
     glAttachShader(ProgramID,ID);
     delete [] Contents;
+    
 }
 void Shader::Detach(GLuint ProgramID)
 {
@@ -60,7 +61,7 @@ void ShaderProgram::LoadShaders(std::string ShaderNames[])
     std::ifstream ShaderFile;
     for(int i=0;i<NumShaderTypes;i++)
     {
-	ShaderFile.open((ShaderNames[i]).c_str());
+	ShaderFile.open(("shaders/"+ShaderNames[i]).c_str());
 	if(ShaderFile.good())
 	{
 	    Shaders[i]=new Shader(ShaderFile,ID,ShaderTypes[i],ShaderNames[i]);
