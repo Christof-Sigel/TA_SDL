@@ -1,8 +1,24 @@
 #include <iostream>
+#include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include "lib/TriangleMesh.hpp"
+#include "lib/Object.hpp"
 
+
+#include "file_format/HPIFile.hpp"
+
+
+bool quit = false;
+Matrix ProjectionMatrix;
+Object * TempObj[9];
+ShaderProgram * DefaultShaders;
+
+
+const int ScreenWidth=640;
+const int ScreenHeight=480;
+
+TriangleMesh * CreateCubeMesh();
 /**
 * Log an SDL error with some error message to the output stream of our choice
 * @param os The output stream to write the message too
@@ -13,6 +29,68 @@ void logSDLError(std::ostream &os, const std::string &msg)
     os << msg << " error: " << SDL_GetError() << std::endl;
 }
 
+void handleKeys( unsigned char key, int x, int y )
+{
+	//Toggle quad
+	if( key == 'q' )
+	{
+	    quit=true;
+	}
+}
+
+void render()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    for(int i=0;i<9;i++)
+    {
+	TempObj[i]->RotateY(30.0f/60.0f);
+//	TempObj[i]->RotateX(60.0f/60.0f*(60.0f/framerate));
+	TempObj[i]->Render();
+    }
+    
+}
+
+
+void setup()
+{
+    glClearColor( 0.f, 0.f, 0.f, 1.f );
+    ProjectionMatrix.SetProjectionMatrix(60,float(ScreenWidth)/ScreenHeight,1.0f,100.0f);
+    
+    
+    DefaultShaders=new ShaderProgram("default");
+
+    ProjectionMatrix.Upload(DefaultShaders->GetUniformLocation("ProjectionMatrix"));
+    
+    float CubeColor[]={1.0f,0.0f,0.0f};
+    float CubePos[]={0.0f,0.0f,-12.0f};
+    
+    for(int i=0;i<9;i++)
+    {
+	CubePos[0]=i*2.0f-9.0f;
+	TempObj[i]=new Object(CreateCubeMesh(),CubeColor,CubePos,Object::WhiteOutLine,0.5f);
+	TempObj[i]->SetShader(DefaultShaders);
+
+	// TempObj[i]->RotateZ(5.0f*i);
+	TempObj[i]->RotateX(20);
+	// TempObj[i]->RotateY(5.0f*i);
+	TempObj[i]->Scale(i/10.0f+0.5f,0.5f,0.5f);
+    }
+    
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    // ExitOnGLError("ERROR: Could not set OpenGL depth testing options");
+ 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+    
+
+}
+
+
+
 int main(int argc, char **argv)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
@@ -21,41 +99,75 @@ int main(int argc, char **argv)
 	return 1;
     }
 
-    SDL_Window *win = SDL_CreateWindow("Hello World!", 100, 100, 640, 480, SDL_WINDOW_SHOWN);
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
+
+    SDL_Window *win = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
     if (win == nullptr)
     {
 	std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
 	return 1;
     }
 
-    SDL_Renderer * ren = SDL_CreateRenderer(win,-1,SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (ren == nullptr)
-    {
-	std::cout << "SDL_CreateRenderer Error: " << SDL_GetError() << std::endl;
-	return 1;
-    }
-    SDL_Surface *bmp = SDL_LoadBMP("data/hello.bmp");
-    if (bmp == nullptr)
-    {
-	std::cout << "SDL_LoadBMP Error: " << SDL_GetError() << std::endl;
-	return 1;
-    }
-    SDL_Texture *tex = SDL_CreateTextureFromSurface(ren, bmp);
-    SDL_FreeSurface(bmp);
-    if (tex == nullptr)
-    {
-	std::cout << "SDL_CreateTextureFromSurface Error: "
-		  << SDL_GetError() << std::endl;
-	return 1;
-    }
-    SDL_RenderClear(ren);
-    SDL_RenderCopy(ren, tex, NULL, NULL);
-    SDL_RenderPresent(ren);
+    SDL_GLContext gContext = SDL_GL_CreateContext( win );
 
-    SDL_Delay(2000);
+    if( SDL_GL_SetSwapInterval( 1 ) < 0 )
+    {
+	std::cout<< "Warning: Unable to set VSync! SDL Error: "<<SDL_GetError()<<std::endl;
+    }
 
-    SDL_DestroyTexture(tex);
-    SDL_DestroyRenderer(ren);
+    glewExperimental = GL_TRUE; 
+    GLenum glewError = glewInit();
+    if( glewError != GLEW_OK )
+    {
+	std::cout<< "Error initializing GLEW! "<< glewGetErrorString( glewError )<<std::endl;
+	return 1;
+    }
+
+    setup();
+
+
+    HPIFile *hpi=new HPIFile("data/totala1.hpi");
+
+    delete hpi;
+
+    
+
+    //Event handler
+    SDL_Event e;
+		
+    //Enable text input
+    SDL_StartTextInput();
+
+    //While application is running
+    while( !quit )
+    {
+	//Handle events on queue
+	while( SDL_PollEvent( &e ) != 0 )
+	{
+	    //User requests quit
+	    if( e.type == SDL_QUIT )
+	    {
+		quit = true;
+	    }
+	    //Handle keypress with current mouse position
+	    else if( e.type == SDL_TEXTINPUT )
+	    {
+		int x = 0, y = 0;
+		SDL_GetMouseState( &x, &y );
+		handleKeys( e.text.text[ 0 ], x, y );
+	    }
+	}
+
+	//Render quad
+	render();
+			
+	//Update screen
+	SDL_GL_SwapWindow( win );
+    }
+    SDL_StopTextInput();
+    
     SDL_DestroyWindow(win);
     SDL_Quit();
 
