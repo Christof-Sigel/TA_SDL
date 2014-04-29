@@ -72,7 +72,7 @@ HPIFile::HPIFile(std::string filename)
     
     for(int i=0;i<NumDirectoryEntries;i++)
     {
-	
+	int32_t NameOffset=*(int32_t*)(&DirectoryBuffer[DirectoryEntryOffset+i*9]);
     }
 }
 
