@@ -39,4 +39,3 @@ clean:
 	rm -f $(OBJECTS) $(W32OBJECTS) $(W64OBJECTS) $(EXECUTABLES)
 
 rebuild:clean all
-
