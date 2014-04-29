@@ -61,8 +61,6 @@ HPIFile::HPIFile(std::string filename)
     DecryptionKey = ~((HeaderKey*4)|(HeaderKey>>6));
     DirectoryStart=*(int32_t*)(&MMapBuffer[16]);
 
-    std::cout<<DirectorySize<<std::endl;
-
     unsigned char DirectoryBuffer[DirectorySize];
 
     Decrypt(DirectoryBuffer,DirectoryStart,DirectorySize);
