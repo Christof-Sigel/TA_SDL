@@ -53,6 +53,7 @@ HPIFile::HPIFile(std::string filename)
     if(*(int32_t*)MMapBuffer != HPI_HAPI_MARKER)
     {
 	std::cout<<"Marker not found"<<std::endl;
+	return;
     }
 
     DirectorySize=*(int32_t*)(&MMapBuffer[8]);
