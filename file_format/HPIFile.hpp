@@ -14,6 +14,7 @@ class HPIFile
 {
 public:
     HPIFile(std::string filename);
+    ~HPIFile();
 
 private:
     unsigned char * MMapBuffer;

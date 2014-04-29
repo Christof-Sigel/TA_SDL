@@ -85,3 +85,16 @@ void HPIFile::Decrypt(unsigned char * destination, int start, int len)
 	destination[i]=((i+start)^DecryptionKey)^ ~(MMapBuffer[i+start]);
     }
 }
+
+
+HPIFile::~HPIFile()
+{
+    #ifdef __WINDOWS__
+    UnmapViewOfFile(MMapBuffer);
+    CloseHandle(MMFile);
+    CloseHandle(File);
+    #else
+    close(File);
+    munmap(MMapBuffer,FileSize);
+    #endif
+}
