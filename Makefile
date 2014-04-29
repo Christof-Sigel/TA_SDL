@@ -33,7 +33,7 @@ ta_sdl: $(OBJECTS)
 	$(W32XX) $(CFLAGS) -c $< -o $@
 
 %.o: %.cpp Makefile
-	$(CXX) $(CFLAGS) -c $< -o $@
+	$(CXX) -Xclang -fcolor-diagnostics $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJECTS) $(W32OBJECTS) $(W64OBJECTS) $(EXECUTABLES)
