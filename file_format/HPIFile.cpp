@@ -75,6 +75,7 @@ HPIFile::HPIFile(std::string filename)
 	int32_t NameOffset=*(int32_t*)(&DirectoryBuffer[DirectoryEntryOffset+i*9]);
 	std::cout<<"NameOffset: "<<NameOffset;
 	std::cout<<", DataOffset: "<<*(int32_t*)(&DirectoryBuffer[DirectoryEntryOffset+i*9+4]);
+	std::cout<<", Flag: "<<(int)DirectoryBuffer[DirectoryEntryOffset+i*9+8]<<std::endl;
     }
 }
 
