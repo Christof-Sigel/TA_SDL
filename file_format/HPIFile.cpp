@@ -1,4 +1,4 @@
-#include <string>
+#include "HPIFile.hpp"
 #include <iostream>
 
 #include <SDL2/SDL_platform.h>
@@ -14,7 +14,6 @@
 
 #include <errno.h>
 #include <string.h>
-#include "HPIFile.hpp"
 
 const int HPI_HAPI_MARKER=0x49504148;
 

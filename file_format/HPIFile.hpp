@@ -2,6 +2,7 @@
 #define __HPI_FILE_HPP__
 
 
+#include <string>
 
 
 class HPIFile
