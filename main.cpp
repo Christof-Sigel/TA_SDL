@@ -128,7 +128,7 @@ int main(int argc, char **argv)
     setup();
 
 
-    HPIFile *hpi=new HPIFile("data/totala1.hpi");
+    HPI *hpi=new HPI("data/totala1.hpi");
 
     delete hpi;
 

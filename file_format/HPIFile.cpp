@@ -17,7 +17,7 @@
 
 const int HPI_HAPI_MARKER=0x49504148;
 
-HPIFile::HPIFile(std::string filename)
+HPI::HPI(std::string filename)
 {
     FileName=filename;
     #ifdef __LINUX__
@@ -81,7 +81,7 @@ HPIFile::HPIFile(std::string filename)
 }
 
 
-void HPIFile::Decrypt(unsigned char * destination, int start, int len)
+void HPI::Decrypt(unsigned char * destination, int start, int len)
 {
     for(int i=0;i<len;i++)
     {
@@ -90,7 +90,7 @@ void HPIFile::Decrypt(unsigned char * destination, int start, int len)
 }
 
 
-HPIFile::~HPIFile()
+HPI::~HPI()
 {
     #ifdef __WINDOWS__
     UnmapViewOfFile(MMapBuffer);

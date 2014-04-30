@@ -10,11 +10,11 @@
 #include <windows.h>
 #endif
 
-class HPIFile
+class HPI
 {
 public:
-    HPIFile(std::string filename);
-    ~HPIFile();
+    HPI(std::string filename);
+    ~HPI();
 
 private:
     unsigned char * MMapBuffer;
