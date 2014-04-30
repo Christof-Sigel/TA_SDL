@@ -17,9 +17,104 @@
 
 const int HPI_HAPI_MARKER=0x49504148;
 
+enum HPICompressionType{NONE,LZ77,ZLib};
+
+class HPIFile
+{
+private:
+    HPI * Container;
+    std::string Name;
+    int DataOffset;
+    int FileSize;
+    HPICompressionType Compression;
+public:
+    HPIFile(HPI * cont, int Offset, unsigned char * Data,std::string name)
+    {
+	Container=cont;
+	DataOffset=*(int32_t*)(&Data[Offset]);
+	FileSize=*(int32_t*)(&Data[Offset+4]);
+	Name=name;
+	switch(Data[Offset+8])
+	{
+	case 0:
+	    Compression=NONE;
+	    break;
+	case 1:
+	    Compression=LZ77;
+	    break;
+	case 2:
+	    Compression=ZLib;
+	    break;
+	default:
+	    std::cout<<"Unknown Compression type: "<<(int)(Data[Offset+8])<<" in file "<<Name<<std::endl;
+	    break;
+	}
+    }
+};
+
+class HPIDirectory
+{
+public:
+    HPIDirectory(HPI * cont,int Offset,unsigned char * Data,std::string name)
+    {
+	Container=cont;
+	Name=name;
+	int NumDirectoryEntries=*(int32_t*)(&Data[Offset]);
+	int DirectoryEntryOffset=*(int32_t*)(&Data[Offset+4]);
+	NumFiles=NumDirectories=0;
+	 
+	for(int i=0;i<NumDirectoryEntries;i++)
+	{
+	    int Flag=(int)Data[DirectoryEntryOffset+i*9+8];
+	    if(Flag==0)
+		NumFiles++;
+	    else
+		NumDirectories++;
+	}
+
+	Files=new HPIFile *[NumFiles];
+	Directories= new HPIDirectory *[NumDirectories];
+	int fileIndex=0;
+	int dirIndex=0;
+	for(int i=0;i<NumDirectoryEntries;i++)
+	{
+	    int32_t NameOffset=*(int32_t*)(&Data[DirectoryEntryOffset+i*9]);
+	    int DataOffset=*(int32_t*)(&Data[DirectoryEntryOffset+i*9+4]);
+	    int Flag=(int)Data[DirectoryEntryOffset+i*9+8];
+	    std::string Name((char *)(&Data[NameOffset]));
+	    if(Flag==1)
+	    {
+		Directories[dirIndex++]=new HPIDirectory(cont,DataOffset,Data,Name);
+	    }
+	    else
+	    {
+		Files[fileIndex++]= new HPIFile(cont,DataOffset,Data,Name);
+	    }
+	}
+    }
+    
+    ~HPIDirectory()
+    {
+	for(int i=0;i<NumFiles;i++)
+	    delete Files[i];
+	delete [] Files;
+	for(int i=0;i<NumDirectories;i++)
+	    delete Directories[i];
+	delete [] Directories;
+    }
+private:
+    HPI * Container;
+    int NumFiles;
+    int NumDirectories;
+    HPIFile ** Files;
+    HPIDirectory ** Directories;
+    std::string Name;
+};
+
 HPI::HPI(std::string filename)
 {
     FileName=filename;
+    Directory=nullptr;
     #ifdef __LINUX__
     struct stat filestats;
     
@@ -61,23 +156,15 @@ HPI::HPI(std::string filename)
     DecryptionKey = ~((HeaderKey*4)|(HeaderKey>>6));
     DirectoryStart=*(int32_t*)(&MMapBuffer[16]);
 
-    unsigned char DirectoryBuffer[DirectorySize];
+    unsigned char * DirectoryBuffer=new unsigned char[DirectorySize+DirectoryStart];
 
-    Decrypt(DirectoryBuffer,DirectoryStart,DirectorySize);
+    memset(DirectoryBuffer,0,DirectoryStart);
+    
+    Decrypt(&DirectoryBuffer[DirectoryStart],DirectoryStart,DirectorySize);
 
-    int NumDirectoryEntries=*(int32_t*)DirectoryBuffer;
-    int DirectoryEntryOffset=*(int32_t*)(&DirectoryBuffer[4]);
-    DirectoryEntryOffset-=DirectoryStart;
-    
-    
-    for(int i=0;i<NumDirectoryEntries;i++)
-    {
-	int32_t NameOffset=*(int32_t*)(&DirectoryBuffer[DirectoryEntryOffset+i*9]);
-	std::cout<<"NameOffset: "<<NameOffset;
-	std::cout<<", DataOffset: "<<*(int32_t*)(&DirectoryBuffer[DirectoryEntryOffset+i*9+4]);
-	std::cout<<", Flag: "<<(int)DirectoryBuffer[DirectoryEntryOffset+i*9+8]<<std::endl;
-	std::cout<<(char *)(&DirectoryBuffer[NameOffset-DirectoryStart])<<std::endl;
-    }
+    Directory=new HPIDirectory(this,DirectoryStart,DirectoryBuffer,std::string("/"));
+
+    delete [] DirectoryBuffer;
 }
 
 
@@ -100,4 +187,6 @@ HPI::~HPI()
     close(File);
     munmap(MMapBuffer,FileSize);
     #endif
+    if(Directory != nullptr)
+	delete Directory;
 }

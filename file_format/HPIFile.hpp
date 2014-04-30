@@ -19,6 +19,7 @@ public:
 private:
     unsigned char * MMapBuffer;
     unsigned int FileSize;
+    class HPIDirectory * Directory;
     
 #ifdef __WINDOWS__
     HANDLE MMFile;
