@@ -13,7 +13,7 @@ Shader::Shader(std::ifstream & ShaderFile,GLuint ProgramID,int Type,std::string 
 
     ID=glCreateShader(Type);
     char ** temp=&Contents;
-    glShaderSource(ID,1,(const char **)temp,NULL);
+    glShaderSource(ID,1,(const char **)temp,&length);
     glCompileShader(ID);
     GLint ShaderSuccess;
     glGetShaderiv(ID,GL_COMPILE_STATUS,&ShaderSuccess);
