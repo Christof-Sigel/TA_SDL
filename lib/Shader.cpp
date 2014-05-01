@@ -8,6 +8,7 @@ Shader::Shader(std::ifstream & ShaderFile,GLuint ProgramID,int Type,std::string 
     int length=ShaderFile.tellg();
     ShaderFile.seekg(0,std::ios_base::beg);
     char * Contents=new char[length+1];
+    memset(Contents,0,length+1);
     ShaderFile.read(Contents,length);
     Contents[length]=0;
 
