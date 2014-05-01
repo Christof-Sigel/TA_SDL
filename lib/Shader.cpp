@@ -62,7 +62,7 @@ void ShaderProgram::LoadShaders(std::string ShaderNames[])
     std::ifstream ShaderFile;
     for(int i=0;i<NumShaderTypes;i++)
     {
-	ShaderFile.open(("shaders/"+ShaderNames[i]).c_str());
+	ShaderFile.open(("shaders/"+ShaderNames[i]).c_str(),ios_base::binary);
 	if(ShaderFile.good())
 	{
 	    Shaders[i]=new Shader(ShaderFile,ID,ShaderTypes[i],ShaderNames[i]);
