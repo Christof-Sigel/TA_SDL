@@ -93,6 +93,10 @@ void setup()
 
 int main(int argc, char **argv)
 {
+    HPI *hpi=new HPI("data/totala1.hpi");
+
+    delete hpi;
+
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
 	std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
@@ -128,10 +132,7 @@ int main(int argc, char **argv)
     setup();
 
 
-    HPI *hpi=new HPI("data/totala1.hpi");
-
-    delete hpi;
-
+    
     
 
     //Event handler
