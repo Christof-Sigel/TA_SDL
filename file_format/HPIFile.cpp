@@ -28,6 +28,10 @@ private:
     int FileSize;
     HPICompressionType Compression;
 public:
+    void Print(std::string path)
+    {
+	std::cout<<path<<"/"<<Name<<std::endl;
+    }
     HPIFile(HPI * cont, int Offset, unsigned char * Data,std::string name)
     {
 	Container=cont;
@@ -102,6 +106,21 @@ public:
 	    delete Directories[i];
 	delete [] Directories;
     }
+
+    void Print(std::string path)
+    {
+	std::string currentPath=path+"/"+Name;
+	std::cout<<currentPath<<std::endl;
+	for(int i=0;i<NumFiles;i++)
+	{
+	    Files[i]->Print(currentPath);
+	}
+	for(int i=0;i<NumDirectories;i++)
+	{
+	    Directories[i]->Print(currentPath);
+	}
+    }
+
 private:
     HPI * Container;
     int NumFiles;
@@ -110,6 +129,11 @@ private:
     HPIDirectory ** Directories;
     std::string Name;
 };
+
+void HPI::Print()
+{
+    Directory->Print(std::string(""));
+}
 
 HPI::HPI(std::string filename)
 {

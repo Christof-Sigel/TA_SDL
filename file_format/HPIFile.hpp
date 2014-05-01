@@ -15,7 +15,7 @@ class HPI
 public:
     HPI(std::string filename);
     ~HPI();
-
+    void Print();
 private:
     unsigned char * MMapBuffer;
     unsigned int FileSize;
