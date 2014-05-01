@@ -1,6 +1,6 @@
 #include <GL/glew.h>
 #include "Shader.hpp"
-
+#include <string.h>
 
 Shader::Shader(std::ifstream & ShaderFile,GLuint ProgramID,int Type,std::string name)
 {
