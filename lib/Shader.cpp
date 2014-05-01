@@ -24,7 +24,7 @@ Shader::Shader(std::ifstream & ShaderFile,GLuint ProgramID,int Type,std::string 
 	glGetShaderiv(ID,GL_INFO_LOG_LENGTH,&LogLen);
 	GLchar * ShaderLog=new GLchar[LogLen];
 	glGetShaderInfoLog(ID,LogLen,NULL,ShaderLog);
-	std::cout<<name<<" failed to compile "<<ShaderLog<<std::endl;
+	std::cout<<name<<" failed to compile "<<Contents<<std::endl<<ShaderLog<<std::endl;
 	delete [] ShaderLog;
     }
     else
