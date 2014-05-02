@@ -51,14 +51,31 @@ void render()
     
 }
 
+void SetViewport()
+{
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    float halfWidth = float(viewport[2]) / 2.0f;
+    float halfHeight = float(viewport[3]) / 2.0f;
+
+    float vpm[]={halfWidth,0,0,0,
+			    0,halfHeight,0,0,
+			    0,0,1,0,
+	       halfWidth,halfHeight,0,1};
+    Matrix ViewPortMatrix(vpm);
+    ViewPortMatrix.Upload(DefaultShaders->GetUniformLocation("ViewPortMatrix"));
+}
+
 
 void setup()
 {
-    glClearColor( 0.f, 0.f, 0.f, 1.f );
+    
+    glClearColor( 0.f, 0.f, 0.f, 0.f );
     ProjectionMatrix.SetProjectionMatrix(60,float(ScreenWidth)/ScreenHeight,1.0f,100.0f);
     
     
     DefaultShaders=new ShaderProgram("default");
+    SetViewport();
 
     ProjectionMatrix.Upload(DefaultShaders->GetUniformLocation("ProjectionMatrix"));
     
@@ -68,7 +85,7 @@ void setup()
     for(int i=0;i<9;i++)
     {
 	CubePos[0]=i*2.0f-9.0f;
-	TempObj[i]=new Object(CreateCubeMesh(),CubeColor,CubePos,Object::WhiteOutLine,0.5f);
+	TempObj[i]=new Object(CreateCubeMesh(),CubeColor,CubePos,Object::WhiteOutLine,1.0f+i/2.5f);
 	TempObj[i]->SetShader(DefaultShaders);
 
 	// TempObj[i]->RotateZ(5.0f*i);
