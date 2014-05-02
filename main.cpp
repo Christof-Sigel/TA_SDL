@@ -1,7 +1,7 @@
-#include <iostream>
 #include <GL/glew.h>
+#include <iostream>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
+
 #include "lib/TriangleMesh.hpp"
 #include "lib/Object.hpp"
 

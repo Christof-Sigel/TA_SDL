@@ -1,9 +1,11 @@
 #ifndef __SIMSCHOOL_SHADER
 #define __SIMSCHOOL_SHADER
 
+#include <GL/glew.h>
 #include <string>
 #include <fstream>
-#include <SDL2/SDL_opengl.h>
+
+
 #include <iostream>
 
 const int NumShaderTypes=5;
