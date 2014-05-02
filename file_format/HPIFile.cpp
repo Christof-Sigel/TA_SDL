@@ -30,7 +30,7 @@ private:
 public:
     void Print(std::string path)
     {
-	std::cout<<path<<"/"<<Name<<std::endl;
+	std::cout<<path<<Name<<std::endl;
     }
     HPIFile(HPI * cont, int Offset, unsigned char * Data,std::string name)
     {
@@ -109,7 +109,7 @@ public:
 
     void Print(std::string path)
     {
-	std::string currentPath=path+"/"+Name;
+	std::string currentPath=path+Name+"/";
 	std::cout<<currentPath<<std::endl;
 	for(int i=0;i<NumFiles;i++)
 	{
@@ -186,7 +186,7 @@ HPI::HPI(std::string filename)
     
     Decrypt(&DirectoryBuffer[DirectoryStart],DirectoryStart,DirectorySize);
 
-    Directory=new HPIDirectory(this,DirectoryStart,DirectoryBuffer,std::string("/"));
+    Directory=new HPIDirectory(this,DirectoryStart,DirectoryBuffer,std::string(""));
 
     delete [] DirectoryBuffer;
 }
