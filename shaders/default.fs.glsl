@@ -17,7 +17,7 @@ const float scaleFactor=1.0/levels;
 uniform float LineWidth;
 uniform vec3 LineColor;
 
-vec3 LightPos[2]=vec3[](vec3(0,0,-8),vec3(50,50,20));
+vec3 LightPos[2]=vec3[](vec3(-50,0,0),vec3(50,50,20));
 void main(void)
 {
     

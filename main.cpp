@@ -2,6 +2,8 @@
 #include <iostream>
 #include <SDL2/SDL.h>
 
+
+
 #include "lib/TriangleMesh.hpp"
 #include "lib/Object.hpp"
 
@@ -11,7 +13,7 @@
 
 bool quit = false;
 Matrix ProjectionMatrix;
-Object * TempObj[9];
+Object * TempObj[10];
 ShaderProgram * DefaultShaders;
 
 
@@ -19,6 +21,7 @@ const int ScreenWidth=2560;
 const int ScreenHeight=1440;
 
 TriangleMesh * CreateCubeMesh();
+TriangleMesh * CreateGeodesicSphere(int depth);
 /**
 * Log an SDL error with some error message to the output stream of our choice
 * @param os The output stream to write the message too
@@ -38,16 +41,23 @@ void handleKeys( unsigned char key, int x, int y )
 	}
 }
 
+Object * TempSphere;
+
 void render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for(int i=0;i<9;i++)
+    for(int i=0;i<10;i++)
     {
 	TempObj[i]->RotateY(30.0f/60.0f);
 //	TempObj[i]->RotateX(60.0f/60.0f*(60.0f/framerate));
 	TempObj[i]->Render();
     }
+
+    
+    
+    TempSphere->RotateX(30.0f/60.0f);
+    TempSphere->Render();
     
 }
 
@@ -85,6 +95,7 @@ void setup()
     for(int i=0;i<9;i++)
     {
 	CubePos[0]=i*2.0f-9.0f;
+	CubeColor[2]=i/9.0f;
 	TempObj[i]=new Object(CreateCubeMesh(),CubeColor,CubePos,Object::WhiteOutLine,1.0f+i/2.5f);
 	TempObj[i]->SetShader(DefaultShaders);
 
@@ -93,6 +104,26 @@ void setup()
 	// TempObj[i]->RotateY(5.0f*i);
 	TempObj[i]->Scale(i/10.0f+0.5f,0.5f,0.5f);
     }
+    CubeColor[2]=0;
+    CubePos[0]=0;
+    CubePos[1]=0;
+    CubePos[2]=-18;
+    TempObj[9]=new Object(CreateCubeMesh(),CubeColor,CubePos,Object::WhiteOutLine,2.0f);
+    TempObj[9]->SetShader(DefaultShaders);
+
+    TempObj[9]->SetPos(0,0,-55.0f);
+    TempObj[9]->ResetScale();
+    TempObj[9]->Scale(50,50,10);
+
+    
+    CubePos[0]=-0.5f;
+    CubePos[1]=0;
+    CubePos[2]=-8.0f;
+    float SphereColor[]={0.0f,1.0f,0.0f};
+    TempSphere=new Object(CreateGeodesicSphere(2),SphereColor,CubePos,Object::WhiteOutLine,3.0f);
+    TempSphere->SetShader(DefaultShaders);
+    TempSphere->Scale(1.0,1.0,0.5);
+    TempSphere->SetPos(0,3,-8);
     
 
     glEnable(GL_DEPTH_TEST);
