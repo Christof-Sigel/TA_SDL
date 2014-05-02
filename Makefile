@@ -40,7 +40,7 @@ clean:
 
 rebuild:clean all
 
-git-hook:
+git-hook: clean
 	make w32/ta_sdl.exe 2>&1 | ansi2html > /srv/http/TA_SDL/win32.html
 	make w64/ta_sdl_64.exe 2>&1 | ansi2html > /srv/http/TA_SDL/win64.html
 	make ta_sdl 2>&1 | ansi2html > /srv/http/TA_SDL/linux.html
