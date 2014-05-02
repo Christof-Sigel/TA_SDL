@@ -35,6 +35,5 @@ void main(void)
     float mixVal=smoothstep(LineWidth-1,LineWidth+1,d);
     
     
-    //out_Color = vec4(mix(LineColor,level*MeshColor,mixVal),1.0);
-    out_Color=vec4(MeshColor,1.0);
+    out_Color = vec4(mix(LineColor,level*MeshColor,mixVal),1.0);
 }
