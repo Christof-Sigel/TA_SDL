@@ -15,8 +15,8 @@ Object * TempObj[9];
 ShaderProgram * DefaultShaders;
 
 
-const int ScreenWidth=640;
-const int ScreenHeight=480;
+const int ScreenWidth=2560;
+const int ScreenHeight=1440;
 
 TriangleMesh * CreateCubeMesh();
 /**
