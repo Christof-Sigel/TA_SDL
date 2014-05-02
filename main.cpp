@@ -139,13 +139,30 @@ int main(int argc, char **argv)
 	return 1;
     }
 
-    SDL_GLContext gContext = SDL_GL_CreateContext( win );
 
+    GLint GLMajorVer, GLMinorVer;
+    
+    GLenum ErrorValue = glGetError();
+    if(ErrorValue!=GL_NO_ERROR)
+	std::cout<<"failed before create context : "<<gluErrorString(ErrorValue)<<std::endl;
+    
+
+    SDL_GLContext gContext = SDL_GL_CreateContext( win );
     SDL_GL_MakeCurrent (win,gContext);
     if( SDL_GL_SetSwapInterval( 1 ) < 0 )
     {
 	std::cout<< "Warning: Unable to set VSync! SDL Error: "<<SDL_GetError()<<std::endl;
     }
+
+    glGetIntegerv(GL_MAJOR_VERSION, &GLMajorVer);
+    glGetIntegerv(GL_MINOR_VERSION, &GLMinorVer);
+    std::cout<<"OpenGL Version "<<GLMajorVer<<"."<<GLMinorVer<<std::endl;
+
+
+    ErrorValue = glGetError();
+    if(ErrorValue!=GL_NO_ERROR)
+	std::cout<<"failed before glewInit : "<<gluErrorString(ErrorValue)<<std::endl;
+  
 
     glewExperimental = GL_TRUE; 
     GLenum glewError = glewInit();
@@ -155,6 +172,11 @@ int main(int argc, char **argv)
 	return 1;
     }
 
+    //as we need to use glewExperimental - known issue (it segfaults otherwise!) - we encounter
+    //another known issue, which is that while glewInit suceeds, it leaves opengl in an error state
+    ErrorValue = glGetError();
+    
+    
     setup();
 
 
