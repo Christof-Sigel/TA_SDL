@@ -1,7 +1,8 @@
 LDWIN = -mwindows -mconsole -lmingw32 -lSDL2main -lglew32 -lglu32 -lopengl32
 LDSDL = -lSDL2
-LDFLAGS = $(LDSDL) 
+LDFLAGS = $(LDSDL) -ggdb
 LDLIN = -lGLEW -lGLU -lGL
+
 
 W32XX = i686-w64-mingw32-g++
 W64XX = x86_64-w64-mingw32-g++
@@ -13,7 +14,7 @@ OBJECTS = $(SOURCES:.cpp=.o)
 W32OBJECTS = $(SOURCES:.cpp=.w32o)
 W64OBJECTS = $(SOURCES:.cpp=.w64o)
 EXECUTABLES = w32/ta_sdl.exe w64/ta_sdl_64.exe ta_sdl
-CFLAGS=-Wall -std=c++11
+CFLAGS=-Wall -std=c++11 -ggdb
 
 all: $(EXECUTABLES)
 
