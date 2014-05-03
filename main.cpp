@@ -142,7 +142,7 @@ void setup()
 int main(int argc, char **argv)
 {
     HPI *hpi=new HPI("data/totala1.hpi");
-    hpi->Print();
+    // hpi->Print();
     HPIFile * MissileTDF=hpi->GetFile("/weapons/MISSILES.TDF");
     HPIFile * SolarPCX=hpi->GetFile("/unitpics/ARMSOLAR.PCX");
     
