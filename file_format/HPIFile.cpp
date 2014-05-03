@@ -17,44 +17,41 @@
 
 const int HPI_HAPI_MARKER=0x49504148;
 
-enum HPICompressionType{NONE,LZ77,ZLib};
 
-class HPIFile
+void HPIFile::Print(std::string path)
 {
-private:
-    HPI * Container;
-    std::string Name;
-    int DataOffset;
-    int FileSize;
-    HPICompressionType Compression;
-public:
-    void Print(std::string path)
+    std::cout<<path<<Name<<std::endl;
+}
+
+HPIFile::HPIFile(HPI * cont, int Offset, unsigned char * Data,std::string name)
+{
+    Container=cont;
+    DataOffset=*(int32_t*)(&Data[Offset]);
+    FileSize=*(int32_t*)(&Data[Offset+4]);
+    Name=name;
+    switch(Data[Offset+8])
     {
-	std::cout<<path<<Name<<std::endl;
+    case 0:
+	Compression=NONE;
+	break;
+    case 1:
+	Compression=LZ77;
+	break;
+    case 2:
+	Compression=ZLib;
+	break;
+    default:
+	std::cout<<"Unknown Compression type: "<<(int)(Data[Offset+8])<<" in file "<<Name<<std::endl;
+	break;
     }
-    HPIFile(HPI * cont, int Offset, unsigned char * Data,std::string name)
-    {
-	Container=cont;
-	DataOffset=*(int32_t*)(&Data[Offset]);
-	FileSize=*(int32_t*)(&Data[Offset+4]);
-	Name=name;
-	switch(Data[Offset+8])
-	{
-	case 0:
-	    Compression=NONE;
-	    break;
-	case 1:
-	    Compression=LZ77;
-	    break;
-	case 2:
-	    Compression=ZLib;
-	    break;
-	default:
-	    std::cout<<"Unknown Compression type: "<<(int)(Data[Offset+8])<<" in file "<<Name<<std::endl;
-	    break;
-	}
-    }
-};
+}
+
+HPIFile * HPIFile::GetFile(std::string filename)
+{
+    if(Name.compare(filename)==0)
+	return this;
+    return nullptr;
+}
 
 class HPIDirectory
 {
@@ -96,6 +93,27 @@ public:
 	    }
 	}
     }
+
+    HPIFile * GetFile(std::string filename)
+    {
+	if(filename.compare(0,Name.length(),Name)!=0)
+	    return nullptr;
+	std::string newpath=filename.substr(Name.length()+1,std::string::npos);
+	HPIFile * file=nullptr;
+	for(int i=0;i<NumFiles;i++)
+	{
+	    file=Files[i]->GetFile(newpath);
+	    if(file)
+		return file;
+	}
+	for(int i=0;i<NumDirectories;i++)
+	{
+	    file=Directories[i]->GetFile(newpath);
+	    if(file)
+		break;
+	}
+	return file;
+    }
     
     ~HPIDirectory()
     {
@@ -129,6 +147,13 @@ private:
     HPIDirectory ** Directories;
     std::string Name;
 };
+
+
+HPIFile * HPI::GetFile(std::string filename)
+{
+    return Directory->GetFile(filename);
+}
+
 
 void HPI::Print()
 {

@@ -10,12 +10,15 @@
 #include <windows.h>
 #endif
 
+enum HPICompressionType{NONE,LZ77,ZLib};
+
 class HPI
 {
 public:
     HPI(std::string filename);
     ~HPI();
     void Print();
+    class HPIFile * GetFile(std::string filename);
 private:
     unsigned char * MMapBuffer;
     unsigned int FileSize;
@@ -33,7 +36,23 @@ private:
     int DirectoryStart;
     int32_t DecryptionKey;
     void Decrypt(unsigned char * destination,int start, int len);
+   
 };
+
+class HPIFile
+{
+private:
+    HPI * Container;
+    std::string Name;
+    int DataOffset;
+    int FileSize;
+    HPICompressionType Compression;
+public:
+    void Print(std::string path);
+    HPIFile(HPI * cont, int Offset, unsigned char * Data,std::string name);
+    HPIFile * GetFile(std::string filename);
+};
+
 
 class IOFail : public std::exception
 {

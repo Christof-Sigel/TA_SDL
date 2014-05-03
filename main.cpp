@@ -143,6 +143,9 @@ int main(int argc, char **argv)
 {
     HPI *hpi=new HPI("data/totala1.hpi");
     hpi->Print();
+    HPIFile * MissileTDF=hpi->GetFile("/weapons/MISSILES.TDF");
+    HPIFile * SolarPCX=hpi->GetFile("/unitpics/ARMSOLAR.PCX");
+    
     delete hpi;
 
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
