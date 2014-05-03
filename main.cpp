@@ -17,8 +17,8 @@ Object * TempObj[10];
 ShaderProgram * DefaultShaders;
 
 
-const int ScreenWidth=2560;
-const int ScreenHeight=1440;
+const int ScreenWidth=1280;
+const int ScreenHeight=1024;
 
 TriangleMesh * CreateCubeMesh();
 TriangleMesh * CreateGeodesicSphere(int depth);
@@ -163,7 +163,7 @@ int main(int argc, char **argv)
     
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
 
-    SDL_Window *win = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL|SDL_WINDOW_FULLSCREEN);
+    SDL_Window *win = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
     if (win == nullptr)
     {
 	std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
