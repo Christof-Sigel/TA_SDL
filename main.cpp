@@ -47,12 +47,13 @@ void render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for(int i=0;i<10;i++)
+    for(int i=0;i<9;i++)
     {
 	TempObj[i]->RotateY(30.0f/60.0f);
 //	TempObj[i]->RotateX(60.0f/60.0f*(60.0f/framerate));
 	TempObj[i]->Render();
     }
+    TempObj[9]->Render();
 
     
     
