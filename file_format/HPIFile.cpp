@@ -15,7 +15,11 @@
 #include <string.h>
 
 
-const int HPI_HAPI_MARKER=0x49504148;
+const int HPI_HAPI_MARKER=0x49504148;//"HAPI"
+const int HPI_CHUNK_MARKER=0x48535153;//"SQSH"
+
+
+const std::string CompressionTypeString[]={"NONE","LZ77","Zlib"};
 
 
 void HPIFile::Print(std::string path)
@@ -44,6 +48,7 @@ HPIFile::HPIFile(HPI * cont, int Offset, unsigned char * Data,std::string name)
 	std::cout<<"Unknown Compression type: "<<(int)(Data[Offset+8])<<" in file "<<Name<<std::endl;
 	break;
     }
+    //std::cout<<Name<<" : "<<CompressionTypeString[Compression]<<std::endl;
 }
 
 HPIFile * HPIFile::GetFile(std::string filename)
@@ -51,6 +56,143 @@ HPIFile * HPIFile::GetFile(std::string filename)
     if(Name.compare(filename)==0)
 	return this;
     return nullptr;
+}
+
+void LZ77Decompress(unsigned char * source, unsigned char * dest);
+
+/** this assumes dest is either null or the correct size, since there is no way to check size
+ *
+ *
+ *
+ */
+const int CHUNK_SIZE=65536;
+int HPIFile::GetData(unsigned char * dest)
+{
+    if(dest==nullptr)
+	return FileSize;
+    if(Compression == NONE)
+    {
+	Container->Decrypt(dest,DataOffset,FileSize);
+	return FileSize;
+    }
+    if(Compression==LZ77 || Compression==ZLib)
+    {
+	int NumChunks = FileSize/CHUNK_SIZE;
+	if(FileSize % CHUNK_SIZE != 0)
+	    NumChunks++;
+	
+	int32_t ChunkSize[NumChunks];
+	Container->Decrypt((unsigned char*)ChunkSize,DataOffset,NumChunks*4);
+	int ChunkOffset=DataOffset+NumChunks*4;
+	
+	for(int i=0;i<NumChunks;i++)
+	{
+	    unsigned char * ChunkData=new unsigned char[ChunkSize[i]];
+	    Container->Decrypt(ChunkData,ChunkOffset,ChunkSize[i]);
+	    ChunkOffset+=ChunkSize[i];
+	    
+	    if(*(int32_t*)ChunkData != HPI_CHUNK_MARKER)
+	    {
+		std::cout<<"Chunk marker not found in "<<Name<<std::endl;
+		delete [] ChunkData;
+		return -1;
+	    }
+	    if(ChunkData[5]!=Compression)
+	    {
+		std::cout<<"Chunk compression method does not match file compression method in "<<Name<<std::endl;
+		delete [] ChunkData;
+		return -1;
+	    }
+	    int CompressedSize=*((int32_t*)&ChunkData[7]);
+	    int32_t CheckSum=*(int32_t*)&ChunkData[15];
+	    int32_t CalcCheckSum=0;
+	    for(int c=0;c<CompressedSize;c++)
+	    {
+		CalcCheckSum+=ChunkData[c+19];
+	    }
+	    if(ChunkData[6])
+	    {
+		//Encrypted again!
+		for(unsigned int e=0;e<CompressedSize;e++)
+		{
+		    ChunkData[e+19]=(ChunkData[e+19] - e)^e;
+		}
+	    }
+	    int UncompressedSize=*((int32_t*)&ChunkData[11]);
+	    if(Compression==LZ77)
+	    {
+		LZ77Decompress(&ChunkData[19],&dest[i*CHUNK_SIZE]);
+	    }
+	    else
+	    {
+		//ZLibDecompress(
+	    }
+
+	    
+	    delete [] ChunkData;
+	    if(CheckSum!=CalcCheckSum)
+	    {
+		std::cout<<"Calculated and stored CheckSum do not match "<<CalcCheckSum<<" != "<<CheckSum<<std::endl;
+		return -1;
+	    }
+	}
+	
+	return FileSize;
+    }
+    return -1;
+}
+
+const int LZ77_WINDOW_SIZE=4096;
+const int LZ77_LENGTH_MASK=0x0f;
+void LZ77Decompress(unsigned char * source, unsigned char * dest)
+{
+    unsigned char Window[LZ77_WINDOW_SIZE];
+    
+    int srcIndex=0;
+    int destIndex=0;
+    int windowIndex=1;
+    while(true)
+    {
+	int tag=source[srcIndex++];
+	int mask=1;
+	for(int MaskCount=0;MaskCount<8;MaskCount++,mask*=2)
+	{
+	    if((tag & mask) == 0)
+	    {
+		//read a byte, put it in window and buffer
+		dest[destIndex++]=source[srcIndex];
+		Window[windowIndex++]=source[srcIndex++];
+		if(windowIndex>=LZ77_WINDOW_SIZE)
+		    windowIndex=0;
+	    }
+	    else
+	    {
+		//read two bytes, lower 4 bytes are length, upper 12 are offset into window
+		
+		int offset=(*(uint16_t*)&source[srcIndex])>>4;
+		int length=(*(uint16_t*)&source[srcIndex])&LZ77_LENGTH_MASK;
+		length+=2;
+		//std::cout<<offset<<" for "<<length<<std::endl;
+		if(offset==0)
+		{
+		    return;
+		}
+		
+		
+		srcIndex+=2;
+	
+		for(int readCount=0;readCount<length;readCount++)
+		{
+		    dest[destIndex++]=Window[offset];
+		    Window[windowIndex++]=Window[offset++];
+		    if(offset>=LZ77_WINDOW_SIZE)
+			offset=0;
+		    if(windowIndex>=LZ77_WINDOW_SIZE)
+			windowIndex=0;
+		}
+	    }
+	}
+    }
 }
 
 class HPIDirectory

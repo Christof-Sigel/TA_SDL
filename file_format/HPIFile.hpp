@@ -20,6 +20,7 @@ public:
     void Print();
     class HPIFile * GetFile(std::string filename);
 private:
+    friend class HPIFile;
     unsigned char * MMapBuffer;
     unsigned int FileSize;
     class HPIDirectory * Directory;
@@ -51,6 +52,7 @@ public:
     void Print(std::string path);
     HPIFile(HPI * cont, int Offset, unsigned char * Data,std::string name);
     HPIFile * GetFile(std::string filename);
+    int GetData(unsigned char * data);
 };
 
 
