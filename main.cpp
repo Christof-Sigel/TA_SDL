@@ -143,9 +143,9 @@ void setup()
 int main(int argc, char **argv)
 {
     HPI *hpi=new HPI("data/totala1.hpi");
-    // hpi->Print();
-    HPIFile * MissileTDF=hpi->GetFile("/weapons/MISSILES.TDF");
-    HPIFile * SolarPCX=hpi->GetFile("/unitpics/ARMSOLAR.PCX");
+    //hpi->Print();
+    HPIFile * ArmSolar3do=hpi->GetFile("/objects3d/armsolar.3do");
+    hpi->GetFile("");
     
     delete hpi;
 
