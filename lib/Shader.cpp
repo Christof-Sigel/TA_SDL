@@ -3,14 +3,21 @@
 #include "Shader.hpp"
 #include <string.h>
 
-Shader::Shader(std::ifstream & ShaderFile,GLuint ProgramID,int Type,std::string name)
+Shader::Shader(FILE * ShaderFile,GLuint ProgramID,int Type,std::string name)
 {
-    ShaderFile.seekg(0,std::ios_base::end);
-    int length=ShaderFile.tellg();
-    ShaderFile.seekg(0,std::ios_base::beg);
-    char * Contents=new char[length+1];
+    fseek(ShaderFile, 0,SEEK_END);
+    int length=ftell(ShaderFile);
+    fseek(ShaderFile,0,SEEK_SET);
+    char *Contents = new char[length+1];
+
     memset(Contents,0,length+1);
-    ShaderFile.read(Contents,length);
+    int readbytes=fread(Contents,1,length,ShaderFile);
+    if(readbytes!=length)
+    {
+	std::cout<<"Only read "<<readbytes<<"( of "<<length<<"bytes) of "<<name<<std::endl;
+	delete [] Contents;
+	return;
+    }
     Contents[length]=0;
 
     ID=glCreateShader(Type);
@@ -31,9 +38,10 @@ Shader::Shader(std::ifstream & ShaderFile,GLuint ProgramID,int Type,std::string 
     else
 	std::cout<<"Successfully compiled "<<name<<std::endl;
     glAttachShader(ProgramID,ID);
+
     delete [] Contents;
-    
 }
+
 void Shader::Detach(GLuint ProgramID)
 {
     glDetachShader(ProgramID,ID);
@@ -60,18 +68,16 @@ GLuint ShaderProgram::GetUniformLocation(std::string name)
 
 void ShaderProgram::LoadShaders(std::string ShaderNames[])
 {
-    std::ifstream ShaderFile;
     for(int i=0;i<NumShaderTypes;i++)
     {
-	ShaderFile.open(("shaders/"+ShaderNames[i]).c_str(),std::ios_base::binary);
-	if(ShaderFile.good())
+	FILE * ShaderFile=fopen(("shaders/"+ShaderNames[i]).c_str(),"rb");
+	if(ShaderFile)
 	{
 	    Shaders[i]=new Shader(ShaderFile,ID,ShaderTypes[i],ShaderNames[i]);
-	    ShaderFile.close();
-		
+	    fclose(ShaderFile);
 	}
 	else
-	    Shaders[i]=0;
+	    Shaders[i]=nullptr;
     }
     glLinkProgram(ID);
     glUseProgram(ID);

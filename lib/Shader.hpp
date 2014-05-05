@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 #include <string>
-#include <fstream>
+#include <stdio.h>
 
 
 #include <iostream>
@@ -13,7 +13,7 @@ const int NumShaderTypes=5;
 class Shader
 {
 public:
-    Shader(std::ifstream & ShaderFile,GLuint ProgramID,int Type,std::string name);
+    Shader(FILE * ShaderFile,GLuint ProgramID,int Type,std::string name);
     void Detach(GLuint ProgramID);
     ~Shader();
 
