@@ -8,7 +8,7 @@ W32XX = i686-w64-mingw32-g++
 W64XX = x86_64-w64-mingw32-g++
 CXX=clang++
 
-SOURCES=main.cpp lib/Shader.cpp lib/TriangleMesh.cpp lib/Object.cpp lib/Matrix.cpp file_format/HPIFile.cpp
+SOURCES=main.cpp lib/Shader.cpp lib/TriangleMesh.cpp lib/Object.cpp lib/Matrix.cpp file_format/HPIFile.cpp file_format/3DOFile.cpp
 
 OBJECTS = $(SOURCES:.cpp=.o)
 W32OBJECTS = $(SOURCES:.cpp=.w32o)
