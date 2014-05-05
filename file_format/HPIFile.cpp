@@ -238,6 +238,8 @@ public:
 
     HPIFile * GetFile(std::string filename)
     {
+	if(filename.length()<=Name.length())
+	    return nullptr;
 	if(filename.compare(0,Name.length(),Name)!=0)
 	    return nullptr;
 	std::string newpath=filename.substr(Name.length()+1,std::string::npos);
