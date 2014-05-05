@@ -11,6 +11,7 @@ Shader::Shader(FILE * ShaderFile,GLuint ProgramID,int Type,std::string name)
     char *Contents = new char[length+1];
 
     memset(Contents,0,length+1);
+
     int readbytes=fread(Contents,1,length,ShaderFile);
     if(readbytes!=length)
     {
