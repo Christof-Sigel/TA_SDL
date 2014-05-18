@@ -9,7 +9,7 @@
 
 
 #include "file_format/HPIFile.hpp"
-
+#include "file_format/3DOFile.hpp"
 
 bool quit = false;
 Matrix ProjectionMatrix;
@@ -145,6 +145,9 @@ int main(int argc, char **argv)
     HPI *hpi=new HPI("data/totala1.hpi");
     //hpi->Print();
     HPIFile * ArmSolar3do=hpi->GetFile("/objects3d/armsolar.3do");
+    unsigned char * temp=new unsigned char[ArmSolar3do->GetData(nullptr)];
+    ArmSolar3do->GetData(temp);
+    Unit3DObject * ArmSolarObject=new Unit3DObject(temp);
     hpi->GetFile("");
     
     delete hpi;
