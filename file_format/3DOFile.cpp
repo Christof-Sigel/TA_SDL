@@ -2,6 +2,9 @@
 #include <iostream>
 #include <string.h>
 
+const float TA_TO_GL_SCALE=1/10000000.0f;//this is the scaling I was using for the old project, may need to look into a better scale
+
+
 Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 {
     if(*(int32_t*)&buffer[offset]!=1)
@@ -16,6 +19,7 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
     int NumPrimitives=*(int32_t*)(&buffer[offset]);
     offset+=4;
 
+    //this will apparently be -1 for all child objects - will need ignore in that case
     int OffsetToSelectionPrimitive=*(int32_t*)(&buffer[offset]);
     offset+=4;
 
@@ -25,6 +29,8 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
     offset+=4;
     int Z=*(int32_t*)(&buffer[offset]);
     offset+=4;
+    GLfloat pos[]={X*TA_TO_GL_SCALE,Y*TA_TO_GL_SCALE,Z*TA_TO_GL_SCALE};
+    LocationMatrix.SetPosition(pos);
 
     int NameOffset=*(int32_t*)(&buffer[offset]);
     Name=std::string((char *)&buffer[NameOffset]);

@@ -3,6 +3,8 @@
 
 #include <GL/glew.h>
 #include <string>
+#include "Matrix.hpp"
+
 
 class Unit3DObject
 {
@@ -18,6 +20,7 @@ private:
     int NumTextures;
     int NumChildren;
     std::string Name;
+    Matrix LocationMatrix;
 };
 
 
