@@ -1,5 +1,5 @@
-#ifndef __SIMSCHOOL_SHADER
-#define __SIMSCHOOL_SHADER
+#ifndef __CSGL_SHADER
+#define __CSGL_SHADER
 
 #include <GL/glew.h>
 #include <string>

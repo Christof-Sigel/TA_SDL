@@ -90,7 +90,7 @@ Matrix & Matrix::operator= (const Matrix & other)
 bool Matrix::Upload(GLuint Location)
 {
     glUniformMatrix4fv(Location,1,GL_TRUE,Contents);//Opengl uses column major order, c row major, so the matrix needs to be transposed
-#ifdef __SIMSCHOOL_DEBUG_
+#ifdef __CSGL_DEBUG_
     GLenum Error=glGetError();
     if(Error!=GL_NO_ERROR)
     {
@@ -106,7 +106,7 @@ bool Matrix::Upload3x3Rotation(GLuint Location)
     for(int i=0;i<9;i++)
 	U3x3[i]=Contents[(i/3)*4+i%3];
     glUniformMatrix3fv(Location,1,GL_TRUE,U3x3);
-#ifdef __SIMSCHOOL_DEBUG_
+#ifdef __CSGL_DEBUG_
     GLenum Error=glGetError();
     if(Error!=GL_NO_ERROR)
     {

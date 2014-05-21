@@ -1,5 +1,5 @@
-#ifndef __SIMSCHOOL_OBJECT_H
-#define __SIMSCHOOL_OBJECT_H
+#ifndef __CSGL_OBJECT_H
+#define __CSGL_OBJECT_H
 
 #include "TriangleMesh.hpp"
 #include "Matrix.hpp"

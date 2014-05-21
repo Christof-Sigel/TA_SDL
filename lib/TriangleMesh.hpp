@@ -1,5 +1,5 @@
-#ifndef __SIMSCHOOL_TRIANGLE_MESH
-#define __SIMSCHOOL_TRIANGLE_MESH
+#ifndef __CSGL_TRIANGLE_MESH
+#define __CSGL_TRIANGLE_MESH
 
 #include "Shader.hpp"
 #include <string.h>

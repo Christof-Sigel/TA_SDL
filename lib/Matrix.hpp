@@ -1,5 +1,5 @@
-#ifndef __SIMSCHOOL_MATRIX_H
-#define __SIMSCHOOL_MATRIX_H
+#ifndef __CSGL_MATRIX_H
+#define __CSGL_MATRIX_H
 
 const double PI = 3.14159265358979323846;
 
