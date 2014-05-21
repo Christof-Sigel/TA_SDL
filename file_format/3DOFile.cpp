@@ -62,6 +62,33 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	std::cout<<" has "<<NumChildren<<" children";
     }
     std::cout<<std::endl;
+    int32_t Vertices[NumVertices*3];
+    memcpy(Vertices,&buffer[VertexArrayOffset],NumVertices*4*3);//read 3 32-bit integers per vertex
+    
+    int32_t PossibleTextures[NumPrimitives];
+    int CurrentTexNum=0;
+    for(int PrimIndex=0;PrimIndex<NumPrimitives;PrimIndex++)
+    {
+	int32_t TexOffset=*(int32_t*)&buffer[PrimitiveArrayOffset+16+PrimIndex*32];//texture offset is at the 5th 32-bit int, Primitive has 8 32-bit ints
+	//Not ignoring 0 here as we need to group no texture primitives and render them separately from the others
+	bool found=false;
+	for(int TexIndex=0;TexIndex<CurrentTexNum;TexIndex++)
+	{
+	    if(PossibleTextures[TexIndex]==TexOffset)
+	    {
+		found=true;
+		break;
+	    }
+	}
+	if(!found)
+	{
+	    PossibleTextures[CurrentTexNum++]=TexOffset;
+	}
+    }
+
+    NumTextures=CurrentTexNum;
+
+     
 
     Children = new Unit3DObject *[NumChildren];
     for(int i=0;i<NumChildren;i++)
@@ -70,6 +97,4 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	ChildOffset=*(int32_t *)&buffer[ChildOffset+OffsetToSibling];
     }
 
-    int32_t Vertices[NumVertices*3];
-    memcpy(Vertices,&buffer[VertexArrayOffset],NumVertices*4*3);//read 3 32-bit integers per vertex 
 }
