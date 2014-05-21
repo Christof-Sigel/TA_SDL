@@ -14,7 +14,7 @@ OBJECTS = $(SOURCES:.cpp=.o)
 W32OBJECTS = $(SOURCES:.cpp=.w32o)
 W64OBJECTS = $(SOURCES:.cpp=.w64o)
 EXECUTABLES = w32/ta_sdl.exe w64/ta_sdl_64.exe ta_sdl
-CFLAGS=-Wall -std=c++11 -ggdb
+CFLAGS=-Wall -std=c++11 -ggdb -Ilib/
 
 all: $(EXECUTABLES)
 

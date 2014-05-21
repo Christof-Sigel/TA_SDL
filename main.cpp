@@ -4,8 +4,8 @@
 
 
 
-#include "lib/TriangleMesh.hpp"
-#include "lib/Object.hpp"
+#include "TriangleMesh.hpp"
+#include "Object.hpp"
 
 
 #include "file_format/HPIFile.hpp"
