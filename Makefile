@@ -1,6 +1,6 @@
 LDWIN = -mwindows -mconsole -lmingw32 -lSDL2main -lglew32 -lglu32 -lopengl32
 LDSDL = -lSDL2
-LDFLAGS = $(LDSDL) -ggdb
+LDFLAGS = $(LDSDL) -ggdb -D__CSGL_DEBUG_
 LDLIN = -lGLEW -lGLU -lGL
 
 
