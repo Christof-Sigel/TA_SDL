@@ -62,8 +62,13 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	std::cout<<" has "<<NumChildren<<" children";
     }
     std::cout<<std::endl;
-    int32_t Vertices[NumVertices*3];
-    memcpy(Vertices,&buffer[VertexArrayOffset],NumVertices*4*3);//read 3 32-bit integers per vertex
+    int32_t IntVertices[NumVertices*3];
+    memcpy(IntVertices,&buffer[VertexArrayOffset],NumVertices*4*3);//read 3 32-bit integers per vertex
+    GLfloat Vertices[NumVertices*3];
+    for(int vertIndex=0;vertIndex<NumVertices*3;vertIndex++)
+    {
+	Vertices[vertIndex]=IntVertices[vertIndex]*TA_TO_GL_SCALE;
+    }
     
     int32_t PossibleTextures[NumPrimitives];
     int CurrentTexNum=0;
