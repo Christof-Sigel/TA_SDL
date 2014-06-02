@@ -71,6 +71,7 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
     }
     
     int32_t PossibleTextures[NumPrimitives];
+    int PrimitiveToTextureMap[NumPrimitives];
     int CurrentTexNum=0;
     for(int PrimIndex=0;PrimIndex<NumPrimitives;PrimIndex++)
     {
@@ -82,15 +83,16 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	    if(PossibleTextures[TexIndex]==TexOffset)
 	    {
 		found=true;
+		PrimitiveToTextureMap[PrimIndex]=TexIndex;
 		break;
 	    }
 	}
 	if(!found)
 	{
+	    PrimitiveToTextureMap[PrimIndex]=CurrentTexNum;
 	    PossibleTextures[CurrentTexNum++]=TexOffset;
 	}
     }
-
     NumTextures=CurrentTexNum;
 
      
