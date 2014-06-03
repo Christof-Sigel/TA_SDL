@@ -94,7 +94,61 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	}
     }
     NumTextures=CurrentTexNum;
+    Textures=new GLuint[NumTextures];
+    VertexArrayObjects=new GLuint[NumTextures];
+    glGenVertexArrays(NumTextures,VertexArrayObjects);
+    glGenTextures(NumTextures,Textures);
+    
 
+    for(int TextureIndex=0; TextureIndex<NumTextures;TextureIndex++)
+    {
+	if(PossibleTextures[TextureIndex]==0)
+	{
+	    glDeleteTextures(1,&Textures[TextureIndex]);
+	    Textures[TextureIndex]=0;
+	}
+	for(int PrimIndex=0;PrimIndex<NumPrimitives;PrimIndex++)
+	{
+	    if(PrimitiveToTextureMap[PrimIndex]==TextureIndex)
+	    {
+		int offset=PrimitiveArrayOffset+PrimIndex*32;
+		int32_t ColorIndex=*(int32_t *)&buffer[offset];
+		offset+=4;
+
+		int32_t NumberOfVertices=*(int32_t *)&buffer[offset];
+		offset+=4;
+
+		offset+=4;//this field is apparently always 0, maybe test later?
+
+		int32_t VertexIndexArrayOffset=*(int32_t *)&buffer[offset];
+		offset+=4;
+
+		offset+=4;//this is the texture offset, which we have already stored
+
+		//the final three 32-bti ints are apparently cavedog specific and only used for their editor?
+		int16_t * IndexArray=(int16_t*)&buffer[VertexIndexArrayOffset];
+		switch(NumberOfVertices)
+		{
+		case 1:
+		case 2:
+		    //Ignore points and lines for rendering, at least for now
+		    break;
+		case 3:
+		    
+		    break;
+		case 4:
+
+
+		    break;
+		case 5:
+
+		    break;
+		default:
+		    std::cout<<"Found a primitive of size "<<NumberOfVertices<<" that we don't know how to deal with at the moment"<<std::endl;
+		}
+	    }
+	}
+    }
      
 
     Children = new Unit3DObject *[NumChildren];
