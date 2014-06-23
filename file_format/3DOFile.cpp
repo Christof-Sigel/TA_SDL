@@ -49,7 +49,6 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 
     int NameOffset=*(int32_t*)(&buffer[offset]);
     Name=std::string((char *)&buffer[NameOffset]);
-    std::cout<<Name<<" ("<<X<<","<<Y<<","<<Z<<") ";
     offset+=4;
     //Dont care about apparently always 0 field
     //TODO: check field for all cavedog models in case some are not 0 and this field is significant
@@ -74,9 +73,8 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	    SiblingOffset=*(int32_t *)&buffer[SiblingOffset+OffsetToSibling];
 	    NumChildren++;
 	}
-	std::cout<<" has "<<NumChildren<<" children";
     }
-    std::cout<<std::endl;
+   
     int32_t IntVertices[NumVertices*3];
     memcpy(IntVertices,&buffer[VertexArrayOffset],NumVertices*4*3);//read 3 32-bit integers per vertex
     GLfloat Vertices[NumVertices*3];
