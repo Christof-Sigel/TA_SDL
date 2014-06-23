@@ -16,6 +16,7 @@ Matrix ProjectionMatrix;
 Object * TempObj[10];
 ShaderProgram * DefaultShaders;
 ShaderProgram * Shaders3DO;
+HPI *hpi;
 
 const int ScreenWidth=1280;
 const int ScreenHeight=1024;
