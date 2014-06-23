@@ -231,6 +231,7 @@ int main(int argc, char **argv)
 	return 1;
     }
 
+    
     //as we need to use glewExperimental - known issue (it segfaults otherwise!) - we encounter
     //another known issue, which is that while glewInit suceeds, it leaves opengl in an error state
     ErrorValue = glGetError();

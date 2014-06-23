@@ -1,8 +1,34 @@
 #include "3DOFile.hpp"
+
+#include "HPIFile.hpp"
 #include <iostream>
 #include <string.h>
 #include <cmath>
+#include <unordered_map>
 
+std::unordered_map<std::string,GLuint> TextureMap;
+extern HPI * hpi;
+void LoadTexture(std::string Name);
+
+GLuint GetGLTexture(std::string Name)
+{
+    if(TextureMap.count(Name)==0)  
+	LoadTexture(Name);
+	
+    return TextureMap[Name];
+}
+
+void LoadTextureList()
+{
+    //load all gafs from /textures
+}
+
+void LoadTexture(std::string Name)
+{
+    GLuint NewTexture=0;
+    TextureMap[Name]=NewTexture;
+}
+    
 
 const float TA_TO_GL_SCALE=1/2500000.0f;//this gives an arm solar collector of approximately size 2x2 units
 const int FLOATS_PER_TRIANGLE=15;//each triangle has 3x3 position coords, and 3x2 texture coords
