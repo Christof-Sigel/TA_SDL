@@ -10,7 +10,7 @@ class Unit3DObject
 {
 public:
     Unit3DObject(unsigned char * buffer, int offset=0);
-
+    void Render(class Matrix Model,GLuint ModelViewLocation, Matrix ParentTrans=Matrix());
 private:
     Unit3DObject ** Children;
     GLuint * Textures;
@@ -21,6 +21,7 @@ private:
     int NumChildren;
     std::string Name;
     Matrix LocationMatrix;
+    int * NumTriangles;
 };
 
 
