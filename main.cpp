@@ -15,7 +15,7 @@ bool quit = false;
 Matrix ProjectionMatrix;
 Object * TempObj[10];
 ShaderProgram * DefaultShaders;
-
+ShaderProgram * Shaders3DO;
 
 const int ScreenWidth=1280;
 const int ScreenHeight=1024;
@@ -42,23 +42,41 @@ void handleKeys( unsigned char key, int x, int y )
 }
 
 Object * TempSphere;
+GLuint ModelViewLocation;
+Unit3DObject * ArmSolarObject;
+Matrix ArmSolarMat;
 
 void render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+   
+    
 
-    for(int i=0;i<9;i++)
+    Shaders3DO->Use();
+    //ArmSolarMat.Rotate(0,1,0,0.01f);
+    ArmSolarMat.Rotate(1,0,0,0.01f);
+    ArmSolarObject->Render(ArmSolarMat,ModelViewLocation);
+    ArmSolarMat.Upload(ModelViewLocation);
+    ProjectionMatrix.Upload(Shaders3DO->GetUniformLocation("ProjectionMatrix"));
+    
+
+    //DefaultShaders->Use();
+    for(int i=0;i<10;i++)
     {
 	TempObj[i]->RotateY(30.0f/60.0f);
 //	TempObj[i]->RotateX(60.0f/60.0f*(60.0f/framerate));
-	TempObj[i]->Render();
+//	TempObj[i]->Render();
     }
-    TempObj[9]->Render();
-
+    // TempObj[9]->Render();
+    GLenum ErrorValue = glGetError();
+    if(ErrorValue!=GL_NO_ERROR)
+	std::cout<<"failed to render : "<<gluErrorString(ErrorValue)<<std::endl;
+    
     
     
     TempSphere->RotateX(30.0f/60.0f);
-    TempSphere->Render();
+    //TempSphere->Render();
+
     
 }
 
@@ -78,12 +96,29 @@ void SetViewport()
 }
 
 
+
 void setup()
 {
+
+    hpi=new HPI("data/totala1.hpi");
+    hpi->Print();
+    HPIFile * ArmSolar3do=hpi->GetFile("/objects3d/cordoom.3do");
+    unsigned char * temp=new unsigned char[ArmSolar3do->GetData(nullptr)];
+    ArmSolar3do->GetData(temp);
+    ArmSolarObject=new Unit3DObject(temp);
+    hpi->GetFile("");
+    
+    delete hpi;
+    ArmSolarMat.Move(0,0,-8);
+
     
     glClearColor( 0.f, 0.f, 0.f, 0.f );
     ProjectionMatrix.SetProjectionMatrix(60,float(ScreenWidth)/ScreenHeight,1.0f,100.0f);
     
+
+    Shaders3DO = new ShaderProgram("unit3do");
+    ProjectionMatrix.Upload(Shaders3DO->GetUniformLocation("ProjectionMatrix"));
+    ModelViewLocation=Shaders3DO->GetUniformLocation("ModelViewMatrix");
     
     DefaultShaders=new ShaderProgram("default");
     SetViewport();
@@ -114,7 +149,7 @@ void setup()
 
     TempObj[9]->SetPos(0,0,-55.0f);
     TempObj[9]->ResetScale();
-    TempObj[9]->Scale(50,50,10);
+    TempObj[9]->Scale(10,10,10);
 
     
     CubePos[0]=-0.5f;
@@ -132,8 +167,9 @@ void setup()
     // ExitOnGLError("ERROR: Could not set OpenGL depth testing options");
  
     glEnable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
+    glFrontFace(GL_CW);
     
 
 }
@@ -142,16 +178,7 @@ void setup()
 
 int main(int argc, char **argv)
 {
-    HPI *hpi=new HPI("data/totala1.hpi");
-    //hpi->Print();
-    HPIFile * ArmSolar3do=hpi->GetFile("/objects3d/armsolar.3do");
-    unsigned char * temp=new unsigned char[ArmSolar3do->GetData(nullptr)];
-    ArmSolar3do->GetData(temp);
-    Unit3DObject * ArmSolarObject=new Unit3DObject(temp);
-    hpi->GetFile("");
     
-    delete hpi;
-
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
 	std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;

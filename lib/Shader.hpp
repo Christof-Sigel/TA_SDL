@@ -39,6 +39,10 @@ public:
     ShaderProgram(std::string name);
     ShaderProgram(std::string VertexShaderName,std::string FragmentShaderName,std::string GeometryShaderName="",std::string TesselationControlShaderName="",std::string TesselationEvalShaderName="");
     ~ShaderProgram();
+    void Use()
+    {
+	glUseProgram(ID);
+    }
    private:
     void LoadShaders(std::string ShaderNames[]);
     GLuint ID;
