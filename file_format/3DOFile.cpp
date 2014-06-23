@@ -59,7 +59,7 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
     int PrimitiveArrayOffset=*(int32_t*)(&buffer[offset]);
     offset+=4;
 
-    int OffsetToSibling=offset;
+    const int OffsetToSibling=44;
     offset+=4;
     int ChildOffset=*(int32_t*)(&buffer[offset]);
 
