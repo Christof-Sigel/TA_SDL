@@ -19,6 +19,7 @@ public:
     ~HPI();
     void Print();
     class HPIFile * GetFile(std::string filename);
+    class HPIDirectory * GetDirectory(std::string filename);
 private:
     friend class HPIFile;
     unsigned char * MMapBuffer;
@@ -71,6 +72,26 @@ public:
     }
 private:
     std::string msg;
+};
+
+class HPIDirectory
+{
+public:
+    HPIDirectory(HPI * cont,int Offset,unsigned char * Data,std::string name);
+    HPIDirectory * GetDirectory(std::string filename);
+    HPIFile * GetFile(std::string filename);
+    
+    ~HPIDirectory();
+
+    void Print(std::string path);
+
+private:
+    HPI * Container;
+    int NumFiles;
+    int NumDirectories;
+    HPIFile ** Files;
+    HPIDirectory ** Directories;
+    std::string Name;
 };
 
 

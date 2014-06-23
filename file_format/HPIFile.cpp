@@ -195,107 +195,120 @@ void LZ77Decompress(unsigned char * source, unsigned char * dest)
     }
 }
 
-class HPIDirectory
+
+HPIDirectory::HPIDirectory(HPI * cont,int Offset,unsigned char * Data,std::string name)
 {
-public:
-    HPIDirectory(HPI * cont,int Offset,unsigned char * Data,std::string name)
-    {
-	Container=cont;
-	Name=name;
-	int NumDirectoryEntries=*(int32_t*)(&Data[Offset]);
-	int DirectoryEntryOffset=*(int32_t*)(&Data[Offset+4]);
-	NumFiles=NumDirectories=0;
+    Container=cont;
+    Name=name;
+    int NumDirectoryEntries=*(int32_t*)(&Data[Offset]);
+    int DirectoryEntryOffset=*(int32_t*)(&Data[Offset+4]);
+    NumFiles=NumDirectories=0;
 	 
-	for(int i=0;i<NumDirectoryEntries;i++)
-	{
-	    int Flag=(int)Data[DirectoryEntryOffset+i*9+8];
-	    if(Flag==0)
-		NumFiles++;
-	    else
-		NumDirectories++;
-	}
-
-	Files=new HPIFile *[NumFiles];
-	Directories= new HPIDirectory *[NumDirectories];
-	int fileIndex=0;
-	int dirIndex=0;
-	for(int i=0;i<NumDirectoryEntries;i++)
-	{
-	    int32_t NameOffset=*(int32_t*)(&Data[DirectoryEntryOffset+i*9]);
-	    int DataOffset=*(int32_t*)(&Data[DirectoryEntryOffset+i*9+4]);
-	    int Flag=(int)Data[DirectoryEntryOffset+i*9+8];
-	    std::string Name((char *)(&Data[NameOffset]));
-	    if(Flag==1)
-	    {
-		Directories[dirIndex++]=new HPIDirectory(cont,DataOffset,Data,Name);
-	    }
-	    else
-	    {
-		Files[fileIndex++]= new HPIFile(cont,DataOffset,Data,Name);
-	    }
-	}
-    }
-
-    HPIFile * GetFile(std::string filename)
+    for(int i=0;i<NumDirectoryEntries;i++)
     {
-	if(filename.length()<=Name.length())
-	    return nullptr;
-	if(filename.compare(0,Name.length(),Name)!=0)
-	    return nullptr;
-	std::string newpath=filename.substr(Name.length()+1,std::string::npos);
-	HPIFile * file=nullptr;
-	for(int i=0;i<NumFiles;i++)
-	{
-	    file=Files[i]->GetFile(newpath);
-	    if(file)
-		return file;
-	}
-	for(int i=0;i<NumDirectories;i++)
-	{
-	    file=Directories[i]->GetFile(newpath);
-	    if(file)
-		break;
-	}
-	return file;
+	int Flag=(int)Data[DirectoryEntryOffset+i*9+8];
+	if(Flag==0)
+	    NumFiles++;
+	else
+	    NumDirectories++;
     }
+
+    Files=new HPIFile *[NumFiles];
+    Directories= new HPIDirectory *[NumDirectories];
+    int fileIndex=0;
+    int dirIndex=0;
+    for(int i=0;i<NumDirectoryEntries;i++)
+    {
+	int32_t NameOffset=*(int32_t*)(&Data[DirectoryEntryOffset+i*9]);
+	int DataOffset=*(int32_t*)(&Data[DirectoryEntryOffset+i*9+4]);
+	int Flag=(int)Data[DirectoryEntryOffset+i*9+8];
+	std::string Name((char *)(&Data[NameOffset]));
+	if(Flag==1)
+	{
+	    Directories[dirIndex++]=new HPIDirectory(cont,DataOffset,Data,Name);
+	}
+	else
+	{
+	    Files[fileIndex++]= new HPIFile(cont,DataOffset,Data,Name);
+	}
+    }
+}
+
+HPIDirectory * HPIDirectory::GetDirectory(std::string filename)
+{
+    if(filename.length()<Name.length())
+	return nullptr;
+    if(filename.compare(0,Name.length(),Name)!=0)
+	return nullptr;
+    if(filename.length()==Name.length())
+	return this;
+    std::string newpath=filename.substr(Name.length()+1,std::string::npos);
+    HPIDirectory * dir=nullptr;
+    for(int i=0;i<NumDirectories;i++)
+    {
+	dir=Directories[i]->GetDirectory(newpath);
+	if(dir)
+	    break;
+    }
+    return dir;	   
+}
+
+HPIFile * HPIDirectory::GetFile(std::string filename)
+{
+    if(filename.length()<=Name.length())
+	return nullptr;
+    if(filename.compare(0,Name.length(),Name)!=0)
+	return nullptr;
+    std::string newpath=filename.substr(Name.length()+1,std::string::npos);
+    HPIFile * file=nullptr;
+    for(int i=0;i<NumFiles;i++)
+    {
+	file=Files[i]->GetFile(newpath);
+	if(file)
+	    return file;
+    }
+    for(int i=0;i<NumDirectories;i++)
+    {
+	file=Directories[i]->GetFile(newpath);
+	if(file)
+	    break;
+    }
+    return file;
+}
     
-    ~HPIDirectory()
-    {
-	for(int i=0;i<NumFiles;i++)
-	    delete Files[i];
-	delete [] Files;
-	for(int i=0;i<NumDirectories;i++)
-	    delete Directories[i];
-	delete [] Directories;
-    }
+HPIDirectory::~HPIDirectory()
+{
+    for(int i=0;i<NumFiles;i++)
+	delete Files[i];
+    delete [] Files;
+    for(int i=0;i<NumDirectories;i++)
+	delete Directories[i];
+    delete [] Directories;
+}
 
-    void Print(std::string path)
+void HPIDirectory::Print(std::string path)
+{
+    std::string currentPath=path+Name+"/";
+    std::cout<<currentPath<<std::endl;
+    for(int i=0;i<NumFiles;i++)
     {
-	std::string currentPath=path+Name+"/";
-	std::cout<<currentPath<<std::endl;
-	for(int i=0;i<NumFiles;i++)
-	{
-	    Files[i]->Print(currentPath);
-	}
-	for(int i=0;i<NumDirectories;i++)
-	{
-	    Directories[i]->Print(currentPath);
-	}
+	Files[i]->Print(currentPath);
     }
-
-private:
-    HPI * Container;
-    int NumFiles;
-    int NumDirectories;
-    HPIFile ** Files;
-    HPIDirectory ** Directories;
-    std::string Name;
-};
+    for(int i=0;i<NumDirectories;i++)
+    {
+	Directories[i]->Print(currentPath);
+    }
+}
 
 
 HPIFile * HPI::GetFile(std::string filename)
 {
     return Directory->GetFile(filename);
+}
+
+HPIDirectory * HPI::GetDirectory(std::string filename)
+{
+    return Directory->GetDirectory(filename);
 }
 
 
@@ -308,7 +321,7 @@ HPI::HPI(std::string filename)
 {
     FileName=filename;
     Directory=nullptr;
-    #ifdef __LINUX__
+#ifdef __LINUX__
     struct stat filestats;
     
     if(stat(filename.c_str(),&filestats)==-1)
@@ -320,8 +333,8 @@ HPI::HPI(std::string filename)
 	throw IOFail(std::string(strerror(errno)));
 
     MMapBuffer=static_cast<unsigned char *>(mmap(MMapBuffer,FileSize,PROT_READ,MAP_SHARED,File,0));
-    #else
-    #ifdef __WINDOWS__
+#else
+#ifdef __WINDOWS__
     OFSTRUCT of;
     File=(HANDLE)OpenFile(FileName.c_str(),&of,OF_READ);
     if(File==(HANDLE)HFILE_ERROR)
@@ -335,8 +348,8 @@ HPI::HPI(std::string filename)
 	throw IOFail(std::string("Could not map file: ")+FileName);
     }
     MMapBuffer=static_cast<unsigned char *>(MapViewOfFile(MMFile,FILE_MAP_READ,0,0,0));
-    #endif
-    #endif
+#endif
+#endif
 
     if(*(int32_t*)MMapBuffer != HPI_HAPI_MARKER)
     {
@@ -372,14 +385,14 @@ void HPI::Decrypt(unsigned char * destination, int start, int len)
 
 HPI::~HPI()
 {
-    #ifdef __WINDOWS__
+#ifdef __WINDOWS__
     UnmapViewOfFile(MMapBuffer);
     CloseHandle(MMFile);
     CloseHandle(File);
-    #else
+#else
     close(File);
     munmap(MMapBuffer,FileSize);
-    #endif
+#endif
     if(Directory != nullptr)
 	delete Directory;
 }
