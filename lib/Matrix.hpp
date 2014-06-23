@@ -19,7 +19,6 @@ public:
     bool Upload3x3Rotation(GLuint Location);
     Matrix & operator*= (const Matrix & other);
     Matrix operator* (const Matrix & other);
-private:
     GLfloat Contents[16];
 };
 
