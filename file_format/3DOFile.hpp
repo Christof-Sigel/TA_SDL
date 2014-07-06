@@ -5,6 +5,7 @@
 #include <string>
 #include "Matrix.hpp"
 
+void LoadTextureList();
 
 class Unit3DObject
 {

@@ -102,7 +102,8 @@ void setup()
 {
 
     hpi=new HPI("data/totala1.hpi");
-    hpi->Print();
+    LoadTextureList();
+
     HPIFile * ArmSolar3do=hpi->GetFile("/objects3d/cordoom.3do");
     unsigned char * temp=new unsigned char[ArmSolar3do->GetData(nullptr)];
     ArmSolar3do->GetData(temp);

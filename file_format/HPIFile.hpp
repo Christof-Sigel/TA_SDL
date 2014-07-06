@@ -84,12 +84,12 @@ public:
     ~HPIDirectory();
 
     void Print(std::string path);
+    HPIFile ** Files;
+    int NumFiles;
 
 private:
     HPI * Container;
-    int NumFiles;
     int NumDirectories;
-    HPIFile ** Files;
     HPIDirectory ** Directories;
     std::string Name;
 };

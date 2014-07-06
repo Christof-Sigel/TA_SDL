@@ -5,10 +5,13 @@
 #include <string.h>
 #include <cmath>
 #include <unordered_map>
+#include "Gaf.hpp"
 
 std::unordered_map<std::string,GLuint> TextureMap;
 extern HPI * hpi;
 void LoadTexture(std::string Name);
+Gaf ** TextureGafs;
+int NumTextureGafs;
 
 GLuint GetGLTexture(std::string Name)
 {
@@ -21,12 +24,29 @@ GLuint GetGLTexture(std::string Name)
 void LoadTextureList()
 {
     //load all gafs from /textures
+    HPIDirectory * TexturesDirectory=hpi->GetDirectory("/textures");
+    NumTextureGafs=TexturesDirectory->NumFiles;
+    TextureGafs=new Gaf*[NumTextureGafs];
+    for(int FileIndex=0;FileIndex<TexturesDirectory->NumFiles;FileIndex++)
+    {
+	unsigned char * temp=new unsigned char[TexturesDirectory->Files[FileIndex]->GetData(nullptr)];
+	TexturesDirectory->Files[FileIndex]->GetData(temp);
+    	TextureGafs[FileIndex]=new Gaf(temp);
+	delete [] temp;
+    }
 }
 
 void LoadTexture(std::string Name)
 {
     GLuint NewTexture=0;
-    TextureMap[Name]=NewTexture;
+    for(int TextureIndex=0;TextureIndex<NumTextureGafs;TextureIndex++)
+    {
+	NewTexture=TextureGafs[TextureIndex]->GetGLTexture(Name);
+	if(NewTexture!=0)
+	    break;
+    }
+    if(NewTexture!=0)
+	TextureMap[Name]=NewTexture;
 }
     
 
