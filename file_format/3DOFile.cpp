@@ -240,20 +240,26 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 		default:
 		{
 		    std::cout<<"Found a primitive of size "<<NumberOfVertices<<", using default 6+ side polygon code"<<std::endl;
+		    GLfloat UVCoords[6];
+		    //Map sin/cos unit circle at (0,0) onto 1/2 unit circle at (0.5,0.5)
+		    UVCoords[2*2]=0.5f*(1-(sin((2.0f*(NumberOfVertices-1)+1)*PI/float(NumberOfVertices))/cos(PI/NumberOfVertices)));
+		    UVCoords[2*2+1]=0.5f*(1-(cos(PI/NumberOfVertices*(2.0f*(NumberOfVertices-1)+1))/cos(PI/NumberOfVertices)));
+
 		    for(int i=0;i<NumberOfVertices-2;i++)
 		    {
 			uint16_t TempIndexes[]={IndexArray[i],IndexArray[i+1],IndexArray[NumberOfVertices-1]};
-			GLfloat UVCoords[6];
-			for(int j=0;j<3;j++)
+			
+			for(int j=0;j<2;j++)
 			{
+			    //Map sin/cos unit circle at (0,0) onto 1/2 unit circle at (0.5,0.5)
 			    UVCoords[j*2]=0.5f*(1-(sin((2.0f*(i+j)+1)*PI/float(NumberOfVertices))/cos(PI/NumberOfVertices)));
 			    UVCoords[j*2+1]=0.5f*(1-(cos(PI/NumberOfVertices*(2.0f*(i+j)+1))/cos(PI/NumberOfVertices)));
 			}
 			FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords,ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
 			CurrentTriangle++;
 		    }
-		}
 		    break;
+		}
 		}
 	    }
 	}
