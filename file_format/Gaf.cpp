@@ -320,6 +320,7 @@ Gaf::Gaf(unsigned char * buffer)
 	{
 	    offset=SparseFramePointers[FrameIndex*2];//the file format stores data_pointer, unknown long so we are skipping unkown here
 	    uint8_t * FrameData=LoadFrameData(offset,buffer,&Frames[FrameIndex]);
+
 	    if(FrameData!=nullptr)
 	    {
 		glGenTextures(1,&Frames[FrameIndex].Texture);
@@ -386,13 +387,14 @@ uint8_t * LoadFrameData(int offset,uint8_t * buffer, Frame * frame )
 		int16_t linelength=*(int16_t*)&buffer[offset];
 		offset+=2;
 		int destoff=y*frame->Width*4;
-		while(linelength>0)
+		int nextline=offset+linelength;
+		while(offset<nextline)
 		{
 		    uint8_t mask=buffer[offset++];
 		    linelength--;
 		    if(mask & 0x01)
 		    {
-			int skip=mask>>1;
+			int skip=(mask>>1);
 			for(int i=0;i<skip;i++)
 			    data[destoff+i*4+3]=0;//transparent
 			destoff+=skip*4;
@@ -406,19 +408,18 @@ uint8_t * LoadFrameData(int offset,uint8_t * buffer, Frame * frame )
 				data[destoff+i*4+j]=TAPalette[buffer[offset]*3+j];
 			    data[destoff+i*4+3]=255;///opaque
 			}
+			destoff+=repeat*4;
 			offset++;
-			linelength--;
-		    }
+				    }
 		    else
 		    {
-			int numToCopy=(mask &0x02)+1;
-			for(;numToCopy>0;numToCopy--)
+			int numToCopy=(mask >> 2)+1;
+			for(int i=0;i<numToCopy;i++)
 			{
 			    for(int j=0;j<3;j++)
 				data[destoff+j]=TAPalette[buffer[offset]*3+j];
 			    data[destoff+3]=255;//opaque
 			    offset++;
-			    linelength--;
 			    destoff+=4;
 			}
 		    }
@@ -427,10 +428,11 @@ uint8_t * LoadFrameData(int offset,uint8_t * buffer, Frame * frame )
 	}
 	else
 	{
-	    for(int i=0;i<frame->Width*frame->Height;i++)
+	    int size=frame->Width * frame->Height;
+	    for(int i=0;i<size;i++)
 	    {
 		for(int j=0;j<3;j++)
-		    data[i*4+j]=TAPalette[buffer[FrameDataOffset+i]*3+j];
+		        data[i*4+j]=TAPalette[buffer[FrameDataOffset+i]*3+j];
 		data[i*4+3]=255;//opaque
 	    }
 	}
