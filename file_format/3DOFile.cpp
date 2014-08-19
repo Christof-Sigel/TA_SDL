@@ -63,8 +63,8 @@ void FillArraysForTriangle(GLfloat * PosTexArray,uint16_t * Indexes, float * Ver
 	PosTexArray[vertex*5]=Vertices[Indexes[vertex]*3];
 	PosTexArray[vertex*5+1]=Vertices[Indexes[vertex]*3+1];
 	PosTexArray[vertex*5+2]=Vertices[Indexes[vertex]*3+2];
-	PosTexArray[vertex*5+3]=UVCoords[vertex*3];
-	PosTexArray[vertex*5+4]=UVCoords[vertex*3+1];
+	PosTexArray[vertex*5+3]=UVCoords[vertex*2];
+	PosTexArray[vertex*5+4]=UVCoords[vertex*2+1];
 	ColorIndexes[vertex]=ColorIndex;
     }
 }
