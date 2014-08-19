@@ -5,7 +5,7 @@ layout(location=1) in vec2 VTexCoord;
 
 
 out vec3 FPosition;
-out vec2 FTexCoord;
+smooth out vec2 FTexCoord;
 
 uniform mat4 ModelViewMatrix;
 uniform mat4 ProjectionMatrix;

@@ -62,9 +62,9 @@ void render()
     
 
     //DefaultShaders->Use();
-    for(int i=0;i<10;i++)
+    //  for(int i=0;i<10;i++)
     {
-	TempObj[i]->RotateY(30.0f/60.0f);
+//	TempObj[i]->RotateY(30.0f/60.0f);
 //	TempObj[i]->RotateX(60.0f/60.0f*(60.0f/framerate));
 //	TempObj[i]->Render();
     }
@@ -75,7 +75,7 @@ void render()
     
     
     
-    TempSphere->RotateX(30.0f/60.0f);
+    //TempSphere->RotateX(30.0f/60.0f);
     //TempSphere->Render();
 
     
@@ -104,7 +104,7 @@ void setup()
     hpi=new HPI("data/totala1.hpi");
     LoadTextureList();
 
-    HPIFile * ArmSolar3do=hpi->GetFile("/objects3d/cordoom.3do");
+    HPIFile * ArmSolar3do=hpi->GetFile("/objects3d/armap.3do");
     unsigned char * temp=new unsigned char[ArmSolar3do->GetData(nullptr)];
     ArmSolar3do->GetData(temp);
     ArmSolarObject=new Unit3DObject(temp);
@@ -121,6 +121,7 @@ void setup()
     Shaders3DO = new ShaderProgram("unit3do");
     ProjectionMatrix.Upload(Shaders3DO->GetUniformLocation("ProjectionMatrix"));
     ModelViewLocation=Shaders3DO->GetUniformLocation("ModelViewMatrix");
+    glUniform1i(Shaders3DO->GetUniformLocation("UnitTexture"),0);
     
     DefaultShaders=new ShaderProgram("default");
     SetViewport();

@@ -43,7 +43,10 @@ void LoadTexture(std::string Name)
     {
 	NewTexture=TextureGafs[TextureIndex]->GetGLTexture(Name);
 	if(NewTexture!=0)
+	{
+	    // std::cout<<"Found and Loading "<<Name<<" Into textures map"<<std::endl;
 	    break;
+	}
     }
     if(NewTexture!=0)
 	TextureMap[Name]=NewTexture;
@@ -172,6 +175,11 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	if(PossibleTextures[TextureIndex]!=0)
 	{
 	    //TODO: Load texture from global pool
+	    std::string TextureName=std::string((char*)&buffer[PossibleTextures[TextureIndex]]);
+	    // std::cout<<"Loading Texture: "<<TextureName<<std::endl;
+	    Textures[TextureIndex]=GetGLTexture(TextureName);
+	    // if(Textures[TextureIndex]!=0)
+	    //	std::cout<<"Successfully Loaded: "<<TextureName<<std::endl;
 	}
 	NumTriangles[TextureIndex]=0;
 	for(int PrimIndex=0;PrimIndex<NumPrimitives;PrimIndex++)
@@ -304,6 +312,7 @@ void Unit3DObject::Render(Matrix Model,GLuint ModelViewLoc,Matrix ParentTrans)
     for(int TextureIndex=0;TextureIndex<NumTextures;TextureIndex++)
     {
 	glBindVertexArray(VertexArrayObjects[TextureIndex]);
+	glBindTexture(GL_TEXTURE_2D,Textures[TextureIndex]);
 	glDrawArrays(GL_TRIANGLES,0,NumTriangles[TextureIndex]*3);
     }
     for(int ChildIndex=0;ChildIndex<NumChildren;ChildIndex++)
