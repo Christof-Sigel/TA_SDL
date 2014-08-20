@@ -366,6 +366,9 @@ uint8_t * LoadFrameData(int offset,uint8_t * buffer, Frame * frame )
     int16_t NumSubFrames=*(int16_t*)&buffer[offset];
     offset+=2;
 
+    //unknown data - apparently always 0
+    offset+=4;
+
     int32_t FrameDataOffset=*(int32_t*)&buffer[offset];//either pixel data, if NumSubFrames==0 or More Entries otherwise
     int datasize=frame->Width * frame->Height*4;//three color + 1 alpha channel
     uint8_t * data=new uint8_t[datasize];

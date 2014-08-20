@@ -8,5 +8,6 @@ uniform sampler2D UnitTexture;
 
 void main(void)
 {
-    out_Color=texture2D(UnitTexture,FTexCoord);//vec4(1,FTexCoord.x,FTexCoord.y,1);
+    out_Color=texture2D(UnitTexture,FTexCoord);
+    // out_Color=vec4(1,FTexCoord.x,FTexCoord.y,1);
 }
