@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include "Gaf.hpp"
 
+
 std::unordered_map<std::string,GLuint> TextureMap;
 extern HPI * hpi;
 void LoadTexture(std::string Name);
@@ -29,9 +30,10 @@ void LoadTextureList()
     TextureGafs=new Gaf*[NumTextureGafs];
     for(int FileIndex=0;FileIndex<TexturesDirectory->NumFiles;FileIndex++)
     {
-	unsigned char * temp=new unsigned char[TexturesDirectory->Files[FileIndex]->GetData(nullptr)];
+	int filesize=TexturesDirectory->Files[FileIndex]->GetData(nullptr);
+	unsigned char * temp=new unsigned char[filesize];
 	TexturesDirectory->Files[FileIndex]->GetData(temp);
-    	TextureGafs[FileIndex]=new Gaf(temp);
+	TextureGafs[FileIndex]=new Gaf(temp);
 	delete [] temp;
     }
 }
@@ -226,20 +228,21 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 		    break;
 		case 3:
 		{
-		    GLfloat UVCoords[]={0,0,0,1,1,1};
+		    GLfloat UVCoords[]={0,1,1,1,0,0};
 		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],IndexArray,Vertices,UVCoords,ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
 		    CurrentTriangle++;
 		}
 		    break;
 		case 4:
 		{
-		    GLfloat UVCoords[]={0,0,1,0,1,1,0,0,1,1,0,1};
+		    GLfloat UVCoords1[]={1,0,1,1,0,1};
 		    uint16_t TempIndexes[]={IndexArray[0],IndexArray[3],IndexArray[2]};
-		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,&UVCoords[6],ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
+		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords1,ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
+		    GLfloat UVCoords2[]={1,0,0,1,0,0};
 		    TempIndexes[1]=IndexArray[2];
 		    TempIndexes[2]=IndexArray[1];
 		    CurrentTriangle++;
-		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords,ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
+		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords2,ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
 		    CurrentTriangle++;
 		}
 		    break;
@@ -292,8 +295,8 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
-	glDeleteBuffers(1,&VertexBuffer);
-	glDeleteBuffers(1,&ColorBuffer);
+//	glDeleteBuffers(1,&VertexBuffer);
+//	glDeleteBuffers(1,&ColorBuffer);
     }
 
     Children = new Unit3DObject *[NumChildren];
@@ -313,6 +316,10 @@ void Unit3DObject::Render(Matrix Model,GLuint ModelViewLoc,Matrix ParentTrans)
     {
 	glBindVertexArray(VertexArrayObjects[TextureIndex]);
 	glBindTexture(GL_TEXTURE_2D,Textures[TextureIndex]);
+	if(Textures[TextureIndex]==0)
+	{
+	    //TODO: Load different shader to render color instead of texture
+	}
 	glDrawArrays(GL_TRIANGLES,0,NumTriangles[TextureIndex]*3);
     }
     for(int ChildIndex=0;ChildIndex<NumChildren;ChildIndex++)

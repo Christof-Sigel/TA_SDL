@@ -45,7 +45,7 @@ class HPIFile
 {
 private:
     HPI * Container;
-    std::string Name;
+    
     int DataOffset;
     int FileSize;
     HPICompressionType Compression;
@@ -54,6 +54,7 @@ public:
     HPIFile(HPI * cont, int Offset, unsigned char * Data,std::string name);
     HPIFile * GetFile(std::string filename);
     int GetData(unsigned char * data);
+    std::string Name;
 };
 
 
