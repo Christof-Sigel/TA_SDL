@@ -229,8 +229,8 @@ void setup()
     glDepthFunc(GL_LESS);
     // ExitOnGLError("ERROR: Could not set OpenGL depth testing options");
  
-    glEnable(GL_CULL_FACE);
-    //glDisable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
     
