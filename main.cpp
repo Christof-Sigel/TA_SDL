@@ -302,13 +302,6 @@ int main(int argc, char **argv)
 	    {
 		quit = true;
 	    }
-	    //Handle keypress with current mouse position
-	    else if( e.type == SDL_TEXTINPUT )
-	    {
-		int x = 0, y = 0;
-		SDL_GetMouseState( &x, &y );
-		handleKeys( e.text.text[ 0 ], x, y );
-	    }
 	    else if( e.type == SDL_KEYDOWN)
 	    {
 		HandleKeyDown(e.key.keysym);
