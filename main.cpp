@@ -198,13 +198,13 @@ void HandleKeyDown(SDL_Keysym key)
 {
     switch(key.sym)
     {
-    case SDLK_O:
+    case SDLK_o:
 	ObjFileIndex++;
 	if(ObjFileIndex >= Objects3dDirectory->NumFiles)
 	    ObjFileIndex = Objects3dDirectory->NumFiles-1;
 	LoadCurrent3doFile();
 	break;
-    case SDLK_L:
+    case SDLK_l:
 	ObjFileIndex--;
 	if(ObjFileIndex < 0)
 	    ObjFileIndex=0;
