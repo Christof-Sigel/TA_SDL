@@ -59,11 +59,11 @@ GLfloat TAPaletteF[256*3];
 char ttf_buffer[1<<20];
 unsigned char temp_bitmap[512*512];
 stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
-GLstbtt_uint ftex;
+GLuint ftex;
 void my_stbtt_initfont(void)
 {
    fread(ttf_buffer, 1, 1<<20, fopen("data/times.ttf", "rb"));
-   stbtt_BakeFontBitmap(data,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
+   stbtt_BakeFontBitmap(ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
    // can free ttf_buffer at this point
    glGenTextures(1, &ftex);
    glBindTexture(GL_TEXTURE_2D, ftex);
