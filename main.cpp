@@ -198,13 +198,13 @@ void HandleKeyDown(SDL_Keysym key)
 {
     switch(key.sym)
     {
-    case SDLK_o:
+    case SDLK_l:
 	ObjFileIndex++;
 	if(ObjFileIndex >= Objects3dDirectory->NumFiles)
 	    ObjFileIndex = Objects3dDirectory->NumFiles-1;
 	LoadCurrent3doFile();
 	break;
-    case SDLK_l:
+    case SDLK_o:
 	ObjFileIndex--;
 	if(ObjFileIndex < 0)
 	    ObjFileIndex=0;
@@ -214,16 +214,24 @@ void HandleKeyDown(SDL_Keysym key)
 	quit=true;
 	break;
     case SDLK_UP:
-	ArmSolarMat.Rotate(1,0,0,-0.005f);
+	ArmSolarMat.Rotate(1,0,0,-0.01f);
 	break;
     case SDLK_DOWN:
-	ArmSolarMat.Rotate(1,0,0,0.005f);
+	ArmSolarMat.Rotate(1,0,0,0.01f);
 	break;
     case SDLK_LEFT:
-	ArmSolarMat.Rotate(0,1,0,-0.005f);
+	ArmSolarMat.Rotate(0,1,0,-0.01f);
 	break;
     case SDLK_RIGHT:
-	ArmSolarMat.Rotate(0,1,0,0.005f);
+	ArmSolarMat.Rotate(0,1,0,0.01f);
+	break;
+    case SDLK_KP_PLUS:
+    case SDLK_PLUS:
+	ArmSolarMat.Move(0,0,0.01f);
+	break;
+    case SDLK_KP_MINUS:
+    case SDLK_MINUS:
+	ArmSolarMat.Move(0,0,-0.01f);
 	break;
     }
 }
