@@ -65,7 +65,7 @@ void FillArraysForTriangle(GLfloat * PosTexArray,uint16_t * Indexes, float * Ver
     if(ColorIndex!=0)
 	std::cout<<ColorIndex<<" -> "<<(ColorIndex &255)<<std::endl;
     ColorIndex &= 255;
-    if(ColorInde!=0)
+    if(ColorIndex!=0)
 	std::cout<<"Color Index: "<<ColorIndex<<" ("<<TAPaletteF[ColorIndex*3+0]<<","<<TAPaletteF[ColorIndex*3+1]
 		 <<","<<TAPaletteF[ColorIndex*3+2]<<std::endl;
     for(int vertex=0;vertex<3;vertex++)
