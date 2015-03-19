@@ -210,6 +210,9 @@ void HandleKeyDown(SDL_Keysym key)
 	    ObjFileIndex=0;
 	LoadCurrent3doFile();
 	break;
+    case SDLK_ESCAPE:
+	quit=true;
+	break;
 	
     }
 }
@@ -286,7 +289,7 @@ int main(int argc, char **argv)
     SDL_Event e;
 		
     //Enable text input
-    SDL_StartTextInput();
+    //SDL_StartTextInput();
 
     //While application is running
     while( !quit )
@@ -318,7 +321,7 @@ int main(int argc, char **argv)
 	//Update screen
 	SDL_GL_SwapWindow( win );
     }
-    SDL_StopTextInput();
+    //SDL_StopTextInput();
     delete hpi;
     SDL_DestroyWindow(win);
     SDL_Quit();
