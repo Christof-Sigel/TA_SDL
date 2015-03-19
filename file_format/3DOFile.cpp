@@ -62,10 +62,12 @@ const int FLOATS_PER_TRIANGLE=24;//each triangle has 3x3 position coords, and 3x
 
 void FillArraysForTriangle(GLfloat * PosTexArray,uint16_t * Indexes, float * Vertices,float * UVCoords,int16_t ColorIndex)
 {
-    
+    if(ColorIndex!=0)
+	std::cout<<ColorIndex<<" -> "<<(ColorIndex &255)<<std::endl;
     ColorIndex &= 255;
-    std::cout<<"Color Index: "<<ColorIndex<<" ("<<TAPaletteF[ColorIndex*3+0]<<","<<TAPaletteF[ColorIndex*3+1]
-	     <<","<<TAPaletteF[ColorIndex*3+2]<<std::endl;
+    if(ColorInde!=0)
+	std::cout<<"Color Index: "<<ColorIndex<<" ("<<TAPaletteF[ColorIndex*3+0]<<","<<TAPaletteF[ColorIndex*3+1]
+		 <<","<<TAPaletteF[ColorIndex*3+2]<<std::endl;
     for(int vertex=0;vertex<3;vertex++)
     {
 	//std::cout<<ColorIndex<<std::endl;
