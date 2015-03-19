@@ -240,8 +240,9 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 		    break;
 		case 3:
 		{
-		    GLfloat UVCoords[]={0,1,1,1,0,0};
-		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],IndexArray,Vertices,UVCoords,ColorIndex);
+		    GLfloat UVCoords[]={0,1,0,0,1,1};
+		    uint16_t TempIndexes[]={IndexArray[0],IndexArray[2],IndexArray[1]};
+		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords,ColorIndex);
 		    CurrentTriangle++;
 		}
 		    break;
