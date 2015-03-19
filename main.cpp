@@ -46,6 +46,9 @@ Object * TempSphere;
 GLuint ModelViewLocation;
 Unit3DObject * ArmSolarObject;
 Matrix ArmSolarMat;
+GLuint RenderColorLocation;
+extern uint8_t TAPalette[256*3];
+GLfloat TAPaletteF[256*3];
 
 void render()
 {
@@ -55,7 +58,7 @@ void render()
 
     Shaders3DO->Use();
     //ArmSolarMat.Rotate(0,1,0,0.01f);
-    ArmSolarMat.Rotate(1,0,0,0.01f);
+    ArmSolarMat.Rotate(1,0,0,0.005f);
     ArmSolarObject->Render(ArmSolarMat,ModelViewLocation);
     ArmSolarMat.Upload(ModelViewLocation);
     ProjectionMatrix.Upload(Shaders3DO->GetUniformLocation("ProjectionMatrix"));
@@ -103,6 +106,11 @@ void setup()
 
     hpi=new HPI("data/totala1.hpi");
     LoadTextureList();
+    HPIDirectory * Objects3dDirectory=hpi->GetDirectory("/objects3d");
+    for(int FileIndex=0;FileIndex<Objects3dDirectory->NumFiles;FileIndex++)
+    {
+	//std::cout<<Objects3dDirectory->Files[FileIndex]->Name<<std::endl;
+    }
 
     HPIFile * ArmSolar3do=hpi->GetFile("/objects3d/armap.3do");
     unsigned char * temp=new unsigned char[ArmSolar3do->GetData(nullptr)];
@@ -122,6 +130,13 @@ void setup()
     ProjectionMatrix.Upload(Shaders3DO->GetUniformLocation("ProjectionMatrix"));
     ModelViewLocation=Shaders3DO->GetUniformLocation("ModelViewMatrix");
     glUniform1i(Shaders3DO->GetUniformLocation("UnitTexture"),0);
+    RenderColorLocation=Shaders3DO->GetUniformLocation("RenderColor");
+    
+    for(int i=0;i<256*3;i++)
+    {
+	TAPaletteF[i]=TAPalette[i]/255.0f;
+    }
+   
     
     DefaultShaders=new ShaderProgram("default");
     SetViewport();

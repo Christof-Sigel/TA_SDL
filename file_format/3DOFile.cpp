@@ -13,6 +13,8 @@ extern HPI * hpi;
 void LoadTexture(std::string Name);
 Gaf ** TextureGafs;
 int NumTextureGafs;
+extern GLuint RenderColorLocation;
+extern GLfloat TAPaletteF[256*3];
 
 GLuint GetGLTexture(std::string Name)
 {
@@ -56,18 +58,23 @@ void LoadTexture(std::string Name)
     
 
 const float TA_TO_GL_SCALE=1/2500000.0f;//this gives an arm solar collector of approximately size 2x2 units
-const int FLOATS_PER_TRIANGLE=15;//each triangle has 3x3 position coords, and 3x2 texture coords
-const int COLORS_PER_TRIANGLE=3;
-void FillArraysForTriangle(GLfloat * PosTexArray,uint16_t * Indexes, float * Vertices,float * UVCoords,int16_t ColorIndex,int16_t * ColorIndexes)
+const int FLOATS_PER_TRIANGLE=24;//each triangle has 3x3 position coords, and 3x2 texture coords and 3x3 color floats
+
+void FillArraysForTriangle(GLfloat * PosTexArray,uint16_t * Indexes, float * Vertices,float * UVCoords,int16_t ColorIndex)
 {
+    
+    ColorIndex &= 255;
     for(int vertex=0;vertex<3;vertex++)
     {
-	PosTexArray[vertex*5]=Vertices[Indexes[vertex]*3];
-	PosTexArray[vertex*5+1]=Vertices[Indexes[vertex]*3+1];
-	PosTexArray[vertex*5+2]=Vertices[Indexes[vertex]*3+2];
-	PosTexArray[vertex*5+3]=UVCoords[vertex*2];
-	PosTexArray[vertex*5+4]=UVCoords[vertex*2+1];
-	ColorIndexes[vertex]=ColorIndex;
+	//std::cout<<ColorIndex<<std::endl;
+	PosTexArray[vertex*8]=Vertices[Indexes[vertex]*3];
+	PosTexArray[vertex*8+1]=Vertices[Indexes[vertex]*3+1];
+	PosTexArray[vertex*8+2]=Vertices[Indexes[vertex]*3+2];
+	PosTexArray[vertex*8+3]=UVCoords[vertex*2];
+	PosTexArray[vertex*8+4]=UVCoords[vertex*2+1];
+	PosTexArray[vertex*8+5]=TAPaletteF[ColorIndex*3+0];
+	PosTexArray[vertex*8+6]=TAPaletteF[ColorIndex*3+1];
+	PosTexArray[vertex*8+7]=TAPaletteF[ColorIndex*3+2];
     }
 }
 
@@ -183,6 +190,8 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	    // if(Textures[TextureIndex]!=0)
 	    //	std::cout<<"Successfully Loaded: "<<TextureName<<std::endl;
 	}
+	else
+	    std::cout<<"No texture primitives "<<std::endl;
 	NumTriangles[TextureIndex]=0;
 	for(int PrimIndex=0;PrimIndex<NumPrimitives;PrimIndex++)
 	{
@@ -196,7 +205,6 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	    }
 	}
 	GLfloat PositionAndTexCoord[NumTriangles[TextureIndex]*FLOATS_PER_TRIANGLE];
-	int16_t ColorIndexes[NumTriangles[TextureIndex]*COLORS_PER_TRIANGLE];
 	int CurrentTriangle=0;
 	for(int PrimIndex=0;PrimIndex<NumPrimitives;PrimIndex++)
 	{
@@ -229,7 +237,7 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 		case 3:
 		{
 		    GLfloat UVCoords[]={0,1,1,1,0,0};
-		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],IndexArray,Vertices,UVCoords,ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
+		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],IndexArray,Vertices,UVCoords,ColorIndex);
 		    CurrentTriangle++;
 		}
 		    break;
@@ -237,12 +245,12 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 		{
 		    GLfloat UVCoords1[]={1,0,1,1,0,1};
 		    uint16_t TempIndexes[]={IndexArray[0],IndexArray[3],IndexArray[2]};
-		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords1,ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
+		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords1,ColorIndex);
 		    GLfloat UVCoords2[]={1,0,0,1,0,0};
 		    TempIndexes[1]=IndexArray[2];
 		    TempIndexes[2]=IndexArray[1];
 		    CurrentTriangle++;
-		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords2,ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
+		    FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords2,ColorIndex);
 		    CurrentTriangle++;
 		}
 		    break;
@@ -250,7 +258,7 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 		    std::cout<<"Currently not treating pentagons specially"<<std::endl;
 		default:
 		{
-		    std::cout<<"Found a primitive of size "<<NumberOfVertices<<", using default 6+ side polygon code"<<std::endl;
+		    //std::cout<<"Found a primitive of size "<<NumberOfVertices<<", using default 6+ side polygon code"<<std::endl;
 		    GLfloat UVCoords[6];
 		    //Map sin/cos unit circle at (0,0) onto 1/2 unit circle at (0.5,0.5)
 		    UVCoords[2*2]=0.5f*(1-(sin((2.0f*(NumberOfVertices-1)+1)*PI/float(NumberOfVertices))/cos(PI/NumberOfVertices)));
@@ -266,7 +274,7 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 			    UVCoords[j*2]=0.5f*(1-(sin((2.0f*(i+j)+1)*PI/float(NumberOfVertices))/cos(PI/NumberOfVertices)));
 			    UVCoords[j*2+1]=0.5f*(1-(cos(PI/NumberOfVertices*(2.0f*(i+j)+1))/cos(PI/NumberOfVertices)));
 			}
-			FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords,ColorIndex,&ColorIndexes[CurrentTriangle*COLORS_PER_TRIANGLE]);
+			FillArraysForTriangle(&PositionAndTexCoord[CurrentTriangle*FLOATS_PER_TRIANGLE],TempIndexes,Vertices,UVCoords,ColorIndex);
 			CurrentTriangle++;
 		    }
 		    break;
@@ -287,15 +295,11 @@ Unit3DObject::Unit3DObject(unsigned char * buffer, int offset)
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	GLuint ColorBuffer;
-	glGenBuffers(1,&ColorBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER,ColorBuffer);
-	glBufferData(GL_ARRAY_BUFFER,sizeof(int16_t)*NumTriangles[TextureIndex]*COLORS_PER_TRIANGLE,ColorIndexes,GL_STATIC_DRAW);
-	glVertexAttribPointer(2,1,GL_SHORT,GL_FALSE,0,0);
+	glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*FLOATS_PER_TRIANGLE/3,(GLvoid*)(sizeof(GLfloat)*5));
 	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
-//	glDeleteBuffers(1,&VertexBuffer);
+	glDeleteBuffers(1,&VertexBuffer);
 //	glDeleteBuffers(1,&ColorBuffer);
     }
 
@@ -319,8 +323,13 @@ void Unit3DObject::Render(Matrix Model,GLuint ModelViewLoc,Matrix ParentTrans)
 	if(Textures[TextureIndex]==0)
 	{
 	    //TODO: Load different shader to render color instead of texture
+	    glUniform1i(RenderColorLocation,1);
 	}
 	glDrawArrays(GL_TRIANGLES,0,NumTriangles[TextureIndex]*3);
+	if(Textures[TextureIndex]==0)
+	{
+	    glUniform1i(RenderColorLocation,0);
+	}
     }
     for(int ChildIndex=0;ChildIndex<NumChildren;ChildIndex++)
     {
