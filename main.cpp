@@ -23,6 +23,10 @@ const int ScreenHeight=1024;
 
 TriangleMesh * CreateCubeMesh();
 TriangleMesh * CreateGeodesicSphere(int depth);
+
+HPIDirectory * Objects3dDirectory=NULL;
+int 3dObjFileIndex=0;
+
 /**
 * Log an SDL error with some error message to the output stream of our choice
 * @param os The output stream to write the message too
@@ -40,6 +44,7 @@ void handleKeys( unsigned char key, int x, int y )
 	{
 	    quit=true;
 	}
+	std::cout<<"Key: "<<key<<" --- Int Key: "<<(int)key<<stdl::endl;
 }
 
 Object * TempSphere;
@@ -99,26 +104,26 @@ void SetViewport()
     ViewPortMatrix.Upload(DefaultShaders->GetUniformLocation("ViewPortMatrix"));
 }
 
+void LoadCurrent3doFile()
+{
 
+    HPIFile * 3doFileToLoad=Objects3dDirectory->Files[3dObjFileIndex];
+    unsigned char * temp=new unsigned char[3doFileToLoad->GetData(nullptr)];
+    3doFileToLoad->GetData(temp);
+    ArmSolarObject=new Unit3DObject(temp);
+    hpi->GetFile("");
+
+}
 
 void setup()
 {
 
     hpi=new HPI("data/totala1.hpi");
     LoadTextureList();
-    HPIDirectory * Objects3dDirectory=hpi->GetDirectory("/objects3d");
-    for(int FileIndex=0;FileIndex<Objects3dDirectory->NumFiles;FileIndex++)
-    {
-	//std::cout<<Objects3dDirectory->Files[FileIndex]->Name<<std::endl;
-    }
-
-    HPIFile * ArmSolar3do=hpi->GetFile("/objects3d/armap.3do");
-    unsigned char * temp=new unsigned char[ArmSolar3do->GetData(nullptr)];
-    ArmSolar3do->GetData(temp);
-    ArmSolarObject=new Unit3DObject(temp);
-    hpi->GetFile("");
     
-    delete hpi;
+    Objects3dDirectory=hpi->GetDirectory("/objects3d");
+        
+    LoadCurrent3doFile();
     ArmSolarMat.Move(0,0,-8);
 
     
@@ -293,7 +298,7 @@ int main(int argc, char **argv)
 	SDL_GL_SwapWindow( win );
     }
     SDL_StopTextInput();
-    
+    delete hpi;
     SDL_DestroyWindow(win);
     SDL_Quit();
 
