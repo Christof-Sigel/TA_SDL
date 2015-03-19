@@ -22,6 +22,7 @@ void main(void)
     else
     {
 	//out_Color=vec4(1,FTexCoord.x,FTexCoord.y,1);
-	out_Color=vec4(FColor,1);
+	//out_Color=vec4(FColor,1);
+	out_Color=vec4(1.0f,0,1.0f,1);
     }
 }
