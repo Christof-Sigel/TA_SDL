@@ -24,8 +24,9 @@ const int ScreenHeight=1024;
 TriangleMesh * CreateCubeMesh();
 TriangleMesh * CreateGeodesicSphere(int depth);
 
-HPIDirectory * Objects3dDirectory=NULL;
+HPIDirectory * Objects3dDirectory=0;
 int ObjFileIndex=0;
+SDL_Window *win=0;
 
 /**
 * Log an SDL error with some error message to the output stream of our choice
@@ -74,6 +75,7 @@ void my_stbtt_initfont(void)
 
 void my_stbtt_print(float x, float y, char *text)
 {
+    //TODO(Christof): actually make this work, 
    // assume orthographic projection with units = screen pixels, origin at top left
    glBindTexture(GL_TEXTURE_2D, ftex);
    glBegin(GL_QUADS);
@@ -147,6 +149,7 @@ void LoadCurrent3doFile()
     unsigned char * temp=new unsigned char[FileToLoad->GetData(nullptr)];
     FileToLoad->GetData(temp);
     ArmSolarObject=new Unit3DObject(temp);
+    SDL_SetWindowTitle(win,FileToLoad->Name.c_str());
 }
 
 void setup()
@@ -289,7 +292,7 @@ int main(int argc, char **argv)
 
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
 
-    SDL_Window *win = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
+    win = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
     if (win == nullptr)
     {
 	std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
