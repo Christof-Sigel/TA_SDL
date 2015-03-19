@@ -148,7 +148,10 @@ void LoadCurrent3doFile()
     HPIFile * FileToLoad=Objects3dDirectory->Files[ObjFileIndex];
     unsigned char * temp=new unsigned char[FileToLoad->GetData(nullptr)];
     FileToLoad->GetData(temp);
+    if(ArmSolarObject)
+	delete ArmSolarObject;
     ArmSolarObject=new Unit3DObject(temp);
+    delete [] temp;
     SDL_SetWindowTitle(win,FileToLoad->Name.c_str());
 }
 
