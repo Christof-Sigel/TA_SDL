@@ -123,7 +123,7 @@ void render()
     
     //TempSphere->RotateX(30.0f/60.0f);
     //TempSphere->Render();
-    my_stbtt_print(0,0,"this is a TEST");
+    // my_stbtt_print(0,0,"this is a TEST");
     
 }
 
