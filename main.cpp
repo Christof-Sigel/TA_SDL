@@ -200,8 +200,8 @@ void HandleKeyDown(SDL_Keysym key)
     {
     case SDLK_UP:
 	ObjFileIndex++;
-	if(ObjFileIndex >= Objects3dDirectory.NumFiles)
-	    ObjFileIndex = Objects3dDirectory.NumFiles-1;
+	if(ObjFileIndex >= Objects3dDirectory->NumFiles)
+	    ObjFileIndex = Objects3dDirectory->NumFiles-1;
 	LoadCurrent3doFile();
 	break;
     case SDLK_DOWN:
