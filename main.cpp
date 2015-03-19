@@ -56,7 +56,7 @@ GLfloat TAPaletteF[256*3];
 
 #define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
 #include "stb_truetype.h"
-char ttf_buffer[1<<20];
+const unsigned char ttf_buffer[1<<20];
 unsigned char temp_bitmap[512*512];
 stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
 GLuint ftex;
