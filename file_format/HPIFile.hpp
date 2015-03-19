@@ -88,7 +88,7 @@ public:
     HPIFile ** Files;
     int NumFiles;
 
-private:
+
     HPI * Container;
     int NumDirectories;
     HPIDirectory ** Directories;

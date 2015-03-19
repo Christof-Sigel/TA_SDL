@@ -44,7 +44,6 @@ void handleKeys( unsigned char key, int x, int y )
 	{
 	    quit=true;
 	}
-	std::cout<<"Key: "<<key<<" --- Int Key: "<<(int)key<<std::endl;
 }
 
 Object * TempSphere;
@@ -195,6 +194,26 @@ void setup()
 
 }
 
+void HandleKeyDown(SDL_Keysymn key)
+{
+    switch(key.sym)
+    {
+    case SDLK_UP:
+	ObjFileIndex++;
+	if(ObjFileIndex >= Objects3dDirectory.NumFiles)
+	    ObjFileIndex = Objects3dDirectory.NumFiles-1;
+	LoadCurrent3doFile();
+	break;
+    case SDLK_DOWN:
+	ObjFileIndex--;
+	if(ObjFileIndex < 0)
+	    ObjFileIndex=0;
+	LoadCurrent3doFile();
+	break;
+	
+    }
+}
+
 
 
 int main(int argc, char **argv)
@@ -286,6 +305,10 @@ int main(int argc, char **argv)
 		int x = 0, y = 0;
 		SDL_GetMouseState( &x, &y );
 		handleKeys( e.text.text[ 0 ], x, y );
+	    }
+	    else if( e.type == SDL_KEYDOWN)
+	    {
+		HandleKeyDown(e.key.keysym);
 	    }
 	}
 
