@@ -25,7 +25,7 @@ TriangleMesh * CreateCubeMesh();
 TriangleMesh * CreateGeodesicSphere(int depth);
 
 HPIDirectory * Objects3dDirectory=NULL;
-int 3dObjFileIndex=0;
+int ObjFileIndex=0;
 
 /**
 * Log an SDL error with some error message to the output stream of our choice
@@ -44,7 +44,7 @@ void handleKeys( unsigned char key, int x, int y )
 	{
 	    quit=true;
 	}
-	std::cout<<"Key: "<<key<<" --- Int Key: "<<(int)key<<stdl::endl;
+	std::cout<<"Key: "<<key<<" --- Int Key: "<<(int)key<<std::endl;
 }
 
 Object * TempSphere;
@@ -107,12 +107,10 @@ void SetViewport()
 void LoadCurrent3doFile()
 {
 
-    HPIFile * 3doFileToLoad=Objects3dDirectory->Files[3dObjFileIndex];
-    unsigned char * temp=new unsigned char[3doFileToLoad->GetData(nullptr)];
-    3doFileToLoad->GetData(temp);
+    HPIFile * FileToLoad=Objects3dDirectory->Files[ObjFileIndex];
+    unsigned char * temp=new unsigned char[FileToLoad->GetData(nullptr)];
+    FileToLoad->GetData(temp);
     ArmSolarObject=new Unit3DObject(temp);
-    hpi->GetFile("");
-
 }
 
 void setup()
