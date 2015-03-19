@@ -227,11 +227,11 @@ void HandleKeyDown(SDL_Keysym key)
 	break;
     case SDLK_KP_PLUS:
     case SDLK_PLUS:
-	ArmSolarMat.Move(0,0,0.01f);
+	ArmSolarMat.Move(0,0,0.1f);
 	break;
     case SDLK_KP_MINUS:
     case SDLK_MINUS:
-	ArmSolarMat.Move(0,0,-0.01f);
+	ArmSolarMat.Move(0,0,-0.1f);
 	break;
     }
 }
