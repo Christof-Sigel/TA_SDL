@@ -194,7 +194,7 @@ void setup()
 
 }
 
-void HandleKeyDown(SDL_Keysymn key)
+void HandleKeyDown(SDL_Keysym key)
 {
     switch(key.sym)
     {
