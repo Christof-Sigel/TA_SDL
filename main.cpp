@@ -62,7 +62,7 @@ void render()
 
     Shaders3DO->Use();
     //ArmSolarMat.Rotate(0,1,0,0.01f);
-    ArmSolarMat.Rotate(1,0,0,0.005f);
+    
     ArmSolarObject->Render(ArmSolarMat,ModelViewLocation);
     ArmSolarMat.Upload(ModelViewLocation);
     ProjectionMatrix.Upload(Shaders3DO->GetUniformLocation("ProjectionMatrix"));
@@ -198,13 +198,13 @@ void HandleKeyDown(SDL_Keysym key)
 {
     switch(key.sym)
     {
-    case SDLK_UP:
+    case SDLK_O:
 	ObjFileIndex++;
 	if(ObjFileIndex >= Objects3dDirectory->NumFiles)
 	    ObjFileIndex = Objects3dDirectory->NumFiles-1;
 	LoadCurrent3doFile();
 	break;
-    case SDLK_DOWN:
+    case SDLK_L:
 	ObjFileIndex--;
 	if(ObjFileIndex < 0)
 	    ObjFileIndex=0;
@@ -213,7 +213,18 @@ void HandleKeyDown(SDL_Keysym key)
     case SDLK_ESCAPE:
 	quit=true;
 	break;
-	
+    case SDLK_UP:
+	ArmSolarMat.Rotate(1,0,0,-0.005f);
+	break;
+    case SDLK_DOWN:
+	ArmSolarMat.Rotate(1,0,0,0.005f);
+	break;
+    case SDLK_LEFT:
+	ArmSolarMat.Rotate(0,1,0,-0.005f);
+	break;
+    case SDLK_RIGHT:
+	ArmSolarMat.Rotate(0,1,0,0.005f);
+	break;
     }
 }
 
