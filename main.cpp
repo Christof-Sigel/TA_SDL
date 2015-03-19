@@ -245,13 +245,15 @@ void HandleKeyDown(SDL_Keysym key)
 	ObjFileIndex++;
 	if(ObjFileIndex >= Objects3dDirectory->NumFiles)
 	    ObjFileIndex = Objects3dDirectory->NumFiles-1;
-	LoadCurrent3doFile();
+	else
+	    LoadCurrent3doFile();
 	break;
     case SDLK_o:
 	ObjFileIndex--;
 	if(ObjFileIndex < 0)
 	    ObjFileIndex=0;
-	LoadCurrent3doFile();
+	else
+	    LoadCurrent3doFile();
 	break;
     case SDLK_ESCAPE:
 	quit=true;
