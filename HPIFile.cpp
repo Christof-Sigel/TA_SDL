@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include "zlib.h"
 
 enum Compression_Type
 {
@@ -263,7 +264,36 @@ char * LoadChunk(char * Source, char * Destination)
 
 void DecompressZLibChunk(char * Source, int CompressedSize, int DecompressedSize, char * Destination)
 {
-    printf("Zlib compression not yet supported\n");
+    z_stream zs;
+    int result;
+    zs.next_in = (unsigned char *)Source;
+    zs.avail_in = CompressedSize;
+    zs.total_in = 0;
+    zs.next_out = (unsigned char *)Destination;
+    zs.avail_out = DecompressedSize;
+    zs.total_out = 0;
+    zs.msg = NULL;
+    zs.state = NULL;
+    zs.zalloc = Z_NULL;
+    zs.zfree = Z_NULL;
+    zs.opaque = NULL;
+    zs.data_type = Z_BINARY;
+    zs.adler = 0;
+    zs.reserved = 0;
+    result = inflateInit(&zs);
+    if (result != Z_OK) {
+	printf("Error on inflateInit %d\nMessage: %s\n", result, zs.msg);
+	return;
+    }
+    result = inflate(&zs, Z_FINISH);
+    if (result != Z_STREAM_END) {
+	printf("Error on inflate %d\nMessage: %s\n", result, zs.msg);
+	zs.total_out = 0;
+    }
+    result = inflateEnd(&zs);
+    if (result != Z_OK) {
+	printf("Error on inflateEnd %d\nMessage: %s\n", result, zs.msg);
+    }
 }
 
 
