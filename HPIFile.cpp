@@ -161,6 +161,11 @@ void LoadEntries(HPIDirectoryEntry * Root, char * Buffer, int Offset,HPIFile * F
 void DecryptHPIBuffer(HPIFile * HPI, char * Destination, int32_t Length, int32_t FileOffset)
 {
     int CurrentKey=0;
+    if(HPI->DecryptionKey == -1)//Header key was 0 -> No Encryption
+    {
+	memcpy(Destination,&HPI->MMFile.MMapBuffer[FileOffset],Length);
+	return;
+    }
     for(int BufferIndex=0;BufferIndex < Length; BufferIndex++)
     {
 	CurrentKey =  (BufferIndex + FileOffset) ^ HPI->DecryptionKey;
