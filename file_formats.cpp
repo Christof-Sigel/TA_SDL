@@ -143,7 +143,7 @@ void DecryptHPIBuffer(char * Source, char * Destination, int32_t Length, int32_t
     for(int BufferIndex=0;BufferIndex < Length; BufferIndex++)
     {
 	CurrentKey =  (BufferIndex + FileOffset) ^ DecryptionKey;
-	Destination[BufferIndex] = CurrentKey ^ ~Source[BufferIndex];
+	Destination[BufferIndex] = CurrentKey ^ ~Source[BufferIndex+FileOffset];
     }
 }
 
