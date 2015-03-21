@@ -95,6 +95,12 @@ void DecompressLZ77Chunk(char * Source, int CompressedSize, int DecompressedSize
 bool32 LoadHPIFile(const char * FileName, HPIFile * HPI)
 {
     MemoryMappedFile HPIMemory = MemoryMapFile(FileName);
+    if(HPIMemory.FileSize == 0)
+    {
+	printf("Could not open %s\n",FileName);
+	return 0;
+    }
+	    
     FILE_HPIHeader * header = (FILE_HPIHeader *)HPIMemory.MMapBuffer;
     if(header->HPIMarker != HPI_MARKER)
     {
