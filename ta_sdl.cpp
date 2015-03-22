@@ -62,17 +62,22 @@ void HandleKeyDown(SDL_Keysym key)
 
 void PrintHPIDirectory(HPIDirectoryEntry dir, int Tabs=0)
 {
-    char printf_format[Tabs+2+1+1];
+    char printf_format[Tabs+2+3+2+1+1];
     for(int i=0;i<Tabs;i++)
 	printf_format[i]='\t';
     printf_format[Tabs]='%';
     printf_format[Tabs+1]='s';
-    printf_format[Tabs+2]='\n';
-    printf_format[Tabs+3]=0;
+    printf_format[Tabs+2]=' ';
+    printf_format[Tabs+3]='-';
+    printf_format[Tabs+4]=' ';
+    printf_format[Tabs+5]='%';
+    printf_format[Tabs+6]='d';
+    printf_format[Tabs+7]='\n';
+    printf_format[Tabs+8]=0;
 
     for(int EntryIndex=0;EntryIndex<dir.NumberOfEntries;EntryIndex++)
     {
-	printf(printf_format,dir.Entries[EntryIndex].Name);
+	printf(printf_format,dir.Entries[EntryIndex].Name,dir.Entries[EntryIndex].IsDirectory?0:dir.Entries[EntryIndex].File.FileSize);
 	if(dir.Entries[EntryIndex].IsDirectory)
 	{
 	    PrintHPIDirectory(dir.Entries[EntryIndex].Directory,Tabs+1);
@@ -84,23 +89,24 @@ void PrintHPIDirectory(HPIDirectoryEntry dir, int Tabs=0)
 void Setup()
 {
     HPIFile main;
-    if(LoadHPIFile("data/rev31.gp3",&main))
+    if(LoadHPIFile("data/totala1.hpi",&main))
     {
 	PrintHPIDirectory(main.Root);
 
     
-	HPIEntry Default = FindHPIEntry(main,"bitmaps-French");
+	HPIEntry Default = FindHPIEntry(main,"objects3d/armsolar.3do");//
 	if(Default.IsDirectory)
 	{
 	    LogError("%s is unexpectedly a directory!",Default.Name);
 	}
 	else if(Default.Name)
 	{
-	    char temp[Default.File.FileSize+1];
+	    char temp[Default.File.FileSize];
 	    if(LoadHPIFileEntryData(Default,temp))
 	    {
-		temp[Default.File.FileSize]=0;
-		FILE * file=fopen(Default.Name,"wb");
+		Object3d temp_model;
+		Load3DOFromBuffer(temp,&temp_model);
+		FILE * file =fopen(Default.Name,"wb");
 		fwrite(temp,Default.File.FileSize,1,file);
 		fclose(file);
 	    }
