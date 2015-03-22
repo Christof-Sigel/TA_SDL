@@ -355,9 +355,13 @@ HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, char * Path)
 	    char * NewPath= strstr(Path,Directory.Entries[EntryIndex].Name);
 	    if(NewPath)
 	    {
-		NewPath+=strlen(Directory.Entries[EntryIndex].Name)+1;
-		printf("%s\n",NewPath);
-		return FindHPIEntry(Directory.Entries[EntryIndex].Directory,NewPath);
+		NewPath+=strlen(Directory.Entries[EntryIndex].Name);
+		if(*NewPath == '\\' || *NewPath == '/')
+		{
+		    NewPath++;
+		    LogDebug("%s",NewPath);
+		    return FindHPIEntry(Directory.Entries[EntryIndex].Directory,NewPath);
+		}
 	    }
 	}
     }
