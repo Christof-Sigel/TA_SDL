@@ -84,27 +84,31 @@ void PrintHPIDirectory(HPIDirectoryEntry dir, int Tabs=0)
 void Setup()
 {
     HPIFile main;
-    LoadHPIFile("data/totala1.hpi",&main);
-    PrintHPIDirectory(main.Root);
+    if(LoadHPIFile("data/rev31.gp3",&main))
+    {
+	PrintHPIDirectory(main.Root);
 
     
-    HPIEntry Default = FindHPIEntry(main,"ai\\DEFAULT.TXT");
-    if(Default.IsDirectory)
-    {
-	printf("%s is unexpectedly a directory!\n",Default.Name);
-    }
-    else if(Default.Name)
-    {
-	char temp[Default.File.FileSize+1];
-	if(LoadHPIFileEntryData(Default,temp))
+	HPIEntry Default = FindHPIEntry(main,"bitmaps-French");
+	if(Default.IsDirectory)
 	{
-	    temp[Default.File.FileSize]=0;
-	    printf("%s\n",temp);
+	    LogError("%s is unexpectedly a directory!",Default.Name);
 	}
-    }
-    else
-    {
-	printf("failed to find %s\n",Default.Name);
+	else if(Default.Name)
+	{
+	    char temp[Default.File.FileSize+1];
+	    if(LoadHPIFileEntryData(Default,temp))
+	    {
+		temp[Default.File.FileSize]=0;
+		FILE * file=fopen(Default.Name,"wb");
+		fwrite(temp,Default.File.FileSize,1,file);
+		fclose(file);
+	    }
+	}
+	else
+	{
+	    LogError("failed to find %s",Default.Name);
+	}
     }
 }
 
@@ -117,7 +121,7 @@ bool32 SetupSDLWindow()
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
-	printf("SDL_Init Error: %s\n", SDL_GetError());
+	LogError("SDL_Init Error: %s", SDL_GetError());
 	return 0;
     }
 
@@ -129,7 +133,7 @@ bool32 SetupSDLWindow()
     MainSDLWindow = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
     if (!MainSDLWindow)
     {
-	printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
+	LogError("SDL_CreateWindow Error: %s", SDL_GetError());
 	return 0;
     }
 
@@ -139,7 +143,7 @@ bool32 SetupSDLWindow()
     GLenum ErrorValue = glGetError();
     if(ErrorValue!=GL_NO_ERROR)
     {
-	printf("failed before create context : %s\n", gluErrorString(ErrorValue));
+	LogError("failed before create context : %s", gluErrorString(ErrorValue));
     }
     
 
@@ -147,18 +151,18 @@ bool32 SetupSDLWindow()
     SDL_GL_MakeCurrent (MainSDLWindow,gContext);
     if( SDL_GL_SetSwapInterval( 1 ) < 0 )
     {
-	printf("Warning: Unable to set VSync! SDL Error: %s\n",SDL_GetError());
+	LogWarning("Warning: Unable to set VSync! SDL Error: %s",SDL_GetError());
     }
 
     glGetIntegerv(GL_MAJOR_VERSION, &GLMajorVer);
     glGetIntegerv(GL_MINOR_VERSION, &GLMinorVer);
-    printf("OpenGL Version %d.%d\n",GLMajorVer,GLMinorVer);
+    LogDebug("OpenGL Version %d.%d",GLMajorVer,GLMinorVer);
 
 
     ErrorValue = glGetError();
     if(ErrorValue!=GL_NO_ERROR)
     {
-	printf("failed before glewInit : %s\n",gluErrorString(ErrorValue));
+	LogError("failed before glewInit : %s",gluErrorString(ErrorValue));
     }
   
 
@@ -166,7 +170,7 @@ bool32 SetupSDLWindow()
     GLenum glewError = glewInit();
     if( glewError != GLEW_OK )
     {
-	printf("Error initializing GLEW! %s\n", glewGetErrorString( glewError ));
+	LogError("Error initializing GLEW! %s", glewGetErrorString( glewError ));
 	return 0;
     }
 

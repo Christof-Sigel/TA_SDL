@@ -7,6 +7,38 @@
 
 #endif
 
+const char * LogError[]={"ERROR","WARNING","INFORMATION","DEBUG"};
+enum
+{
+    LOG_ERROR,
+    LOG_WARNING,
+    LOG_INFORMATION,
+    LOG_DEBUG
+};
+const int LOG_LEVEL=LOG_DEBUG; //controls up to what level of errors is logged
+#define Log(ll,fmt,...) __LOG(ll,fmt,__func__,__LINE__,__FILE__,##__VA_ARGS__)
+#define LogError(fmt,...)__LOG(LOG_ERROR,fmt,__func__,__LINE__,__FILE__,##__VA_ARGS__) 
+#define LogWarning(fmt,...) __LOG(LOG_WARNING,fmt,__func__,__LINE__,__FILE__,##__VA_ARGS__) 
+#define LogInformation(fmt,...) __LOG(LOG_INFORMATION,fmt,__func__,__LINE__,__FILE__,##__VA_ARGS__)
+#define LogDebug(fmt,...) __LOG(LOG_DEBUG,fmt,__func__,__LINE__,__FILE__,##__VA_ARGS__)
+
+void __LOG(int loglevel,const char * fmt, const char* caller , int line,const char * file,...)
+{
+    if (loglevel>LOG_LEVEL)
+        return;
+    va_list argptr;
+    va_start(argptr,file);
+    char * tmp;
+    int size=vsnprintf(NULL, 0, fmt, argptr);
+    tmp=(char*)malloc(size+1);
+    va_end(argptr);
+    va_start(argptr,file);
+    vsnprintf(tmp,size+1,fmt,argptr);
+    //TODO(Christof): Update this to use a log file at some point
+    printf("%s: %s line %d - %s : %s\n",LogError[loglevel],file,line,caller,tmp);
+    va_end(argptr);
+    free(tmp);
+}
 
 struct MemoryMappedFile
 {

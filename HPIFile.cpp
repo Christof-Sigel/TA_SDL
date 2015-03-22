@@ -98,24 +98,24 @@ bool32 LoadHPIFile(const char * FileName, HPIFile * HPI)
     MemoryMappedFile HPIMemory = MemoryMapFile(FileName);
     if(HPIMemory.FileSize == 0)
     {
-	printf("Could not open %s\n",FileName);
+	LogError("Could not open %s",FileName);
 	return 0;
     }
 	    
     FILE_HPIHeader * header = (FILE_HPIHeader *)HPIMemory.MMapBuffer;
     if(header->HPIMarker != HPI_MARKER)
     {
-	printf("%s is not a HPI file!\n",FileName);
+	LogError("%s is not a HPI file!",FileName);
 	return 0;
     }
     if(header->SaveMarker == SAVE_MARKER)
     {
-	printf("%s is a save file\n",FileName);
+	LogWarning("%s is a save file",FileName);
     }
 
     if(header->DirectorySize > HPIMemory.FileSize)
     {
-	printf("%s has directory size %d larger than the file is %d\n",FileName,header->DirectorySize,HPIMemory.FileSize);
+	LogError("%s has directory size %d larger than the file is %d",FileName,header->DirectorySize,HPIMemory.FileSize);
 	return 0;
     }
     HPI->MMFile = HPIMemory;
@@ -178,7 +178,7 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, char * Destination)
 {
     if(Entry.IsDirectory)
     {
-	printf("%s is a directory, no data to load!\n",Entry.Name);
+	LogError("%s is a directory, no data to load!",Entry.Name);
 	return 0;
     }
     switch(Entry.File.Compression)
@@ -226,7 +226,7 @@ char * LoadChunk(char * Source, char * Destination)
     FILE_HPIChunk * header=(FILE_HPIChunk *)Source;
     if(header->Marker != CHUNK_MARKER)
     {
-	printf("chunk with incorrect marker %d\n",header->Marker);
+	LogError("chunk with incorrect marker %d",header->Marker);
 	return 0;
     }
     char * data=Source+sizeof(FILE_HPIChunk);
@@ -237,7 +237,7 @@ char * LoadChunk(char * Source, char * Destination)
     }
     if(ComputedChecksum != header->Checksum)
     {
-     	printf("Chunk Checksums do not match: %d != %d\n",ComputedChecksum,header->Checksum);
+     	LogError("Chunk Checksums do not match: %d != %d",ComputedChecksum,header->Checksum);
      	return 0;
     }
     if(header->Encrypt)
@@ -255,7 +255,7 @@ char * LoadChunk(char * Source, char * Destination)
 	DecompressLZ77Chunk(data,header->CompressedSize,header->DecompressedSize,Destination);
 	break;
     default:
-	printf("Unknown Compression method %d in chunk\n",CompressionMethod);
+	LogWarning("Unknown Compression method %d in chunk",CompressionMethod);
 	break;
     }
     
@@ -282,17 +282,17 @@ void DecompressZLibChunk(char * Source, int CompressedSize, int DecompressedSize
     zs.reserved = 0;
     result = inflateInit(&zs);
     if (result != Z_OK) {
-	printf("Error on inflateInit %d\nMessage: %s\n", result, zs.msg);
+	LogError("Error on inflateInit %d: Message: %s", result, zs.msg);
 	return;
     }
     result = inflate(&zs, Z_FINISH);
     if (result != Z_STREAM_END) {
-	printf("Error on inflate %d\nMessage: %s\n", result, zs.msg);
+	LogWarning("Error on inflate %d: Message: %s", result, zs.msg);
 	zs.total_out = 0;
     }
     result = inflateEnd(&zs);
     if (result != Z_OK) {
-	printf("Error on inflateEnd %d\nMessage: %s\n", result, zs.msg);
+	LogError("Error on inflateEnd %d: Message: %s", result, zs.msg);
     }
 }
 
