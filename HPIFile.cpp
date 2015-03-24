@@ -93,6 +93,24 @@ void LoadEntries(HPIDirectoryEntry * Root, char * Buffer, int Offset, HPIFile * 
 char * LoadChunk(char * SourceBuffer, char * Destination);
 void DecompressZLibChunk(char * Source, int CompressedSize, int DecompressedSize, char * Destination);
 void DecompressLZ77Chunk(char * Source, int CompressedSize, int DecompressedSize, char * Destination);
+
+
+void UnloadHPIDirectory(HPIDirectoryEntry * Directory)
+{
+    for(int i=0;i<Directory->NumberOfEntries;i++)
+	if(Directory->Entries[i].IsDirectory)
+	    UnloadHPIDirectory(&Directory->Entries[i].Directory);
+    free(Directory->Entries);
+}
+
+void UnloadHPIFile(HPIFile * HPI)
+{
+    UnMapFile(HPI->MMFile);
+    UnloadHPIDirectory(&HPI->Root);
+    if(HPI->Name)
+	free(HPI->Name);
+}
+
     
 bool32 LoadHPIFile(const char * FileName, HPIFile * HPI)
 {
