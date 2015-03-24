@@ -367,7 +367,7 @@ void DecompressLZ77Chunk(char * Source, int CompressedSize, int DecompressedSize
     }
 }
 
-HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, char * Path)
+HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, const char * Path)
 {
     for(int EntryIndex = 0;EntryIndex < Directory.NumberOfEntries ; EntryIndex++)
     {
@@ -375,7 +375,7 @@ HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, char * Path)
 	    return Directory.Entries[EntryIndex];
 	else if(Directory.Entries[EntryIndex].IsDirectory)
 	{
-	    char * NewPath= strstr(Path,Directory.Entries[EntryIndex].Name);
+	    char * NewPath= (char *)strstr(Path,Directory.Entries[EntryIndex].Name);
 	    if(NewPath)
 	    {
 		NewPath+=strlen(Directory.Entries[EntryIndex].Name);
@@ -391,7 +391,8 @@ HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, char * Path)
     return {0};
 }
 
-HPIEntry FindHPIEntry(HPIFile File, char * Path)
+HPIEntry FindHPIEntry(HPIFile * File, const char * Path)
 {
-    return FindHPIEntry(File.Root,Path);
+    return FindHPIEntry(File->Root,Path);
 }
+
