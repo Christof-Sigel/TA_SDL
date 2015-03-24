@@ -91,10 +91,11 @@ void Setup()
     HPIFile main;
     if(LoadHPIFile("data/totala1.hpi",&main))
     {
-	PrintHPIDirectory(main.Root);
+	//PrintHPIDirectory(main.Root);
 
     
-	HPIEntry Default = FindHPIEntry(main,"objects3d/armsolar.3do");//
+	HPIEntry Default = FindHPIEntry(&main,"objects3d/armsolar.3do");
+	//HPIEntry Default = FindHPIEntry(main,"units/ARMSOLAR.FBI");
 	if(Default.IsDirectory)
 	{
 	    LogError("%s is unexpectedly a directory!",Default.Name);
@@ -106,15 +107,18 @@ void Setup()
 	    {
 		Object3d temp_model;
 		Load3DOFromBuffer(temp,&temp_model);
-		FILE * file =fopen(Default.Name,"wb");
+		/*	FILE * file =fopen(Default.Name,"wb");
 		fwrite(temp,Default.File.FileSize,1,file);
-		fclose(file);
+		fclose(file);*/
+		Unload3DO(&temp_model);
 	    }
 	}
 	else
 	{
 	    LogError("failed to find %s",Default.Name);
 	}
+	LoadTextures(&main);
+	UnloadHPIFile(&main);
     }
 }
 
