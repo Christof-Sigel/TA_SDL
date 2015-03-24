@@ -18,14 +18,14 @@ struct FILE_Object3dHeader
     int32_t OffsetToChildObject;
 };
 
-struct FILE_Vertex
+struct FILE_Object3dVertex
 {
     int32_t x;
     int32_t y;
     int32_t z;
 };
 
-struct FILE_Primitive
+struct FILE_Object3dPrimitive
 {
     int32_t ColorIndex;
     int32_t NumberOfVertexIndexes;
@@ -39,7 +39,6 @@ struct FILE_Primitive
 };
 
 
-const double TA_TO_GL_SCALE=1.0f/2500000.0f;
 
 struct Position3d
 {
@@ -52,10 +51,26 @@ struct Object3d
     Object3d * Children;
     int NumberOfChildren;
     Position3d Position;
+    int NumberOfPrimitives;
+    struct Object3dPrimitive * Primitives;
+    int NumberOfVertices;
+    float * Vertices;
 };
 
+struct Object3dPrimitive
+{
+    struct GafTexture * Texture;
+    int NumberOfVertices;
+    int ColorIndex;
+    int * VertexIndexes;
+};
+//TODO(Christof): Load Primitives from file to memory
+//TODO(Christof): Generate Collision Meshes from Primitives?
+//TODO(Christof): Generate Render Data from Primitives
 
-//TODO(Christof): Figure out if we can/need to use bindless textures or something similar for rendering, for now lets just go with the simple solution
+
+/*TODO(Christof): Figure out if we can/need to use bindless textures or something similar for rendering, for now lets just go with the simple solution
+ Probably just load all the textures into one big (1024x1024 or 2048x2048 - will need to check what size we need) texture and use offsets, since the textures are all quite small*/
 //NOTE: Palette for non-textured primites is in "palettes/PALETTE.PAL"
 
 int Count3DOChildren(char * Buffer,FILE_Object3dHeader * header)
@@ -73,6 +88,13 @@ int Count3DOChildren(char * Buffer,FILE_Object3dHeader * header)
     }
     return NumChildren;
 }
+
+void LoadTextureData(Object3dPrimitive * Primitive, FILE_Object3dPrimitive * FilePrimitive)
+{
+    //TODO(Christof): Lookup Texture in global array
+}
+
+const double TA_TO_GL_SCALE=1.0f/2500000.0f;
 
 bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
 {
@@ -95,9 +117,32 @@ bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
     Object->Position.X=header->XFromParent*TA_TO_GL_SCALE;
     Object->Position.Y=header->YFromParent*TA_TO_GL_SCALE;
     Object->Position.Z=header->ZFromParent*TA_TO_GL_SCALE;
-    
-    
 
+    FILE_Object3dPrimitive * Primitives=(FILE_Object3dPrimitive*)(Buffer+header->OffsetToPrimitiveArray);
+    FILE_Object3dPrimitive * CurrentPrimitive = Primitives;
+    Object->NumberOfPrimitives = header->NumberOfPrimitives;
+    Object->Primitives = (Object3dPrimitive *)malloc(sizeof(Object3dPrimitive)*Object->NumberOfPrimitives);
+    for(int i=0;i<header->NumberOfPrimitives;i++)
+    {
+	LoadTextureData(&Object->Primitives[i],CurrentPrimitive);
+	Object->Primitives[i].NumberOfVertices = CurrentPrimitive->NumberOfVertexIndexes;
+	Object->Primitives[i].VertexIndexes = (int *)malloc(sizeof(int)*Object->Primitives[i].NumberOfVertices);
+	Object->Primitives[i].ColorIndex = CurrentPrimitive->ColorIndex;
+
+	CurrentPrimitive++;
+    }
+
+    Object->NumberOfVertices = header->NumberOfVertexes;
+    Object->Vertices = (float *)malloc(sizeof(float)*3*Object->NumberOfVertices);
+
+    FILE_Object3dVertex * Vertices= (FILE_Object3dVertex *)(Buffer + header->OffsetToVertexArray);
+    for(int i=0;i<Object->NumberOfVertices;i++)
+    {
+	Object->Vertices[i*3+0]=Vertices[i].x*TA_TO_GL_SCALE;
+	Object->Vertices[i*3+1]=Vertices[i].y*TA_TO_GL_SCALE;
+	Object->Vertices[i*3+2]=Vertices[i].z*TA_TO_GL_SCALE;
+    }
+    
     
 
     Object->NumberOfChildren = Count3DOChildren(Buffer,header);
@@ -122,6 +167,14 @@ void Unload3DO(Object3d * Object)
 	return;
     if(Object->Name)
 	free(Object->Name);
+    if(Object->Vertices)
+	free(Object->Vertices);
+    if(Object->Primitives)
+    {
+	for(int i=0;i<Object->NumberOfPrimitives;i++)
+	    free(Object->Primitives[i].VertexIndexes);
+	free(Object->Primitives);
+    }
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
 	Unload3DO(&Object->Children[i]);
