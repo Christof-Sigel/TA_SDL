@@ -40,6 +40,7 @@ struct HPIFile
     MemoryMappedFile MMFile;
     HPIDirectoryEntry Root;
     int32_t DecryptionKey;
+    char * Name;
 };
 
 
@@ -121,6 +122,10 @@ bool32 LoadHPIFile(const char * FileName, HPIFile * HPI)
     HPI->MMFile = HPIMemory;
     
     HPI->DecryptionKey = ~((header->HeaderKey *4) | (header->HeaderKey >> 6));
+    int NameLength=strlen(FileName);
+    HPI->Name=(char*)malloc(NameLength+1);
+    memcpy(HPI->Name,FileName,NameLength);
+    HPI->Name[NameLength]=0;
 
     //TODO(Christof): Figure out a memory alloc scheme, just use malloc for now
     char * DecryptedDirectory = (char *)malloc(header->DirectorySize);
