@@ -115,4 +115,53 @@ void UnMapFile(MemoryMappedFile MMFile)
     munmap(MMFile.MMapBuffer,MMFile.FileSize);
 #endif
 }
-    
+
+#include <png.h>
+#include "zlib.h"
+
+void SaveDataToPng(char * ImageData, char * FileName, int Width, int Height)
+{
+    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL, NULL);
+    if (!png_ptr)
+    {
+        LogError("Could not create PNG write stucture for %s",FileName);
+	return;
+    }
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr)
+    {
+        png_destroy_write_struct(&png_ptr,(png_infopp)NULL);
+        LogError("Could not create PNG info stucture for %s",FileName);
+	return;
+    }
+    if (setjmp(png_jmpbuf(png_ptr)))
+    {
+        png_destroy_write_struct(&png_ptr, &info_ptr);
+        LogError("Could not set PNG jmp ptr for %s",FileName);
+	return;
+    }
+    FILE *fp = fopen(FileName, "wb");
+    if (!fp)
+    {
+        LogError("Failed to open %s",FileName);
+	return;
+    }
+    png_init_io(png_ptr, fp);
+    png_set_filter(png_ptr, 0,PNG_ALL_FILTERS);
+    png_set_compression_level(png_ptr,Z_DEFAULT_COMPRESSION);
+    png_set_compression_strategy(png_ptr,Z_DEFAULT_STRATEGY);
+    png_set_IHDR(png_ptr, info_ptr, Width, Height,8,PNG_COLOR_TYPE_RGB , PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT) ;
+    png_write_info(png_ptr, info_ptr);
+    png_write_flush(png_ptr);
+
+    unsigned char ** row_pointers =new unsigned char*[Height];
+    for (int i=0; i<Height; i++)
+        row_pointers[i]=(unsigned char *)&(ImageData[(Height-1-i)*Width*3]);
+    png_write_image(png_ptr, row_pointers);
+    png_write_end(png_ptr, NULL);
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    fclose(fp);
+
+    delete[] row_pointers;
+
+}
