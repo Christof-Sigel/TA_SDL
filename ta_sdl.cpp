@@ -88,6 +88,13 @@ void PrintHPIDirectory(HPIDirectoryEntry dir, int Tabs=0)
 
 void Setup()
 {
+    //Clear Texture data so we can lookup weather a space is free
+    int size=TEXTURE_WIDTH *TEXTURE_HEIGHT*4/4;
+    int32_t * ClearDataPointer=(int32_t *)TextureData;
+    for(int i=0;i<size;i++)
+	ClearDataPointer[i]=0xdeadbeef;
+
+	
     HPIFile main;
     if(LoadHPIFile("data/totala1.hpi",&main))
     {
