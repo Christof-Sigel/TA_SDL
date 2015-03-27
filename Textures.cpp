@@ -224,6 +224,8 @@ bool32 LoadAllTextures()
     if(TotalA1HPI.Name  || LoadHPIFile("data/totala1.hpi",&TotalA1HPI))
     {
 	LoadTextures(&TotalA1HPI);
+	TexturePosition temp=GetAvailableTextureLocation(8,8);
+	LogDebug("(%d,%d)",temp.X,temp.Y);
 	return 1;
     }
     return 0;
@@ -256,6 +258,9 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height)
 		    }
 		}
 	    }
+	    //NOTE: if texure search has to loop (total textures size -> big texture size) this will get quite slow, should be ok for now though
+	    FirstFreeTexture.X=X;
+	    FirstFreeTexture.Y=Y;
 	    return {X,Y};
 	next:
 	    continue;
