@@ -50,10 +50,14 @@ struct Texture
     int FrameNumber;
     float U,V;
     float Width,Height;
+    FILE_GafEntry * From;
 };
 
 const int TEXTURE_WIDTH=2048;
 const int TEXTURE_HEIGHT=2048;
+const int MAX_NUMBER_OF_TEXTURE=1024;
+Texture Textures[MAX_NUMBER_OF_TEXTURE];
+int NextTexture=0;
 char TextureData[TEXTURE_HEIGHT*TEXTURE_WIDTH*4];
 
 char PaletteData[1024];
@@ -61,6 +65,29 @@ bool32 PaletteLoaded=0;
 
 TexturePosition GetAvailableTextureLocation(int Width, int Height);
 void SetTextureLocationUsed(int X, int Y, int Width, int Height);
+
+bool32 NamesMatch(const char * NameToFind, const char * TextureName)
+{
+    while(*TextureName && *NameToFind)
+    {
+	if(*NameToFind!=*TextureName)
+	    return 0;
+	NameToFind++;
+	TextureName++;
+    }
+    return *TextureName == *NameToFind;
+}
+
+Texture * GetTexture(const char * Name,int FrameNumber)
+{
+    //TODO(Christof): some better storage/retrieval mechanism for texture lookup?
+    for(int i=0;i<NextTexture;i++)
+    {
+	if(Textures[i].FrameNumber == FrameNumber && NamesMatch(Name,Textures[i].Name))
+	    return &Textures[i];
+    }
+    return 0;
+}
 
 void LoadGafFrameEntry(char * Buffer, int Offset)
 {
@@ -71,19 +98,22 @@ void LoadGafFrameEntry(char * Buffer, int Offset)
     for(int i=0;i<Entry->NumberOfFrames;i++)
     {
 	FILE_GafFrameData * Frame = (FILE_GafFrameData *)(Buffer + FrameEntries[i].FrameInfoOffset);
-	int Width=Frame->Width, Height = Frame->Height;
 	if(Frame->NumberOfSubframes!=0)
 	{
 	    //NOTE: no textures from totala1.hpi have subframes, ignoring for now
 	    LogError("%s(%d) has %d subframes",Entry->Name,i,Frame->NumberOfSubframes);
 	    continue;
 	}
-		
+	Texture * Texture=GetTexture(Entry->Name,i);
+	if(Texture)
+	{
+	    LogInformation("Skipping %s(%d of %d) as already loaded from %s(%d)",Entry->Name,i,Entry->NumberOfFrames,Texture->From->Name,Texture->From->NumberOfFrames);
+	    continue;
+	}
 	
 	//NOTE: Many textures have non-zero X and/or Y, perhaps this influences texture coord gen in some way? rendering in the past has ignored these values and seemed fine, so going to just ignore them for now
 
-
-	TexturePosition PositionToStore = GetAvailableTextureLocation(Width,Height);
+	TexturePosition PositionToStore = GetAvailableTextureLocation(Frame->Width,Frame->Height);
 	if(PositionToStore.X==-1)
 	{
 	    LogError("Unable to get storage location for texture: %s(%d of %d)",Entry->Name,i,Entry->NumberOfFrames);
@@ -106,6 +136,15 @@ void LoadGafFrameEntry(char * Buffer, int Offset)
 		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=255;//PaletteData[FrameData[x+y*Frame->Width]*4+3];
 		}
 	    }
+	    //NOTE: Move this out if we ever start handling Compressed textures
+	    memcpy(Textures[NextTexture].Name,Entry->Name,32);
+	    Textures[NextTexture].FrameNumber = i;
+	    Textures[NextTexture].U=PositionToStore.X/float(TEXTURE_WIDTH);
+	    Textures[NextTexture].V=PositionToStore.Y/float(TEXTURE_HEIGHT);
+	    Textures[NextTexture].Width=Frame->Width/float(TEXTURE_WIDTH);
+	    Textures[NextTexture].Height=Frame->Height/float(TEXTURE_HEIGHT);
+	    Textures[NextTexture].From = Entry;
+	    NextTexture++;
 	}
     }
 }
@@ -168,21 +207,41 @@ void LoadTextures(HPIFile* HPI)
 	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer);
 	LoadTexturesFromGafBuffer(GafBuffer);
     }
-    TexturePosition FirstFree = GetAvailableTextureLocation(128,128);
-    LogDebug("First Free Texture Position: (%d,%d)",FirstFree.X,FirstFree.Y);
 }
 
-bool32 TexturePixelFree(int X, int Y)
+HPIFile TotalA1HPI;
+
+bool32 LoadAllTextures()
+{
+    //Clear Texture data so we can lookup whether a space is free
+    int size=TEXTURE_WIDTH *TEXTURE_HEIGHT*4/4;
+    int32_t * ClearDataPointer=(int32_t *)TextureData;
+    for(int i=0;i<size;i++)
+	ClearDataPointer[i]=0xdeadbeef;
+
+
+    //TODO(Christof): Load textures from all the data files, probably in some way that doesn't doubly load .hpi files
+    if(TotalA1HPI.Name  || LoadHPIFile("data/totala1.hpi",&TotalA1HPI))
+    {
+	LoadTextures(&TotalA1HPI);
+	return 1;
+    }
+    return 0;
+}
+
+inline bool32 TexturePixelFree(int X, int Y)
 {
     return *(int32_t *)&TextureData[(X+Y*TEXTURE_WIDTH)*4]==0xdeadbeef;
 }
 
+TexturePosition FirstFreeTexture={0,0};
+
 TexturePosition GetAvailableTextureLocation(int Width, int Height)
 {
-    //TODO(Christof): Store first free pixel for slight speed improvement
-    for(int Y=0;Y<TEXTURE_WIDTH;Y++)
+    int StartX=FirstFreeTexture.X;
+    for(int Y=FirstFreeTexture.Y;Y<TEXTURE_HEIGHT;Y++)
     {
-	for(int X=0;X<TEXTURE_WIDTH;X++)
+	for(int X=StartX;X<TEXTURE_WIDTH;X++)
 	{
 	    if(Y+Height>=TEXTURE_HEIGHT || X+ Width >= TEXTURE_WIDTH)
 		continue;
@@ -198,9 +257,10 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height)
 		}
 	    }
 	    return {X,Y};
-	    next:
+	next:
 	    continue;
 	}
+	StartX=0;
     }
     return {-1,-1};
 }

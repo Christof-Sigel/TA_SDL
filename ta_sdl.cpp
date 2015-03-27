@@ -88,20 +88,13 @@ void PrintHPIDirectory(HPIDirectoryEntry dir, int Tabs=0)
 
 void Setup()
 {
-    //Clear Texture data so we can lookup weather a space is free
-    int size=TEXTURE_WIDTH *TEXTURE_HEIGHT*4/4;
-    int32_t * ClearDataPointer=(int32_t *)TextureData;
-    for(int i=0;i<size;i++)
-	ClearDataPointer[i]=0xdeadbeef;
 
-	
-    HPIFile main;
-    if(LoadHPIFile("data/totala1.hpi",&main))
+    if(LoadHPIFile("data/totala1.hpi",&TotalA1HPI))
     {
 	//PrintHPIDirectory(main.Root);
-
+	LoadAllTextures();
     
-	HPIEntry Default = FindHPIEntry(&main,"objects3d/armsolar.3do");
+	HPIEntry Default = FindHPIEntry(&TotalA1HPI,"objects3D/armsolar.3do");
 	//HPIEntry Default = FindHPIEntry(main,"units/ARMSOLAR.FBI");
 	if(Default.IsDirectory)
 	{
@@ -114,9 +107,9 @@ void Setup()
 	    {
 		Object3d temp_model;
 		Load3DOFromBuffer(temp,&temp_model);
-		/*	FILE * file =fopen(Default.Name,"wb");
+			FILE * file =fopen(Default.Name,"wb");
 		fwrite(temp,Default.File.FileSize,1,file);
-		fclose(file);*/
+		fclose(file);
 		Unload3DO(&temp_model);
 	    }
 	}
@@ -124,8 +117,8 @@ void Setup()
 	{
 	    LogError("failed to find %s",Default.Name);
 	}
-	LoadTextures(&main);
-	UnloadHPIFile(&main);
+//	LoadTextures(&TotalA1HPI);
+	UnloadHPIFile(&TotalA1HPI);
     }
 }
 
