@@ -367,6 +367,25 @@ void DecompressLZ77Chunk(char * Source, int CompressedSize, int DecompressedSize
     }
 }
 
+inline char * IsDirectory(char * Path, char * Directory)
+{
+    while(*Path && *Directory)
+    {
+	char pcomp=*Path, dcomp=*Directory;
+	if(pcomp >='a' && pcomp <='z')
+	    pcomp+='A'-'a';
+	if(dcomp >='a' && dcomp <='z')
+	    dcomp+='A'-'a';
+	if(dcomp!=pcomp)
+	    break;
+	Path++;
+	Directory++;
+    }
+    if(!*Directory && (*Path == '/' || *Path == '\\'))
+       return ++Path;
+    return 0;
+}
+
 HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, const char * Path)
 {
     for(int EntryIndex = 0;EntryIndex < Directory.NumberOfEntries ; EntryIndex++)
@@ -375,16 +394,10 @@ HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, const char * Path)
 	    return Directory.Entries[EntryIndex];
 	else if(Directory.Entries[EntryIndex].IsDirectory)
 	{
-	    char * NewPath= (char *)strstr(Path,Directory.Entries[EntryIndex].Name);
+	    char * NewPath= IsDirectory((char*)Path,Directory.Entries[EntryIndex].Name);
 	    if(NewPath)
 	    {
-		NewPath+=strlen(Directory.Entries[EntryIndex].Name);
-		if(*NewPath == '\\' || *NewPath == '/')
-		{
-		    NewPath++;
-		    LogDebug("%s",NewPath);
-		    return FindHPIEntry(Directory.Entries[EntryIndex].Directory,NewPath);
-		}
+		return FindHPIEntry(Directory.Entries[EntryIndex].Directory,NewPath);
 	    }
 	}
     }
