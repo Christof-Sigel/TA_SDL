@@ -59,7 +59,7 @@ struct Object3d
 
 struct Object3dPrimitive
 {
-    struct GafTexture * Texture;
+    Texture * Texture;
     int NumberOfVertices;
     int ColorIndex;
     int * VertexIndexes;
@@ -89,10 +89,6 @@ int Count3DOChildren(char * Buffer,FILE_Object3dHeader * header)
     return NumChildren;
 }
 
-void LoadTextureData(Object3dPrimitive * Primitive, FILE_Object3dPrimitive * FilePrimitive)
-{
-    //TODO(Christof): Lookup Texture in global array
-}
 
 const double TA_TO_GL_SCALE=1.0f/2500000.0f;
 
@@ -124,7 +120,14 @@ bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
     Object->Primitives = (Object3dPrimitive *)malloc(sizeof(Object3dPrimitive)*Object->NumberOfPrimitives);
     for(int i=0;i<header->NumberOfPrimitives;i++)
     {
-	LoadTextureData(&Object->Primitives[i],CurrentPrimitive);
+	if(CurrentPrimitive->OffsetToTextureName)
+	{
+	    Object->Primitives[i].Texture = GetTexture(Buffer+CurrentPrimitive->OffsetToTextureName,0);
+	    if(!Object->Primitives[i].Texture)
+	    {
+		LogError("Could not get texture for primitive %d in %s, %s",i,Object->Name,Buffer+CurrentPrimitive->OffsetToTextureName);
+	    }
+	}
 	Object->Primitives[i].NumberOfVertices = CurrentPrimitive->NumberOfVertexIndexes;
 	Object->Primitives[i].VertexIndexes = (int *)malloc(sizeof(int)*Object->Primitives[i].NumberOfVertices);
 	Object->Primitives[i].ColorIndex = CurrentPrimitive->ColorIndex;
