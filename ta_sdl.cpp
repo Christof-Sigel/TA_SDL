@@ -227,6 +227,11 @@ ScreenText TestText;
 
 void Setup()
 {
+#ifdef __WINDOWS__
+    LARGE_INTEGER PerfCountFrequencyResult;
+    QueryPerformanceFrequency(&PerfCountFrequencyResult);
+    PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
+#endif
     my_stbtt_initfont();
 
     UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");

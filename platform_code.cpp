@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <time.h>
 #else
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
@@ -69,6 +70,26 @@ void __LOG(int loglevel,const char * fmt, const char* caller , int line,const ch
     va_end(argptr);
     free(tmp);
 }
+
+#ifdef __WINDOWS__
+int64_t PerformaceCounterFrequency;
+#endif
+
+int64_t GetTimeMillis()
+{
+    #ifdef __LINUX__
+    //TODO(Christof): check clock res and do something (warn maybe?) if insufficient
+    struct timespec time;
+    clock_gettime(CLOCK_REALTIME,&time);
+    return (time.tv_sec*1000)+(time.tv_nsec/1000/1000);
+    #endif
+    #ifdef __WINDOWS__
+    LARGE_INTEGER time;
+    QueryPerformanceCounter(&time);
+    return time.QuadPart/(PerformaceCounterFrequency/1000);
+    #endif
+}
+
 
 struct MemoryMappedFile
 {
