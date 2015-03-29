@@ -4,10 +4,11 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #else
-
+#define WIN32_LEAN_AND_MEAN
+#include "windows.h"
 #endif
 
-
+#ifdef __LINUX__
 #define CONSOLE_COLOR_NORMAL  "\x1B[0m"
 #define CONSOLE_COLOR_RED  "\x1B[31m"
 #define CONSOLE_COLOR_GREEN  "\x1B[32m"
@@ -19,6 +20,19 @@
 #define CONSOLE_COLOR_RESET "\033[0m"
 #define CONSOLE_COLOR_BOLD "\x1B[1m"
 #define CONSOLE_COLOR_WHITE_BOLD "\x1B[1;37m"
+#else
+#define CONSOLE_COLOR_NORMAL
+#define CONSOLE_COLOR_RED
+#define CONSOLE_COLOR_GREEN
+#define CONSOLE_COLOR_YELLOW
+#define CONSOLE_COLOR_BLUE
+#define CONSOLE_COLOR_MAGENTA
+#define CONSOLE_COLOR_CYAN
+#define CONSOLE_COLOR_WHITE
+#define CONSOLE_COLOR_RESET
+#define CONSOLE_COLOR_BOLD
+#define CONSOLE_COLOR_WHITE_BOLD
+#endif
 
 const char * LogError[]={CONSOLE_COLOR_BOLD CONSOLE_COLOR_RED "ERROR" ,
 			 CONSOLE_COLOR_YELLOW "WARNING" ,
@@ -51,7 +65,7 @@ void __LOG(int loglevel,const char * fmt, const char* caller , int line,const ch
     va_start(argptr,file);
     vsnprintf(tmp,size+1,fmt,argptr);
     //TODO(Christof): Update this to use a log file at some point
-    printf("%s:"CONSOLE_COLOR_WHITE_BOLD" %s "CONSOLE_COLOR_RESET"line "CONSOLE_COLOR_WHITE_BOLD"%d"CONSOLE_COLOR_RESET" - %s : %s\n",LogError[loglevel],file,line,caller,tmp);
+    printf("%s:" CONSOLE_COLOR_WHITE_BOLD " %s " CONSOLE_COLOR_RESET "line " CONSOLE_COLOR_WHITE_BOLD "%d" CONSOLE_COLOR_RESET " - %s : %s\n",LogError[loglevel],file,line,caller,tmp);
     va_end(argptr);
     free(tmp);
 }
@@ -94,7 +108,7 @@ MemoryMappedFile MemoryMapFile(const char * FileName)
 
     DWORD high=0;
     DWORD low=GetFileSize(MMFile.File,&high);
-    MMFile.FileSize = low | (high<<32);
+    MMFile.FileSize = low | (((int64_t)high) << 32);
     MMFile.MMFile=CreateFileMapping(MMFile.File,NULL,PAGE_READONLY,0,0,NULL);
     if(!MMFile.MMFile)
     {
