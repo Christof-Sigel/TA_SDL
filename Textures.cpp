@@ -1,7 +1,4 @@
 
-//NOTE: Textures in "textures"
-
-
 const int32_t GAF_IDVERSION=0x00010100;
 struct FILE_GafHeader
 {
@@ -70,8 +67,14 @@ bool32 NamesMatch(const char * NameToFind, const char * TextureName)
 {
     while(*TextureName && *NameToFind)
     {
-	if(*NameToFind!=*TextureName)
+	char pcomp=*NameToFind, dcomp=*TextureName;
+	if(pcomp >='a' && pcomp <='z')
+	    pcomp+='A'-'a';
+	if(dcomp >='a' && dcomp <='z')
+	    dcomp+='A'-'a';
+	if(dcomp!=pcomp)
 	    return 0;
+	
 	NameToFind++;
 	TextureName++;
     }
@@ -94,7 +97,6 @@ void LoadGafFrameEntry(char * Buffer, int Offset)
     FILE_GafEntry * Entry = (FILE_GafEntry*)(Buffer +Offset);
     FILE_GafFrameEntry * FrameEntries=(FILE_GafFrameEntry *)(Buffer + Offset + sizeof(*Entry));
 
-    //TODO(Christof): Actually load frame data here
     for(int i=0;i<Entry->NumberOfFrames;i++)
     {
 	FILE_GafFrameData * Frame = (FILE_GafFrameData *)(Buffer + FrameEntries[i].FrameInfoOffset);
@@ -209,7 +211,9 @@ void LoadTextures(HPIFile* HPI)
     }
 }
 
-HPIFile TotalA1HPI;
+HPIFile AllArchiveFiles[5];
+const char * HPIFileNames[]={"data/totala1.hpi","data/totala2.hpi","data/totala3.hpi","data/totala4.hpi","data/totala5.hpi"};
+GLuint UnitTexture;
 
 bool32 LoadAllTextures()
 {
@@ -221,11 +225,17 @@ bool32 LoadAllTextures()
 
 
     //TODO(Christof): Load textures from all the data files, probably in some way that doesn't doubly load .hpi files
-    if(TotalA1HPI.Name  || LoadHPIFile("data/totala1.hpi",&TotalA1HPI))
+    for(int i=0;i<5;i++)
     {
-	LoadTextures(&TotalA1HPI);
-	TexturePosition temp=GetAvailableTextureLocation(8,8);
-	LogDebug("(%d,%d)",temp.X,temp.Y);
+	if(AllArchiveFiles[i].Name || LoadHPIFile(HPIFileNames[i],&AllArchiveFiles[i]))
+	{
+	    LoadTextures(&AllArchiveFiles[i]);
+	}
+	glGenTextures(1,&UnitTexture);
+	glBindTexture(GL_TEXTURE_2D,UnitTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TEXTURE_WIDTH,TEXTURE_HEIGHT,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
 	return 1;
     }
     return 0;

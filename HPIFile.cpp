@@ -367,6 +367,23 @@ void DecompressLZ77Chunk(char * Source, int CompressedSize, int DecompressedSize
     }
 }
 
+inline int FileNamesMatch(char * Path, char * FileName)
+{
+    while(*Path && *FileName)
+    {
+	char pcomp=*Path, dcomp=*FileName;
+	if(pcomp >='a' && pcomp <='z')
+	    pcomp+='A'-'a';
+	if(dcomp >='a' && dcomp <='z')
+	    dcomp+='A'-'a';
+	if(dcomp!=pcomp)
+	    break;
+	Path++;
+	FileName++;
+    }
+    return(*Path == *FileName);
+}
+
 inline char * IsDirectory(char * Path, char * Directory)
 {
     while(*Path && *Directory)
@@ -390,9 +407,9 @@ HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, const char * Path)
 {
     for(int EntryIndex = 0;EntryIndex < Directory.NumberOfEntries ; EntryIndex++)
     {
-	if(strcmp(Directory.Entries[EntryIndex].Name,Path)==0)
+	if(FileNamesMatch(Directory.Entries[EntryIndex].Name,(char *)Path))
 	    return Directory.Entries[EntryIndex];
-	else if(Directory.Entries[EntryIndex].IsDirectory)
+	if(Directory.Entries[EntryIndex].IsDirectory)
 	{
 	    char * NewPath= IsDirectory((char*)Path,Directory.Entries[EntryIndex].Name);
 	    if(NewPath)
