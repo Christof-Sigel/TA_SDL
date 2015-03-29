@@ -224,6 +224,8 @@ void RenderOnScreenText(ScreenText Text)
 }
 
 ScreenText TestText;
+int64_t StartTime=0;
+int NumberOfFrames=0;
 
 void Setup()
 {
@@ -286,6 +288,7 @@ void Setup()
 	    LogError("failed to find %s",Default.Name);
 	}
     }
+    StartTime= GetTimeMillis();
 }
 
 
@@ -315,10 +318,13 @@ void Render()
     {
 	LogError("failed to render : %s",gluErrorString(ErrorValue));
     }
+    NumberOfFrames++;
 }
 
 void Teardown()
 {
+    int64_t EndTime=GetTimeMillis();
+    LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
     UnloadShaderProgram(UnitShader);
     for(int i=0;i<5;i++)
 	UnloadHPIFile(&AllArchiveFiles[i]);
