@@ -13,7 +13,7 @@ SOURCES=main.cpp lib/Shader.cpp lib/TriangleMesh.cpp lib/Object.cpp lib/Matrix.c
 OBJECTS = $(SOURCES:.cpp=.o)
 W32OBJECTS = $(SOURCES:.cpp=.w32o)
 W64OBJECTS = $(SOURCES:.cpp=.w64o)
-EXECUTABLES = w32/ta_sdl.exe w64/ta_sdl_64.exe ta_sdl
+EXECUTABLES = ta_sdl_32.exe ta_sdl_64.exe ta_sdl
 CFLAGS=-Wall -std=c++11 -ggdb -Ilib/ -O0
 
 all: $(EXECUTABLES)
@@ -42,7 +42,7 @@ clean:
 rebuild:clean all
 
 git-hook: clean
-	make w32/ta_sdl.exe 2>&1 | ansi2html > /srv/http/TA_SDL/win32.html
-	make w64/ta_sdl_64.exe 2>&1 | ansi2html > /srv/http/TA_SDL/win64.html
-	make ta_sdl 2>&1 | ansi2html > /srv/http/TA_SDL/linux.html
-	cp w32/ta_sdl.exe w64/ta_sdl_64.exe ta_sdl /srv/http/TA_SDL
+	./build.w32.sh 2>&1 | ansi2html > /srv/http/TA_SDL/win32.html
+	./build.w64.sh 2>&1 | ansi2html > /srv/http/TA_SDL/win64.html
+	./build.sh 2>&1 | ansi2html > /srv/http/TA_SDL/linux.html
+	cp ta_sdl_32.exe ta_sdl_64.exe ta_sdl /srv/http/TA_SDL
