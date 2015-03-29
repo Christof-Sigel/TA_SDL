@@ -65,16 +65,16 @@ struct MemoryMappedFile
     int File;
 #endif
     unsigned char * MMapBuffer;
-    unsigned int FileSize;
+    int64_t FileSize;
 };
 
 MemoryMappedFile MemoryMapFile(const char * FileName)
 {
     MemoryMappedFile MMFile={0};
 #ifdef __LINUX__
-    struct stat filestats;
+    struct stat64 filestats;
     
-    if(stat(FileName,&filestats)==-1)
+    if(stat64(FileName,&filestats)==-1)
 	return {0};
     MMFile.FileSize=filestats.st_size;
     
@@ -91,7 +91,10 @@ MemoryMappedFile MemoryMapFile(const char * FileName)
     {
 	return {0};
     }
-    MMFile.FileSize=GetFileSize(MMFile.File,NULL);
+
+    DWORD high=0;
+    DWORD low=GetFileSize(MMFile.File,&high);
+    MMFile.FileSize = low | (high<<32);
     MMFile.MMFile=CreateFileMapping(MMFile.File,NULL,PAGE_READONLY,0,0,NULL);
     if(!MMFile.MMFile)
     {

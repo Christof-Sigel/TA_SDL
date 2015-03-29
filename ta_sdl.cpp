@@ -7,6 +7,7 @@ typedef int32_t bool32;
 
 
 #include "platform_code.cpp"
+#include "GL.cpp"
 #include "file_formats.cpp"
 
 void HandleKeyDown(SDL_Keysym key);
@@ -14,6 +15,7 @@ bool32 quit=0;
 bool32 SetupSDLWindow();
 void Render();
 void Setup();
+void Teardown();
 SDL_Window * MainSDLWindow;
 
 int ScreenWidth=800,ScreenHeight=600;
@@ -43,7 +45,7 @@ int main(int argc, char * argv[])
 	SDL_GL_SwapWindow( MainSDLWindow );
     }
 
-    
+    Teardown();
     SDL_DestroyWindow(MainSDLWindow);
     SDL_Quit();
 
@@ -85,21 +87,176 @@ void PrintHPIDirectory(HPIDirectoryEntry dir, int Tabs=0)
     }
 }
 
+ShaderProgram UnitShader;
+ShaderProgram OrthoShader;
+#define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
+#include "stb_truetype.h"
+unsigned char temp_bitmap[512*512];
+stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
+GLuint ftex;
+void my_stbtt_initfont(void)
+{
+    char ttf_buffer[1<<20];
+    fread(ttf_buffer, 1, 1<<20, fopen("data/times.ttf", "rb"));
+    stbtt_BakeFontBitmap((const unsigned char*)ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
+    // can free ttf_buffer at this point
+    glGenTextures(1, &ftex);
+    glBindTexture(GL_TEXTURE_2D, ftex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512,512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_bitmap);
+    // can free temp_bitmap at this point
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+}
+
+void my_stbtt_print(float x, float y, char *text)
+{
+    //TODO(Christof): actually make this work, 
+    // assume orthographic projection with units = screen pixels, origin at top left
+    glBindTexture(GL_TEXTURE_2D, ftex);
+    glBegin(GL_QUADS);
+    while (*text) {
+	if (*text >= 32 && *text >0) {
+	    stbtt_aligned_quad q;
+	    stbtt_GetBakedQuad(cdata, 512,512, *text-32, &x,&y,&q,1);//1=opengl & d3d10+,0=d3d9
+	    glTexCoord2f(q.s0,q.t1); glVertex2f(q.x0,q.y0);
+	    glTexCoord2f(q.s1,q.t1); glVertex2f(q.x1,q.y0);
+	    glTexCoord2f(q.s1,q.t0); glVertex2f(q.x1,q.y1);
+	    glTexCoord2f(q.s0,q.t0); glVertex2f(q.x0,q.y1);
+	}
+	++text;
+    }
+    glEnd();
+}
+
+struct ScreenText
+{
+    GLuint VertexArrayObject;
+    GLuint FontTexture;
+    int NumberOfVertices;
+    float X,Y;
+};
+
+ScreenText SetupOnScreenText(char * Text, float X, float Y)
+{
+    int NumQuads=0;
+    char * t=Text;
+    while (*t) {
+	if (*t >= 32 && *t >0) {
+	    NumQuads++;
+	}
+	t++;
+    }
+    const int NUM_FLOATS_PER_QUAD=2*3*2*2;//2 triangles per quad, 3 verts per triangle, 2 position and 2 texture coords per vert
+    GLfloat VertexAndTexCoordData[NumQuads*NUM_FLOATS_PER_QUAD];
+    ScreenText result;
+    result.X=X;
+    result.Y=Y;
+    result.FontTexture=ftex;
+    result.NumberOfVertices=NumQuads * 6;
+    glGenVertexArrays(1,&result.VertexArrayObject);
+    for(int i=0;i<NumQuads;i++)
+    {
+	if (Text[i] >= 32 && Text[i] >0) {
+	    stbtt_aligned_quad q;
+	    //TODO(Christof): Make this position independant
+	    stbtt_GetBakedQuad(cdata, 512,512, Text[i]-32, &X,&Y,&q,1);
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 0]=q.x0;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 1]=q.y0;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 2]=q.s0;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 3]=q.t0;
+
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 4]=q.x0;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 5]=q.y1;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 6]=q.s0;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 7]=q.t1;
+
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 8]=q.x1;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 9]=q.y1;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 10]=q.s1;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 11]=q.t1;
+
+
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 12]=q.x1;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 13]=q.y1;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 14]=q.s1;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 15]=q.t1;
+
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 16]=q.x1;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 17]=q.y0;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 18]=q.s1;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 19]=q.t0;
+
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 20]=q.x0;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 21]=q.y0;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 22]=q.s0;
+	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 23]=q.t0;
+	}
+    }
+    glBindVertexArray(result.VertexArrayObject);
+
+    GLuint VertexBuffer;
+    glGenBuffers(1,&VertexBuffer);
+
+    glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*NumQuads*NUM_FLOATS_PER_QUAD,VertexAndTexCoordData,GL_STATIC_DRAW);
+    glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*4,0);
+    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*4,(GLvoid*)(sizeof(GLfloat)*2));
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+    //glDeleteBuffers(1,&VertexBuffer);
+    
+    return result;
+}
+
+void RenderOnScreenText(ScreenText Text)
+{
+    glBindVertexArray(Text.VertexArrayObject);
+    glBindTexture(GL_TEXTURE_2D,Text.FontTexture);
+    glDrawArrays(GL_TRIANGLES,0,Text.NumberOfVertices);
+}
+
+ScreenText TestText;
 
 void Setup()
 {
+    my_stbtt_initfont();
 
-    if(LoadHPIFile("data/totala1.hpi",&TotalA1HPI))
+    UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
+    OrthoShader=LoadShaderProgram("shaders/ortho.vs.glsl","shaders/ortho.fs.glsl");
+    glUseProgram(OrthoShader.ProgramID);
+    glUniform1i(GetUniformLocation(OrthoShader,"UnitTexture"),0);
+    TestText=SetupOnScreenText("This is a test, now somewhat longer",0,30);
+    //GL Setup:
+    glClearColor( 0.f, 0.f,0.f, 0.f );
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+ 
+    //glEnable(GL_CULL_FACE);
+    glDisable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    //glFrontFace(GL_CW);
+    
+
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glUseProgram(OrthoShader.ProgramID);
+    glUniform2iv(GetUniformLocation(OrthoShader,"Viewport"),1,viewport+2);
+
+
+    if(LoadHPIFile("data/totala1.hpi",&AllArchiveFiles[0]))
     {
 	//PrintHPIDirectory(main.Root);
 	LoadAllTextures();
     
-	HPIEntry Default = FindHPIEntry(&TotalA1HPI,"objects3D/armsolar.3do");
+	HPIEntry Default = FindHPIEntry(&AllArchiveFiles[0],"objects3D/armsolar.3do");
 	//HPIEntry Default = FindHPIEntry(main,"units/ARMSOLAR.FBI");
 	if(Default.IsDirectory)
 	{
 	    LogError("%s is unexpectedly a directory!",Default.Name);
 	}
+	
 	else if(Default.Name)
 	{
 	    char temp[Default.File.FileSize];
@@ -107,7 +264,7 @@ void Setup()
 	    {
 		Object3d temp_model;
 		Load3DOFromBuffer(temp,&temp_model);
-			FILE * file =fopen(Default.Name,"wb");
+		FILE * file =fopen(Default.Name,"wb");
 		fwrite(temp,Default.File.FileSize,1,file);
 		fclose(file);
 		Unload3DO(&temp_model);
@@ -117,14 +274,43 @@ void Setup()
 	{
 	    LogError("failed to find %s",Default.Name);
 	}
-//	LoadTextures(&TotalA1HPI);
-	UnloadHPIFile(&TotalA1HPI);
     }
 }
 
+
+
 void Render()
 {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_BLEND);                      // Turn Blending on
+    glEnable(GL_DEPTH_TEST);        //Turn Depth Testing off
+    glUseProgram(UnitShader.ProgramID);
 
+    //TODO(Christof): Unit Rendering here
+
+
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);                      // Turn Blending on
+    glDisable(GL_DEPTH_TEST);        //Turn Depth Testing off
+    glUseProgram(OrthoShader.ProgramID);
+    RenderOnScreenText(TestText);
+    //my_stbtt_print(0,0,"Another Test");
+    
+
+
+
+    GLenum ErrorValue = glGetError();
+    if(ErrorValue!=GL_NO_ERROR)
+    {
+	LogError("failed to render : %s",gluErrorString(ErrorValue));
+    }
+}
+
+void Teardown()
+{
+    UnloadShaderProgram(UnitShader);
+    for(int i=0;i<5;i++)
+	UnloadHPIFile(&AllArchiveFiles[i]);
 }
 
 bool32 SetupSDLWindow()
