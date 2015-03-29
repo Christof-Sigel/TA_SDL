@@ -97,7 +97,13 @@ GLuint ftex;
 void my_stbtt_initfont(void)
 {
     char ttf_buffer[1<<20];
-    fread(ttf_buffer, 1, 1<<20, fopen("data/times.ttf", "rb"));
+    FILE * file=fopen("data/times.ttf", "rb");
+    if(!file)
+    {
+	LogError("Failed to load font file");
+//	return;
+    }
+    fread(ttf_buffer, 1, 1<<20, file);
     stbtt_BakeFontBitmap((const unsigned char*)ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
     // can free ttf_buffer at this point
     glGenTextures(1, &ftex);
