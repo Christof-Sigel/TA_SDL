@@ -1,6 +1,6 @@
 
 
-
+#pragma pack(push,1)
 struct FILE_Object3dHeader
 {
     int32_t Version;
@@ -37,7 +37,7 @@ struct FILE_Object3dPrimitive
     int32_t Unknown_2;
     int32_t Unknown_3;    
 };
-
+#pragma pack(pop)
 
 
 struct Position3d

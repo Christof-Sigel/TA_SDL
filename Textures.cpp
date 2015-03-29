@@ -1,5 +1,6 @@
 
 const int32_t GAF_IDVERSION=0x00010100;
+#pragma pack(push,1)
 struct FILE_GafHeader
 {
     int32_t IDVersion;
@@ -7,7 +8,7 @@ struct FILE_GafHeader
     int32_t Unknown1; //Always 0 apparently?
 };
 
-struct __attribute__((__packed__)) FILE_GafEntry
+struct  FILE_GafEntry
 {
     int16_t NumberOfFrames;
     int16_t Unknown1;//apparently always 1
@@ -15,13 +16,13 @@ struct __attribute__((__packed__)) FILE_GafEntry
     char Name[32];
 };
 
-struct __attribute__((__packed__)) FILE_GafFrameEntry
+struct FILE_GafFrameEntry
 {
     int32_t FrameInfoOffset;
     int32_t Unknown1;//completely unknown
 };
 
-struct __attribute__((__packed__)) FILE_GafFrameData
+struct FILE_GafFrameData
 {
     int16_t Width;
     int16_t Height;
@@ -34,6 +35,8 @@ struct __attribute__((__packed__)) FILE_GafFrameData
     int32_t FrameDataOffset;
     int32_t Unknow3;//completely unknown
 };
+#pragma pack(pop)
+
 
 struct TexturePosition
 {

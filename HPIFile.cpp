@@ -49,6 +49,8 @@ const int32_t HPI_MARKER= 'H' << 0 | 'A' <<8 | 'P' <<16 | 'I' << 24;
 const int32_t CHUNK_MARKER = 'S' << 0 | 'Q' <<8 | 'S' <<16 | 'H' << 24;
 const int32_t CHUNK_SIZE = 65536;
 
+#pragma pack(push,1)
+
 struct FILE_HPIHeader
 {
     int32_t HPIMarker;
@@ -64,21 +66,21 @@ struct FILE_HPIDirectoryHeader
     int32_t Offset;
 };
 
-struct __attribute__((__packed__)) FILE_HPIEntry
+struct FILE_HPIEntry
 {
     int32_t NameOffset;
     int32_t DirDataOffset;
     char Flag;// 0 -> File,  1 -> Directory
 };
 
-struct __attribute__((__packed__)) FILE_HPIFileData
+struct FILE_HPIFileData
 {
     int32_t DataOffset;
     int32_t FileSize;
     char Flag;// 0 -> File,  1 -> Directory
 };
 
-struct __attribute__((__packed__)) FILE_HPIChunk
+struct FILE_HPIChunk
 {
     int32_t Marker;
     char Unknown1;
@@ -88,6 +90,8 @@ struct __attribute__((__packed__)) FILE_HPIChunk
     int32_t DecompressedSize;
     int32_t Checksum;
 };
+#pragma pack(pop)
+
 void DecryptHPIBuffer(HPIFile * HPI, char * Destination, int32_t Length, int32_t FileOffset);
 void LoadEntries(HPIDirectoryEntry * Root, char * Buffer, int Offset, HPIFile * File);
 char * LoadChunk(char * SourceBuffer, char * Destination);
@@ -115,7 +119,7 @@ void UnloadHPIFile(HPIFile * HPI)
 bool32 LoadHPIFile(const char * FileName, HPIFile * HPI)
 {
     MemoryMappedFile HPIMemory = MemoryMapFile(FileName);
-    if(HPIMemory.FileSize == 0)
+    if(HPIMemory.MMapBuffer == 0)
     {
 	LogError("Could not open %s",FileName);
 	return 0;
@@ -260,7 +264,7 @@ char * LoadChunk(char * Source, char * Destination)
     }
     if(ComputedChecksum != header->Checksum)
     {
-     	LogError("Chunk Checksums do not match: %d != %d",ComputedChecksum,header->Checksum);
+     	LogError("Chunk Checksums do not match: calculated %d != read %d",ComputedChecksum,header->Checksum);
      	return 0;
     }
     if(header->Encrypt)
