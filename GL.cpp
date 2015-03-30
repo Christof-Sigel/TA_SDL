@@ -6,22 +6,31 @@ struct Matrix
     float Contents[16];
 };
 
-
-void SetProjectionMatrix(float VerticalFieldOfView,float AspectRatio,float NearPlane,float FarPlane,Matrix Projection)
+void SetIdentityMatrix(Matrix * Identity)
 {
+    memset(Identity->Contents,0,16*sizeof(GLfloat));
+    for(int i=0;i<4;i++)
+	Identity->Contents[i*4+i]=1;
+}
+
+
+void SetProjectionMatrix(float VerticalFieldOfView,float AspectRatio,float NearPlane,float FarPlane,Matrix *  Projection)
+{
+    SetIdentityMatrix(Projection);
     const float yscale=1.0/tan((VerticalFieldOfView/2)*PI/180.0),//cot(degtorad(vfow/2));
 	xscale= yscale/AspectRatio,
 	frustumlength=FarPlane-NearPlane;
-    memset(Projection.Contents,0,16*sizeof(GLfloat));
-    Projection.Contents[0*4+0]=xscale;
-    Projection.Contents[1*4+1]=yscale;
-    Projection.Contents[2*4+2]=-(FarPlane+NearPlane)/frustumlength;
-    Projection.Contents[2*4+3]=-(2*NearPlane*FarPlane)/frustumlength;
-    Projection.Contents[3*4+2]=-1;
+    memset(Projection->Contents,0,16*sizeof(GLfloat));
+    Projection->Contents[0*4+0]=xscale;
+    Projection->Contents[1*4+1]=yscale;
+    Projection->Contents[2*4+2]=-(FarPlane+NearPlane)/frustumlength;
+    Projection->Contents[2*4+3]=-(2*NearPlane*FarPlane)/frustumlength;
+    Projection->Contents[3*4+2]=-1;
 }
 
-void SetRotationMatrix(float x, float y, float z, float rad, Matrix Rotation)
+void SetRotationMatrix(float x, float y, float z, float rad, Matrix * Rotation)
 {
+    SetIdentityMatrix(Rotation);
     float vector[]={x,y,z};
     float vleninv=1/sqrt(x*x+y*y+z*z);
     for(int i=0;i<3;i++)
@@ -30,25 +39,27 @@ void SetRotationMatrix(float x, float y, float z, float rad, Matrix Rotation)
     float sine=sin(rad);
 
     
-    Rotation.Contents[0]=cosine+vector[0]*vector[0]*(1-cosine);
-    Rotation.Contents[1]=vector[0]*vector[1]*(1-cosine)-vector[2]*sine;
-    Rotation.Contents[2]=vector[0]*vector[2]*(1-cosine)+vector[1]*sine;
+    Rotation->Contents[0]=cosine+vector[0]*vector[0]*(1-cosine);
+    Rotation->Contents[1]=vector[0]*vector[1]*(1-cosine)-vector[2]*sine;
+    Rotation->Contents[2]=vector[0]*vector[2]*(1-cosine)+vector[1]*sine;
 
-    Rotation.Contents[4]=vector[1]*vector[0]*(1-cosine)+vector[2]*sine;
-    Rotation.Contents[5]=cosine+vector[1]*vector[1]*(1-cosine);
-    Rotation.Contents[6]=vector[1]*vector[2]*(1-cosine)-vector[0]*sine;
+    Rotation->Contents[4]=vector[1]*vector[0]*(1-cosine)+vector[2]*sine;
+    Rotation->Contents[5]=cosine+vector[1]*vector[1]*(1-cosine);
+    Rotation->Contents[6]=vector[1]*vector[2]*(1-cosine)-vector[0]*sine;
 	
-    Rotation.Contents[8]=vector[2]*vector[0]*(1-cosine)-vector[1]*sine;
-    Rotation.Contents[9]=vector[2]*vector[1]*(1-cosine)+vector[0]*sine;
-    Rotation.Contents[10]=cosine+vector[2]*vector[2]*(1-cosine);
+    Rotation->Contents[8]=vector[2]*vector[0]*(1-cosine)-vector[1]*sine;
+    Rotation->Contents[9]=vector[2]*vector[1]*(1-cosine)+vector[0]*sine;
+    Rotation->Contents[10]=cosine+vector[2]*vector[2]*(1-cosine);
 }
 
-void SetTranslationMatrix(float x, float y, float z, Matrix Translation)
+void SetTranslationMatrix(float x, float y, float z, Matrix * Translation)
 {
+    SetIdentityMatrix(Translation);
     float pos[]={x,y,z};
     for(int i=0;i<3;i++)
-	Translation.Contents[i*4+3] = pos[i];   
+	Translation->Contents[i*4+3] = pos[i];   
 }
+
 
 inline Matrix operator*(Matrix A, Matrix B)
 {
@@ -65,9 +76,9 @@ inline Matrix operator*(Matrix A, Matrix B)
     return result;
 }
 
-bool UploadMatrix(Matrix Upload, GLuint Location)
+bool UploadMatrix(Matrix * Upload, GLuint Location)
 {
-    glUniformMatrix4fv(Location,1,GL_TRUE,Upload.Contents);
+    glUniformMatrix4fv(Location,1,GL_TRUE,Upload->Contents);
 #ifdef __CSGL_DEBUG__
     GLenum Error = glGetError();
     if(Error!=GL_NO_ERROR)
