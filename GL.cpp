@@ -136,6 +136,7 @@ ShaderProgram LoadShaderProgram( const char * VertexShaderFileName, const char *
     MemoryMappedFile PixelShaderFile=MemoryMapFile(PixelShaderFileName);
     if(!PixelShaderFile.MMapBuffer)
     {
+	UnMapFile(PixelShaderFile);
 	LogError("Failed to load pixel shader file %s",PixelShaderFileName);
 	return {0};
     }
@@ -152,6 +153,10 @@ ShaderProgram LoadShaderProgram( const char * VertexShaderFileName, const char *
     
     Program.PixelID = LoadShader(GL_FRAGMENT_SHADER,PixelShaderFile,PixelShaderFileName);
     glAttachShader(Program.ProgramID,Program.PixelID);
+
+    UnMapFile(VertexShaderFile);
+    UnMapFile(PixelShaderFile);
+    
     if(!Program.PixelID || !Program.VertexID)
     {
 	UnloadShaderProgram(Program);
