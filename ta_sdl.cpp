@@ -227,6 +227,15 @@ ScreenText TestText;
 int64_t StartTime=0;
 int NumberOfFrames=0;
 
+
+Object3d temp_model;
+Matrix ProjectionMatrix;
+Matrix ModelMatrix;
+Matrix ViewMatrix;
+
+GLuint ProjectionMatrixLocation;
+GLuint ModelMatrixLocation;
+GLuint ViewMatrixLocation;
 void Setup()
 {
 #ifdef __WINDOWS__
@@ -236,19 +245,39 @@ void Setup()
 #endif
     my_stbtt_initfont();
 
+    SetProjectionMatrix(60,float(ScreenWidth)/ScreenHeight,1.0,100.0,&ProjectionMatrix);
+    
+    SetTranslationMatrix(0,0,-4,&ModelMatrix);
+    SetRotationMatrix(1,0,0,0.5,&ViewMatrix);
+    ModelMatrix = ModelMatrix*ViewMatrix;
+    SetRotationMatrix(0,1,0,PI,&ViewMatrix);
+    ModelMatrix = ModelMatrix*ViewMatrix;
+
+    SetIdentityMatrix(&ViewMatrix);
+    
+    
+
     UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
     OrthoShader=LoadShaderProgram("shaders/ortho.vs.glsl","shaders/ortho.fs.glsl");
     glUseProgram(OrthoShader.ProgramID);
     glUniform1i(GetUniformLocation(OrthoShader,"UnitTexture"),0);
+    
+    glUseProgram(UnitShader.ProgramID);
+    glUniform1i(GetUniformLocation(UnitShader,"UnitTexture"),0);
+
+    ProjectionMatrixLocation = GetUniformLocation(UnitShader,"ProjectionMatrix");
+    ModelMatrixLocation = GetUniformLocation(UnitShader,"ModelMatrix");
+    ViewMatrixLocation = GetUniformLocation(UnitShader,"ViewMatrix");
+    
     TestText=SetupOnScreenText("This is a test, now somewhat longer",0,30);
     //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
  
-    //glEnable(GL_CULL_FACE);
-    glDisable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
     //glFrontFace(GL_CW);
     
 
@@ -260,10 +289,10 @@ void Setup()
 
     if(LoadHPIFile("data/totala1.hpi",&AllArchiveFiles[0]))
     {
-	//PrintHPIDirectory(main.Root);
+	PrintHPIDirectory(AllArchiveFiles[0].Root);
 	LoadAllTextures();
     
-	HPIEntry Default = FindHPIEntry(&AllArchiveFiles[0],"objects3D/armsolar.3do");
+	HPIEntry Default = FindHPIEntry(&AllArchiveFiles[0],"objects3D/armaap.3do");
 	//HPIEntry Default = FindHPIEntry(main,"units/ARMSOLAR.FBI");
 	if(Default.IsDirectory)
 	{
@@ -275,12 +304,13 @@ void Setup()
 	    char temp[Default.File.FileSize];
 	    if(LoadHPIFileEntryData(Default,temp))
 	    {
-		Object3d temp_model;
+		
 		Load3DOFromBuffer(temp,&temp_model);
+		PrepareObject3dForRendering(&temp_model);
 		FILE * file =fopen(Default.Name,"wb");
 		fwrite(temp,Default.File.FileSize,1,file);
 		fclose(file);
-		Unload3DO(&temp_model);
+	
 	    }
 	}
 	else
@@ -291,14 +321,18 @@ void Setup()
     StartTime= GetTimeMillis();
 }
 
-
-
 void Render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_BLEND);                      // Turn Blending on
     glEnable(GL_DEPTH_TEST);        //Turn Depth Testing off
     glUseProgram(UnitShader.ProgramID);
+    glBindTexture(GL_TEXTURE_2D,UnitTexture);
+    UploadMatrix(&ProjectionMatrix,ProjectionMatrixLocation);
+    UploadMatrix(&ModelMatrix,ModelMatrixLocation);
+    UploadMatrix(&ViewMatrix,ViewMatrixLocation);
+    RenderObject3d(&temp_model,0);
+    
 
     //TODO(Christof): Unit Rendering here
 
@@ -328,6 +362,7 @@ void Teardown()
     UnloadShaderProgram(UnitShader);
     for(int i=0;i<5;i++)
 	UnloadHPIFile(&AllArchiveFiles[i]);
+    Unload3DO(&temp_model);
 }
 
 bool32 SetupSDLWindow()
