@@ -282,6 +282,10 @@ bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
 		LogError("Could not get texture for primitive %d in %s, %s",i,Object->Name,Buffer+CurrentPrimitive->OffsetToTextureName);
 	    }
 	}
+	else
+	{
+	    Object->Primitives[i].Texture=0;
+	}
 	Object->Primitives[i].NumberOfVertices = CurrentPrimitive->NumberOfVertexIndexes;
 	Object->Primitives[i].VertexIndexes = (int *)malloc(sizeof(int)*Object->Primitives[i].NumberOfVertices);
 	int16_t * VertexIndexes = (int16_t *)(Buffer + CurrentPrimitive->OffsetToVertexIndexArray);
