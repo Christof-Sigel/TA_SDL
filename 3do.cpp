@@ -107,9 +107,9 @@ bool32 PrepareObject3dForRendering(Object3d * Object)
     GLfloat Data[Object->NumTriangles * (3+2+3)*3];//3 coord, 2 tex, 3 color
     //NOTE: signal no texture in some way, perhaps negative texture coords?
     int CurrentTriangle=0;
-    for(int i=0;i<Object->NumberOfPrimitives;i++)
+    for(int PrimitiveIndex=0;PrimitiveIndex<Object->NumberOfPrimitives;PrimitiveIndex++)
     {
-	Object3dPrimitive * CurrentPrimitive=&Object->Primitives[i];
+	Object3dPrimitive * CurrentPrimitive=&Object->Primitives[PrimitiveIndex];
 	Texture * Texture=CurrentPrimitive->Texture;
 	if(!Texture)
 	    Texture=&NoTexture;
