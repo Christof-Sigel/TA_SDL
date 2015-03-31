@@ -247,15 +247,11 @@ void Setup()
 
     SetProjectionMatrix(60,float(ScreenWidth)/ScreenHeight,1.0,100.0,&ProjectionMatrix);
     
-    SetTranslationMatrix(0,0,-4,&ModelMatrix);
-    SetRotationMatrix(1,0,0,0.5,&ViewMatrix);
-    ModelMatrix = ModelMatrix*ViewMatrix;
-    SetRotationMatrix(0,1,0,PI,&ViewMatrix);
-    ModelMatrix = ModelMatrix*ViewMatrix;
-
-    SetIdentityMatrix(&ViewMatrix);
-    
-    
+    SetTranslationMatrix(0,0,-4,&ViewMatrix);
+    SetRotationMatrix(1,0,0,0.5,&ModelMatrix);
+    ViewMatrix = ViewMatrix*ModelMatrix;
+    SetRotationMatrix(0,1,0,PI,&ModelMatrix);
+    ViewMatrix = ViewMatrix*ModelMatrix;
 
     UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
     OrthoShader=LoadShaderProgram("shaders/ortho.vs.glsl","shaders/ortho.fs.glsl");
@@ -289,10 +285,10 @@ void Setup()
 
     if(LoadHPIFile("data/totala1.hpi",&AllArchiveFiles[0]))
     {
-	PrintHPIDirectory(AllArchiveFiles[0].Root);
+//	PrintHPIDirectory(AllArchiveFiles[0].Root);
 	LoadAllTextures();
     
-	HPIEntry Default = FindHPIEntry(&AllArchiveFiles[0],"objects3D/armaap.3do");
+	HPIEntry Default = FindHPIEntry(&AllArchiveFiles[0],"objects3D/armsolar.3do");
 	//HPIEntry Default = FindHPIEntry(main,"units/ARMSOLAR.FBI");
 	if(Default.IsDirectory)
 	{
@@ -329,9 +325,13 @@ void Render()
     glUseProgram(UnitShader.ProgramID);
     glBindTexture(GL_TEXTURE_2D,UnitTexture);
     UploadMatrix(&ProjectionMatrix,ProjectionMatrixLocation);
-    UploadMatrix(&ModelMatrix,ModelMatrixLocation);
+
+
+    SetRotationMatrix(0,1,0,PI/300,&ModelMatrix);
+    ViewMatrix = ViewMatrix*ModelMatrix;
+
     UploadMatrix(&ViewMatrix,ViewMatrixLocation);
-    RenderObject3d(&temp_model,0);
+    RenderObject3d(&temp_model,0,ModelMatrixLocation);
     
 
     //TODO(Christof): Unit Rendering here
