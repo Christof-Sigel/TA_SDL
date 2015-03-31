@@ -199,13 +199,19 @@ struct Object3dTransformationDetails
     
 };
 
-void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails)
+Matrix Identity={{1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1}};
+void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, Matrix ParentMatrix=Identity)
 {
     //TODO(Christof): Actually make use of TransformationDetails
+    Matrix CurrentMatrix;
+    SetTranslationMatrix(Object->Position.X,Object->Position.Y,Object->Position.Z,&CurrentMatrix);
+    CurrentMatrix = CurrentMatrix * ParentMatrix;
+
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	RenderObject3d(&Object->Children[i],0);
+	RenderObject3d(&Object->Children[i],TransformationDetails,ModelMatrixLocation,CurrentMatrix);
     }
+    UploadMatrix(&CurrentMatrix,ModelMatrixLocation);
     glBindVertexArray(Object->VertexBuffer);
     glDrawArrays(GL_TRIANGLES, 0, Object->NumTriangles);
     GLenum ErrorValue = glGetError();
