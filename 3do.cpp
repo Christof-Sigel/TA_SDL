@@ -116,8 +116,10 @@ bool32 PrepareObject3dForRendering(Object3d * Object)
 	switch(CurrentPrimitive->NumberOfVertices)
 	{
 	case 1:
+	    LogDebug("ignoring point in %s",Object->Name);
+	    break;
 	case 2:
-	    LogDebug("ignoring line or point (%d) in %s",CurrentPrimitive->NumberOfVertices,Object->Name);
+	    LogDebug("ignoring line in %s",Object->Name);
 	    break;
 	case 3:
 	{
@@ -182,7 +184,7 @@ bool32 PrepareObject3dForRendering(Object3d * Object)
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
-    //glDeleteBuffers(1,&VertexBuffer);
+    glDeleteBuffers(1,&VertexBuffer);
 
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
@@ -317,6 +319,7 @@ bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
 
     Object->NumberOfChildren = Count3DOChildren(Buffer,header);
     Object->Children = (Object3d *)malloc(sizeof(Object3d)*Object->NumberOfChildren);
+    memset(Object->Children,0,sizeof(Object3d)*Object->NumberOfChildren);
     int ChildOffset=header->OffsetToChildObject;
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
@@ -345,6 +348,8 @@ void Unload3DO(Object3d * Object)
 	    free(Object->Primitives[i].VertexIndexes);
 	free(Object->Primitives);
     }
+    if(Object->VertexBuffer)
+	glDeleteBuffers(1,&Object->VertexBuffer);
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
 	Unload3DO(&Object->Children[i]);
