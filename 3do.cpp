@@ -213,7 +213,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     }
     UploadMatrix(&CurrentMatrix,ModelMatrixLocation);
     glBindVertexArray(Object->VertexBuffer);
-    glDrawArrays(GL_TRIANGLES, 0, Object->NumTriangles);
+    glDrawArrays(GL_TRIANGLES, 0, Object->NumTriangles*3);
     GLenum ErrorValue = glGetError();
     if(ErrorValue!=GL_NO_ERROR)
     {
