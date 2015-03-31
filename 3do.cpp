@@ -84,9 +84,9 @@ void FillObject3dData(GLfloat * Data, int CurrentTriangle,int * VertexIndices,GL
 	Data[i*8+4]=Texture->V+Texture->Height*UV[i*2+1];
 	
 
-	Data[i*8+5]=(uint8_t)PaletteData[Primitive->ColorIndex*3+0]/255.0;
-	Data[i*8+6]=(uint8_t)PaletteData[Primitive->ColorIndex*3+1]/255.0;
-	Data[i*8+7]=(uint8_t)PaletteData[Primitive->ColorIndex*3+2]/255.0;
+	Data[i*8+5]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0;
+	Data[i*8+6]=(uint8_t)PaletteData[Primitive->ColorIndex*4+1]/255.0;
+	Data[i*8+7]=(uint8_t)PaletteData[Primitive->ColorIndex*4+2]/255.0;
     }
 }
 
@@ -269,7 +269,6 @@ bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
     int NameLength=strlen(Buffer + header->OffsetToObjectName)+1;
     Object->Name = (char *)malloc(NameLength);
     memcpy(Object->Name,Buffer+header->OffsetToObjectName,NameLength);
-    LogDebug(Object->Name);
     Object->Position.X=header->XFromParent*TA_TO_GL_SCALE;
     Object->Position.Y=header->YFromParent*TA_TO_GL_SCALE;
     Object->Position.Z=header->ZFromParent*TA_TO_GL_SCALE;
@@ -298,7 +297,7 @@ bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
 	for(int j=0;j<Object->Primitives[i].NumberOfVertices;j++)
 	    Object->Primitives[i].VertexIndexes[j]=VertexIndexes[j];
 	
-	Object->Primitives[i].ColorIndex = CurrentPrimitive->ColorIndex&0xFF;
+	Object->Primitives[i].ColorIndex = CurrentPrimitive->ColorIndex & 255;
 
 	CurrentPrimitive++;
     }
