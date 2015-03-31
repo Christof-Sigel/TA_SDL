@@ -59,16 +59,14 @@ void __LOG(int loglevel,const char * fmt, const char* caller , int line,const ch
         return;
     va_list argptr;
     va_start(argptr,file);
-    char * tmp;
     int size=vsnprintf(NULL, 0, fmt, argptr);
-    tmp=(char*)malloc(size+1);
+    char tmp[size];
     va_end(argptr);
     va_start(argptr,file);
     vsnprintf(tmp,size+1,fmt,argptr);
     //TODO(Christof): Update this to use a log file at some point
     printf("%s:" CONSOLE_COLOR_WHITE_BOLD " %s " CONSOLE_COLOR_RESET "line " CONSOLE_COLOR_WHITE_BOLD "%d" CONSOLE_COLOR_RESET " - %s : %s\n",LogError[loglevel],file,line,caller,tmp);
     va_end(argptr);
-    free(tmp);
 }
 
 #ifdef __WINDOWS__
