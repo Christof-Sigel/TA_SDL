@@ -1,4 +1,5 @@
 
+
 const int32_t GAF_IDVERSION=0x00010100;
 #pragma pack(push,1)
 struct FILE_GafHeader
@@ -169,27 +170,32 @@ void LoadTexturesFromGafBuffer(char * Buffer)
     }
 }
 
+HPIFile AllArchiveFiles[6];
 #include <math.h>
+void LoadPalette()
+{
+    HPIEntry Palette = FindHPIEntry(&AllArchiveFiles[1],"palettes/PALETTE.PAL");
+    if(!Palette.Name)
+    {
+	LogWarning("No Palette found in %s",AllArchiveFiles[1].Name);
+    }
+    else if(Palette.IsDirectory)
+    {
+	LogWarning("Directory found while trying to load palette");
+    }
+    else
+    {
+	PaletteLoaded=1;
+	LoadHPIFileEntryData(Palette,PaletteData);
+    }
+}
+
 
 void LoadTextures(HPIFile* HPI)
 {
     if(!PaletteLoaded)
     {
-	
-	HPIEntry Palette = FindHPIEntry(HPI,"palettes/PALETTE.PAL");
-	if(!Palette.Name)
-	{
-	    LogWarning("No Palette found in %s",HPI->Name);
-	}
-	else if(Palette.IsDirectory)
-	{
-	    LogWarning("Directory found while trying to load palette");
-	}
-	else
-	{
-	    PaletteLoaded=1;
-	    LoadHPIFileEntryData(Palette,PaletteData);
-	}
+	LoadPalette();
     }
     HPIEntry Textures = FindHPIEntry(HPI,"textures");
     if(!Textures.Name)
@@ -214,8 +220,8 @@ void LoadTextures(HPIFile* HPI)
     }
 }
 
-HPIFile AllArchiveFiles[5];
-const char * HPIFileNames[]={"data/totala1.hpi","data/totala2.hpi","data/totala3.hpi","data/totala4.hpi","data/totala5.hpi"};
+
+const char * HPIFileNames[]={"data/rev31.gp3","data/totala1.hpi","data/totala2.hpi","data/totala3.hpi","data/totala4.hpi","data/totala5.hpi"};
 GLuint UnitTexture;
 
 bool32 LoadAllTextures()
@@ -226,9 +232,13 @@ bool32 LoadAllTextures()
     for(int i=0;i<size;i++)
 	ClearDataPointer[i]=0xdeadbeef;
 
-
+    for(int i=0;i<6;i++)
+    {
+	if(!AllArchiveFiles[i].Name)
+	    LoadHPIFile(HPIFileNames[i],&AllArchiveFiles[i]);
+    }
     //TODO(Christof): Load textures from all the data files, probably in some way that doesn't doubly load .hpi files
-    for(int i=0;i<5;i++)
+    for(int i=0;i<6;i++)
     {
 	if(AllArchiveFiles[i].Name || LoadHPIFile(HPIFileNames[i],&AllArchiveFiles[i]))
 	{

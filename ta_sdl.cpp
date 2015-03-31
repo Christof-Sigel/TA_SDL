@@ -52,15 +52,6 @@ int main(int argc, char * argv[])
     return 0;
 }
 
-void HandleKeyDown(SDL_Keysym key)
-{
-    switch(key.sym)
-    {
-    case SDLK_ESCAPE:
-	quit=true;
-	break;
-    }
-}
 
 void PrintHPIDirectory(HPIDirectoryEntry dir, int Tabs=0)
 {
@@ -236,6 +227,58 @@ Matrix ViewMatrix;
 GLuint ProjectionMatrixLocation;
 GLuint ModelMatrixLocation;
 GLuint ViewMatrixLocation;
+
+
+int ModelIndex=138;
+HPIEntry Models;
+void LoadCurrentModel()
+{
+    if(ModelIndex>=Models.Directory.NumberOfEntries)
+	ModelIndex=Models.Directory.NumberOfEntries-1;
+    if(ModelIndex<0)
+	ModelIndex=0;
+
+    char temp[Models.Directory.Entries[ModelIndex].File.FileSize];
+    if(LoadHPIFileEntryData(Models.Directory.Entries[ModelIndex],temp))
+    {
+	if(temp_model.Name)
+	    Unload3DO(&temp_model);
+	Load3DOFromBuffer(temp,&temp_model);
+	int size=snprintf(NULL, 0, "%d - %s",ModelIndex,Models.Directory.Entries[ModelIndex].Name)+1;
+	char tmp[size];
+	snprintf(tmp,size,"%d - %s",ModelIndex,Models.Directory.Entries[ModelIndex].Name);
+	TestText=SetupOnScreenText(tmp,0,30);
+	PrepareObject3dForRendering(&temp_model);
+    }
+}
+
+
+void HandleKeyDown(SDL_Keysym key)
+{
+    switch(key.sym)
+    {
+    case SDLK_ESCAPE:
+	quit=true;
+	break;
+    case SDLK_o:
+	ModelIndex++;
+	if(ModelIndex>=Models.Directory.NumberOfEntries)
+	    ModelIndex--;
+	else
+	    LoadCurrentModel();
+	break;
+    case SDLK_l:
+	ModelIndex--;
+	if(ModelIndex<0)
+	    ModelIndex=0;
+	else
+	    LoadCurrentModel();
+	break;
+    }
+}
+
+
+
 void Setup()
 {
 #ifdef __WINDOWS__
@@ -283,35 +326,23 @@ void Setup()
     glUniform2iv(GetUniformLocation(OrthoShader,"Viewport"),1,viewport+2);
 
 
-    if(LoadHPIFile("data/totala1.hpi",&AllArchiveFiles[0]))
+    if(LoadHPIFile("data/rev31.gp3",&AllArchiveFiles[0]))
     {
 //	PrintHPIDirectory(AllArchiveFiles[0].Root);
 	LoadAllTextures();
     
-	HPIEntry Default = FindHPIEntry(&AllArchiveFiles[0],"objects3D/armsolar.3do");
-	//HPIEntry Default = FindHPIEntry(main,"units/ARMSOLAR.FBI");
-	if(Default.IsDirectory)
+	Models = FindHPIEntry(&AllArchiveFiles[1],"objects3D");
+	if(!Models.IsDirectory)
 	{
-	    LogError("%s is unexpectedly a directory!",Default.Name);
+	    LogError("%s is unexpectedly not a directory!",Models.Name);
 	}
-	
-	else if(Default.Name)
+	if(!Models.Name)
 	{
-	    char temp[Default.File.FileSize];
-	    if(LoadHPIFileEntryData(Default,temp))
-	    {
-		
-		Load3DOFromBuffer(temp,&temp_model);
-		PrepareObject3dForRendering(&temp_model);
-		FILE * file =fopen(Default.Name,"wb");
-		fwrite(temp,Default.File.FileSize,1,file);
-		fclose(file);
-	
-	    }
+	    LogError("Failed to Load objects3d Directory!");
 	}
 	else
 	{
-	    LogError("failed to find %s",Default.Name);
+	    LoadCurrentModel();
 	}
     }
     StartTime= GetTimeMillis();
