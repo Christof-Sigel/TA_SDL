@@ -231,7 +231,7 @@ UFOSearchResult GetUfoFiles()
     std::vector<char *> FileNames;
     SetCurrentDirectory("data");
     WIN32_FIND_DATA ffd;
-    HANDLE find=FindFirstFile(".ufo", &ffd);
+    HANDLE find=FindFirstFile("*.ufo", &ffd);
     if(find==INVALID_HANDLE_VALUE)
     {
 	LogError("Failed to find .ufo files in data directory");
