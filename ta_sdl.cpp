@@ -231,28 +231,28 @@ GLuint ViewMatrixLocation;
 
 int ModelIndex=138;
 int FileIndex=0;
-HPIEntry * Models;
+HPIEntry Models;
 void LoadCurrentModel()
 {
-    if(!Models[FileIndex].IsDirectory)
+    if(!Models.IsDirectory)
     {
-	LogWarning("No model files in %s",GlobalArchiveCollection.Files[FileIndex].Name);
+	LogWarning("No model files");
 	return;
     }
-    if(ModelIndex>=Models[FileIndex].Directory.NumberOfEntries)
-	ModelIndex=Models[FileIndex].Directory.NumberOfEntries-1;
+    if(ModelIndex>=Models.Directory.NumberOfEntries)
+	ModelIndex=Models.Directory.NumberOfEntries-1;
     if(ModelIndex<0)
 	ModelIndex=0;
 
-    char temp[Models[FileIndex].Directory.Entries[ModelIndex].File.FileSize];
-    if(LoadHPIFileEntryData(Models[FileIndex].Directory.Entries[ModelIndex],temp))
+    char temp[Models.Directory.Entries[ModelIndex].File.FileSize];
+    if(LoadHPIFileEntryData(Models.Directory.Entries[ModelIndex],temp))
     {
 	if(temp_model.Name)
 	    Unload3DO(&temp_model);
 	Load3DOFromBuffer(temp,&temp_model);
-	int size=snprintf(NULL, 0, "%d in %s - %s",ModelIndex,GlobalArchiveCollection.Files[FileIndex].Name,Models[FileIndex].Directory.Entries[ModelIndex].Name)+1;
+	int size=snprintf(NULL, 0, "%d: %s (from %s)",ModelIndex,Models.Directory.Entries[ModelIndex].Name,Models.Directory.Entries[ModelIndex].ContainedInFile->Name)+1;
 	char tmp[size];
-	snprintf(tmp,size,"%d in %s - %s",ModelIndex,GlobalArchiveCollection.Files[FileIndex].Name,Models[FileIndex].Directory.Entries[ModelIndex].Name);
+	snprintf(tmp,size,"%d: %s (from %s)",ModelIndex,Models.Directory.Entries[ModelIndex].Name,Models.Directory.Entries[ModelIndex].ContainedInFile->Name);
 	TestText=SetupOnScreenText(tmp,0,30);
 	PrepareObject3dForRendering(&temp_model);
     }
@@ -267,18 +267,18 @@ void HandleKeyDown(SDL_Keysym key)
 	quit=true;
 	break;
     case SDLK_o:
-	if(Models[FileIndex].IsDirectory)
+	if(Models.IsDirectory)
 	{
 	    ModelIndex++;
 	
-	    if(ModelIndex>=Models[FileIndex].Directory.NumberOfEntries)
+	    if(ModelIndex>=Models.Directory.NumberOfEntries)
 		ModelIndex--;
 	    else
 		LoadCurrentModel();
 	}
 	break;
     case SDLK_l:
-	if(Models[FileIndex].IsDirectory)
+	if(Models.IsDirectory)
 	{
 	ModelIndex--;
 	if(ModelIndex<0)
@@ -286,20 +286,6 @@ void HandleKeyDown(SDL_Keysym key)
 	else
 	    LoadCurrentModel();
 	}
-	break;
-    case SDLK_i:
-	FileIndex++;
-	if(FileIndex>=GlobalArchiveCollection.NumberOfFiles)
-	    FileIndex=GlobalArchiveCollection.NumberOfFiles-1;
-	else
-	    LoadCurrentModel();
-	break;
-    case SDLK_k:
-	FileIndex--;
-	if(FileIndex<0)
-	    FileIndex=0;
-	else
-	    LoadCurrentModel();
 	break;
     }
 }
@@ -355,11 +341,7 @@ void Setup()
     LoadAllTextures();
 
 
-    Models = (HPIEntry*)malloc(sizeof(HPIEntry)*GlobalArchiveCollection.NumberOfFiles);
-    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
-    {
-	Models[i] = FindHPIEntry(&GlobalArchiveCollection.Files[i],"objects3D");
-    }
+    Models = FindEntryInAllFiles("objects3d");
     LoadCurrentModel();
     
 
@@ -409,8 +391,7 @@ void Teardown()
     int64_t EndTime=GetTimeMillis();
     LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
     UnloadShaderProgram(UnitShader);
-    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
-	UnloadHPIFile(&GlobalArchiveCollection.Files[i]);
+    UnloadHPIFileCollection();
     Unload3DO(&temp_model);
 }
 

@@ -215,10 +215,8 @@ static int IsUFO( const struct dirent * file)
 	&&(*(fname-1)=='O' || *(fname-1) == 'o');
 }
 #endif
-#ifdef __WINDOWS__
-#include <vector>
-#endif
 
+#include <vector>
 struct UFOSearchResult
 {
     int NumberOfFiles;

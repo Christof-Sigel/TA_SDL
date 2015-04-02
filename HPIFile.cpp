@@ -448,7 +448,6 @@ const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
 bool32 LoadHPIFileCollection()
 {
     UFOSearchResult UfoFiles=GetUfoFiles();
-    LogDebug("found %d UfoFiles, %d",UfoFiles.NumberOfFiles,NUM_FIXED_FILES);
     GlobalArchiveCollection.NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
     GlobalArchiveCollection.Files = (HPIFile*)malloc(sizeof(HPIFile)*GlobalArchiveCollection.NumberOfFiles);
     for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
@@ -471,4 +470,65 @@ bool32 LoadHPIFileCollection()
     UnloadUFOSearchResult(&UfoFiles);
 
     return 1;
+}
+
+HPIEntry FindEntryInAllFiles(const char * Path)
+{
+    HPIEntry Result={0};
+    std::vector<HPIEntry> Entries;
+    for(int ArchiveIndex=0;ArchiveIndex<GlobalArchiveCollection.NumberOfFiles;ArchiveIndex++)
+    {
+	HPIEntry temp=FindHPIEntry(&GlobalArchiveCollection.Files[ArchiveIndex],Path);
+	if(temp.Name)
+	{
+	    if(!temp.IsDirectory)
+	    {
+		if(Entries.size())
+		{
+		    LogError("Found file in %s while loading directory %s",GlobalArchiveCollection.Files[ArchiveIndex].Name,Path);
+		    return {0};
+		}
+		else
+		{
+		    return temp;
+		}
+	    }
+	    else
+	    {
+		if(!Entries.size())
+		{
+		    Result.Name=temp.Name;
+		    Result.IsDirectory=1;
+		    Result.ContainedInFile=0;
+		}
+		for(int i=0;i<temp.Directory.NumberOfEntries;i++)
+		{
+		    Entries.push_back(temp.Directory.Entries[i]);
+		}
+	    }
+	}
+    }
+    if(!Entries.size())
+    {
+	return {0};
+    }
+    Result.Directory.NumberOfEntries=Entries.size();
+    Result.Directory.Entries=(HPIEntry *)malloc(sizeof(HPIEntry)*Result.Directory.NumberOfEntries);
+    for(int i=0;i<Entries.size();i++)
+    {
+	Result.Directory.Entries[i]=Entries[i];
+    }
+    return Result;
+}
+
+
+void UnloadHPIFileCollection()
+{
+    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
+    {
+	UnloadHPIFile(&GlobalArchiveCollection.Files[i]);
+    }
+    free(GlobalArchiveCollection.Files);
+    GlobalArchiveCollection.NumberOfFiles=0;
+    GlobalArchiveCollection.Files=0;
 }

@@ -174,12 +174,11 @@ void LoadTexturesFromGafBuffer(char * Buffer)
 #include <math.h>
 void LoadPalette()
 {
-    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
-    {
-    HPIEntry Palette = FindHPIEntry(&GlobalArchiveCollection.Files[i],"palettes/PALETTE.PAL");
+
+    HPIEntry Palette = FindEntryInAllFiles("palettes/PALETTE.PAL");
     if(!Palette.Name)
     {
-	LogWarning("No Palette found in %s",GlobalArchiveCollection.Files[i].Name);
+	LogWarning("No Palette found in data files");
     }
     else if(Palette.IsDirectory)
     {
@@ -189,40 +188,13 @@ void LoadPalette()
     {
 	PaletteLoaded=1;
 	LoadHPIFileEntryData(Palette,PaletteData);
-	return;
-    }
     }
 }
 
 
 void LoadTextures(HPIFile* HPI)
 {
-    if(!PaletteLoaded)
-    {
-	LoadPalette();
-    }
-    HPIEntry Textures = FindHPIEntry(HPI,"textures");
-    if(!Textures.Name)
-    {
-	LogWarning("No Textures found in %s",HPI->Name);
-	return;
-    }
-    if(!Textures.IsDirectory)
-    {
-	LogError("Found a file instead of a directory while trying to load textures from %s",HPI->Name);
-	return;
-    }
-    LogDebug("Loading %d textures from %s",Textures.Directory.NumberOfEntries,HPI->Name);
-    for(int i=0;i<Textures.Directory.NumberOfEntries;i++)
-    {
-	if(Textures.Directory.Entries[i].IsDirectory)
-	{
-	    LogWarning("Unexpectedly found directory %s inside textures directory of %s",Textures.Directory.Entries[i].Name,HPI->Name);
-	}
-	char GafBuffer[Textures.Directory.Entries[i].File.FileSize];
-	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer);
-	LoadTexturesFromGafBuffer(GafBuffer);
-    }
+   
 }
 
 
@@ -236,14 +208,34 @@ bool32 LoadAllTextures()
     for(int i=0;i<size;i++)
 	ClearDataPointer[i]=0xdeadbeef;
 
-
-    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
+    if(!PaletteLoaded)
     {
-	if(GlobalArchiveCollection.Files[i].Name)
-	{
-	    LoadTextures(&GlobalArchiveCollection.Files[i]);
-	}
+	LoadPalette();
     }
+    HPIEntry Textures = FindEntryInAllFiles("textures");
+    if(!Textures.Name)
+    {
+	LogWarning("No Textures found in archives");
+	return 0;
+    }
+    if(!Textures.IsDirectory)
+    {
+	LogError("Found a file instead of a directory while trying to load textures from archives");
+	return 0;
+    }
+    for(int i=0;i<Textures.Directory.NumberOfEntries;i++)
+    {
+	if(Textures.Directory.Entries[i].IsDirectory)
+	{
+	    LogWarning("Unexpectedly found directory %s inside textures directory of %s",Textures.Directory.Entries[i].Name,
+		       Textures.Directory.Entries[i].ContainedInFile->Name);
+	}
+	char GafBuffer[Textures.Directory.Entries[i].File.FileSize];
+	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer);
+	LoadTexturesFromGafBuffer(GafBuffer);
+    }
+
+    
     glGenTextures(1,&UnitTexture);
     glBindTexture(GL_TEXTURE_2D,UnitTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
