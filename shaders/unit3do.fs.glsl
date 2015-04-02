@@ -1,7 +1,7 @@
 #version 400
 
 in vec3 FPosition;
-smooth in vec2 FTexCoord;
+in vec2 FTexCoord;
 in vec3 FColor;
 out vec4 out_Color;
 uniform sampler2D UnitTexture;

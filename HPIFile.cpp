@@ -43,6 +43,15 @@ struct HPIFile
     char * Name;
 };
 
+struct HPIFileCollection
+{
+    //TODO(Christof): track directory(s?) as well
+    int NumberOfFiles;
+    HPIFile * Files;
+};
+
+HPIFileCollection GlobalArchiveCollection;
+
 
 const int32_t SAVE_MARKER= 'B' << 0 | 'A' <<8 | 'N' << 16 | 'K' <<24;
 const int32_t HPI_MARKER= 'H' << 0 | 'A' <<8 | 'P' <<16 | 'I' << 24;
@@ -430,3 +439,36 @@ HPIEntry FindHPIEntry(HPIFile * File, const char * Path)
     return FindHPIEntry(File->Root,Path);
 }
 
+const char * HPIFileNames[]={"rev31.gp3","btdata.ccx","ccdata.ccx","tactics1.hpi","tactics2.hpi",
+			     "tactics3.hpi","tactics4.hpi","tactics5.hpi","tactics6.hpi","tactics7.hpi",
+			     "tactics8.hpi","totala1.hpi","totala2.hpi","totala3.hpi","totala4.hpi"};
+
+const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
+
+bool32 LoadHPIFileCollection()
+{
+    UFOSearchResult UfoFiles=GetUfoFiles();
+    LogDebug("found %d UfoFiles, %d",UfoFiles.NumberOfFiles,NUM_FIXED_FILES);
+    GlobalArchiveCollection.NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
+    GlobalArchiveCollection.Files = (HPIFile*)malloc(sizeof(HPIFile)*GlobalArchiveCollection.NumberOfFiles);
+    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
+    {
+	char * FileName=0;
+	if(i>=UfoFiles.NumberOfFiles)
+	{
+	    FileName=(char*)HPIFileNames[i-UfoFiles.NumberOfFiles];
+	}
+	else
+	{
+	    FileName=UfoFiles.FileNames[i];
+	}
+	int size=snprintf(0,0,"data/%s",FileName)+1;
+	char temp[size];
+	snprintf(temp,size,"data/%s",FileName);
+	LoadHPIFile(temp,&GlobalArchiveCollection.Files[i]);
+    }
+
+    UnloadUFOSearchResult(&UfoFiles);
+
+    return 1;
+}

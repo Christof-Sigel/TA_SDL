@@ -201,3 +201,95 @@ void SaveDataToPng(char * ImageData, char * FileName, int Width, int Height)
     delete[] row_pointers;
 
 }
+
+
+#ifdef __LINUX__
+#include <dirent.h>
+static int IsUFO( const struct dirent * file)
+{
+    const char * fname=(char *)file->d_name;
+    while(*++fname){}
+
+    return *(fname-4)=='.' &&(*(fname-3)=='U' || *(fname-3) == 'u')
+	&&(*(fname-2)=='F' || *(fname-2) == 'f')
+	&&(*(fname-1)=='O' || *(fname-1) == 'o');
+}
+#endif
+#ifdef __WINDOWS__
+#include <vector>
+#endif
+
+struct UFOSearchResult
+{
+    int NumberOfFiles;
+    char ** FileNames;
+};
+UFOSearchResult GetUfoFiles()
+{
+    UFOSearchResult Result={0,0};
+#ifdef __WINDOWS__
+    std::vector<char *> FileNames;
+    SetCurrentDirectory("data");
+    WIN32_FIND_DATA ffd;
+    HANDLE find=FindFirstFile(".ufo", &ffd);
+    if(find==INVALID_HANDLE_VALUE)
+    {
+	LogError("Failed to find .ufo files in data directory");
+	SetCurrentDirectory("..");
+	return Result;
+    }
+
+    do
+    {
+	int length=strlen(ffd.cFileName)+1;
+	char * FileName=(char*)malloc(length);
+	memcpy(FileName,ffd.cFileName,length);
+	FileNames.push_back(FileName);
+    }while(FindNextFile(find,&ffd));
+    FindClose(find);
+
+    Result.NumberOfFiles=FileNames.size();
+    Result.FileNames=(char **)malloc(sizeof(char *)*Result.NumberOfFiles);
+    for(int i=0;i<Result.NumberOfFiles;i++)
+    {
+	Result.FileNames[i]=FileNames[i];
+    }
+    
+    SetCurrentDirectory("..");
+#endif
+#ifdef __LINUX__
+    chdir("data");
+    struct dirent **eps;
+    
+
+    Result.NumberOfFiles = scandir ("./", &eps, IsUFO, alphasort);
+    if (Result.NumberOfFiles >= 0)
+    {
+	Result.FileNames=(char**)malloc(sizeof(char*)*Result.NumberOfFiles);
+	for(int i=0;i<Result.NumberOfFiles;i++)
+	{
+	    int length=strlen(eps[i]->d_name)+1;
+	    char * FileName=(char*)malloc(length);
+	    memcpy(FileName,eps[i]->d_name,length);
+	    Result.FileNames[i]=FileName;
+	}
+    }
+    else
+    {
+	LogError("Failed to find .ufo files in data directory");
+    }
+    chdir("..");
+#endif
+    return Result;
+}
+
+void UnloadUFOSearchResult(UFOSearchResult * Result)
+{
+    if(Result)
+    {
+	for(int i=0;i<Result->NumberOfFiles;i++)
+	{
+	    free(Result->FileNames[i]);
+	}
+    }
+}

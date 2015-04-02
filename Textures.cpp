@@ -113,7 +113,7 @@ void LoadGafFrameEntry(char * Buffer, int Offset)
 	Texture * Texture=GetTexture(Entry->Name,i);
 	if(Texture)
 	{
-	    LogInformation("Skipping %s(%d of %d) as already loaded from %s(%d)",Entry->Name,i,Entry->NumberOfFrames,Texture->From->Name,Texture->From->NumberOfFrames);
+	    // LogInformation("Skipping %s(%d of %d) as already loaded from %s(%d)",Entry->Name,i,Entry->NumberOfFrames,Texture->From->Name,Texture->From->NumberOfFrames);
 	    continue;
 	}
 	
@@ -170,14 +170,16 @@ void LoadTexturesFromGafBuffer(char * Buffer)
     }
 }
 
-HPIFile AllArchiveFiles[6];
+
 #include <math.h>
 void LoadPalette()
 {
-    HPIEntry Palette = FindHPIEntry(&AllArchiveFiles[1],"palettes/PALETTE.PAL");
+    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
+    {
+    HPIEntry Palette = FindHPIEntry(&GlobalArchiveCollection.Files[i],"palettes/PALETTE.PAL");
     if(!Palette.Name)
     {
-	LogWarning("No Palette found in %s",AllArchiveFiles[1].Name);
+	LogWarning("No Palette found in %s",GlobalArchiveCollection.Files[i].Name);
     }
     else if(Palette.IsDirectory)
     {
@@ -187,6 +189,8 @@ void LoadPalette()
     {
 	PaletteLoaded=1;
 	LoadHPIFileEntryData(Palette,PaletteData);
+	return;
+    }
     }
 }
 
@@ -208,6 +212,7 @@ void LoadTextures(HPIFile* HPI)
 	LogError("Found a file instead of a directory while trying to load textures from %s",HPI->Name);
 	return;
     }
+    LogDebug("Loading %d textures from %s",Textures.Directory.NumberOfEntries,HPI->Name);
     for(int i=0;i<Textures.Directory.NumberOfEntries;i++)
     {
 	if(Textures.Directory.Entries[i].IsDirectory)
@@ -221,7 +226,6 @@ void LoadTextures(HPIFile* HPI)
 }
 
 
-const char * HPIFileNames[]={"data/rev31.gp3","data/totala1.hpi","data/totala2.hpi","data/totala3.hpi","data/totala4.hpi","data/totala5.hpi"};
 GLuint UnitTexture;
 
 bool32 LoadAllTextures()
@@ -232,26 +236,21 @@ bool32 LoadAllTextures()
     for(int i=0;i<size;i++)
 	ClearDataPointer[i]=0xdeadbeef;
 
-    for(int i=0;i<6;i++)
+
+    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
     {
-	if(!AllArchiveFiles[i].Name)
-	    LoadHPIFile(HPIFileNames[i],&AllArchiveFiles[i]);
-    }
-    //TODO(Christof): Load textures from all the data files, probably in some way that doesn't doubly load .hpi files
-    for(int i=0;i<6;i++)
-    {
-	if(AllArchiveFiles[i].Name || LoadHPIFile(HPIFileNames[i],&AllArchiveFiles[i]))
+	if(GlobalArchiveCollection.Files[i].Name)
 	{
-	    LoadTextures(&AllArchiveFiles[i]);
+	    LoadTextures(&GlobalArchiveCollection.Files[i]);
 	}
-	glGenTextures(1,&UnitTexture);
-	glBindTexture(GL_TEXTURE_2D,UnitTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TEXTURE_WIDTH,TEXTURE_HEIGHT,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
-	return 1;
     }
-    return 0;
+    glGenTextures(1,&UnitTexture);
+    glBindTexture(GL_TEXTURE_2D,UnitTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TEXTURE_WIDTH,TEXTURE_HEIGHT,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
+    return 1;
+
 }
 
 inline bool32 TexturePixelFree(int X, int Y)

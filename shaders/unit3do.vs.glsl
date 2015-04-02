@@ -6,7 +6,7 @@ layout(location=2) in vec3 VColor;
 
 out vec3 FPosition;
 out vec3 FColor;
-smooth out vec2 FTexCoord;
+out vec2 FTexCoord;
 
 uniform mat4 ModelMatrix;
 uniform mat4 ViewMatrix;
