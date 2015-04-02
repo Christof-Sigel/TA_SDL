@@ -257,8 +257,7 @@ UFOSearchResult GetUfoFiles()
 #endif
 #ifdef __LINUX__
     chdir("data");
-    struct dirent **eps;
-    
+    struct dirent **eps=0;
 
     Result.NumberOfFiles = scandir ("./", &eps, IsUFO, alphasort);
     if (Result.NumberOfFiles >= 0)
@@ -269,6 +268,7 @@ UFOSearchResult GetUfoFiles()
 	    int length=strlen(eps[i]->d_name)+1;
 	    char * FileName=(char*)malloc(length);
 	    memcpy(FileName,eps[i]->d_name,length);
+	    free(eps[i]);
 	    Result.FileNames[i]=FileName;
 	}
     }
@@ -276,6 +276,7 @@ UFOSearchResult GetUfoFiles()
     {
 	LogError("Failed to find .ufo files in data directory");
     }
+    if(eps){free(eps);}
     chdir("..");
 #endif
     return Result;
@@ -289,5 +290,6 @@ void UnloadUFOSearchResult(UFOSearchResult * Result)
 	{
 	    free(Result->FileNames[i]);
 	}
+	free(Result->FileNames);
     }
 }

@@ -234,7 +234,7 @@ bool32 LoadAllTextures()
 	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer);
 	LoadTexturesFromGafBuffer(GafBuffer);
     }
-
+    UnloadCompositeEntry(&Textures);
     
     glGenTextures(1,&UnitTexture);
     glBindTexture(GL_TEXTURE_2D,UnitTexture);

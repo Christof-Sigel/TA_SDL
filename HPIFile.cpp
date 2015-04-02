@@ -110,9 +110,15 @@ void DecompressLZ77Chunk(char * Source, int CompressedSize, int DecompressedSize
 
 void UnloadHPIDirectory(HPIDirectoryEntry * Directory)
 {
+
     for(int i=0;i<Directory->NumberOfEntries;i++)
+    {
 	if(Directory->Entries[i].IsDirectory)
+	{
 	    UnloadHPIDirectory(&Directory->Entries[i].Directory);
+	}
+	free(Directory->Entries[i].Name);
+    }
     free(Directory->Entries);
 }
 
@@ -162,6 +168,7 @@ bool32 LoadHPIFile(const char * FileName, HPIFile * HPI)
     char * DecryptedDirectory = (char *)malloc(header->DirectorySize);
     DecryptHPIBuffer(HPI,DecryptedDirectory,header->DirectorySize, 0);
     LoadEntries(&HPI->Root, DecryptedDirectory, header->Offset,HPI);
+    free(DecryptedDirectory);
 
     return 1;
 }
@@ -519,6 +526,12 @@ HPIEntry FindEntryInAllFiles(const char * Path)
 	Result.Directory.Entries[i]=Entries[i];
     }
     return Result;
+}
+
+void UnloadCompositeEntry(HPIEntry * Entry)
+{
+    if(Entry && Entry->IsDirectory)
+	free(Entry->Directory.Entries);
 }
 
 

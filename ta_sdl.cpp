@@ -95,6 +95,7 @@ void my_stbtt_initfont(void)
 //	return;
     }
     fread(ttf_buffer, 1, 1<<20, file);
+    fclose(file);
     stbtt_BakeFontBitmap((const unsigned char*)ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
     // can free ttf_buffer at this point
     glGenTextures(1, &ftex);
@@ -391,6 +392,7 @@ void Teardown()
     int64_t EndTime=GetTimeMillis();
     LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
     UnloadShaderProgram(UnitShader);
+    UnloadCompositeEntry(&Models);
     UnloadHPIFileCollection();
     Unload3DO(&temp_model);
 }
