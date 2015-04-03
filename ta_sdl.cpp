@@ -230,30 +230,48 @@ GLuint ModelMatrixLocation;
 GLuint ViewMatrixLocation;
 
 
-int ModelIndex=138;
-int FileIndex=0;
-HPIEntry Models;
+int UnitIndex=0;
+std::vector<UnitDetails> Units;
+
 void LoadCurrentModel()
 {
-    if(!Models.IsDirectory)
-    {
-	LogWarning("No model files");
-	return;
-    }
-    if(ModelIndex>=Models.Directory.NumberOfEntries)
-	ModelIndex=Models.Directory.NumberOfEntries-1;
-    if(ModelIndex<0)
-	ModelIndex=0;
+    if(UnitIndex>Units.size()-1)
+	UnitIndex=Units.size()-1;
+    if(UnitIndex<0)
+	UnitIndex=0;
 
-    char temp[Models.Directory.Entries[ModelIndex].File.FileSize];
-    if(LoadHPIFileEntryData(Models.Directory.Entries[ModelIndex],temp))
+    char * UnitName=Units[UnitIndex].GetString("UnitName");
+    int len=snprintf(0,0,"objects3d/%s.3do",UnitName)+1;
+    char ModelName[len];
+    snprintf(ModelName,len,"objects3d/%s.3do",UnitName);
+    
+    HPIEntry Entry=FindEntryInAllFiles(ModelName);
+    
+    char temp[Entry.File.FileSize];
+    if(LoadHPIFileEntryData(Entry,temp))
     {
 	if(temp_model.Name)
 	    Unload3DO(&temp_model);
 	Load3DOFromBuffer(temp,&temp_model);
-	int size=snprintf(NULL, 0, "%d: %s (from %s)",ModelIndex,Models.Directory.Entries[ModelIndex].Name,Models.Directory.Entries[ModelIndex].ContainedInFile->Name)+1;
+	char * Name=Units[UnitIndex].GetString("Name");
+	char * SideName;
+	UnitSide Side=Units[UnitIndex].GetSide();
+	switch(Side)
+	{
+	case SIDE_ARM:
+	    SideName = "ARM";
+	    break;
+	case SIDE_CORE:
+	    SideName = "CORE";
+	    break;
+	default:
+	    SideName="UNKNOWN";
+	    break;
+	}
+
+	int size=snprintf(NULL, 0, "%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name)+1;
 	char tmp[size];
-	snprintf(tmp,size,"%d: %s (from %s)",ModelIndex,Models.Directory.Entries[ModelIndex].Name,Models.Directory.Entries[ModelIndex].ContainedInFile->Name);
+	snprintf(tmp,size,"%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name);
 	TestText=SetupOnScreenText(tmp,0,30);
 	PrepareObject3dForRendering(&temp_model);
     }
@@ -268,25 +286,12 @@ void HandleKeyDown(SDL_Keysym key)
 	quit=true;
 	break;
     case SDLK_o:
-	if(Models.IsDirectory)
-	{
-	    ModelIndex++;
-	
-	    if(ModelIndex>=Models.Directory.NumberOfEntries)
-		ModelIndex--;
-	    else
-		LoadCurrentModel();
-	}
+	UnitIndex++;
+	LoadCurrentModel();
 	break;
     case SDLK_l:
-	if(Models.IsDirectory)
-	{
-	ModelIndex--;
-	if(ModelIndex<0)
-	    ModelIndex=0;
-	else
-	    LoadCurrentModel();
-	}
+	UnitIndex--;
+	LoadCurrentModel();
 	break;
     }
 }
@@ -342,9 +347,30 @@ void Setup()
     LoadAllTextures();
 
 
-    Models = FindEntryInAllFiles("objects3d");
+    HPIEntry Entry=FindEntryInAllFiles("units");
+    if(Entry.IsDirectory)
+    {
+	for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
+	{
+	    char temp[Entry.Directory.Entries[i].File.FileSize];
+	    if(LoadHPIFileEntryData(Entry.Directory.Entries[i],temp))
+	    {
+		UnitDetails deets;
+		if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
+		{
+		    LoadFBIFileFromBuffer(&deets,temp);
+		    Units.push_back(deets);
+		}
+	    }
+	}
+    }
+    UnloadCompositeEntry(&Entry);
+
     LoadCurrentModel();
+   
     
+    
+
 
     StartTime= GetTimeMillis();
 }
@@ -392,7 +418,6 @@ void Teardown()
     int64_t EndTime=GetTimeMillis();
     LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
     UnloadShaderProgram(UnitShader);
-    UnloadCompositeEntry(&Models);
     UnloadHPIFileCollection();
     Unload3DO(&temp_model);
 }
