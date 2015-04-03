@@ -67,30 +67,12 @@ bool32 PaletteLoaded=0;
 TexturePosition GetAvailableTextureLocation(int Width, int Height);
 void SetTextureLocationUsed(int X, int Y, int Width, int Height);
 
-bool32 NamesMatch(const char * NameToFind, const char * TextureName)
-{
-    while(*TextureName && *NameToFind)
-    {
-	char pcomp=*NameToFind, dcomp=*TextureName;
-	if(pcomp >='a' && pcomp <='z')
-	    pcomp+='A'-'a';
-	if(dcomp >='a' && dcomp <='z')
-	    dcomp+='A'-'a';
-	if(dcomp!=pcomp)
-	    return 0;
-	
-	NameToFind++;
-	TextureName++;
-    }
-    return *TextureName == *NameToFind;
-}
-
 Texture * GetTexture(const char * Name,int FrameNumber)
 {
     //TODO(Christof): some better storage/retrieval mechanism for texture lookup?
     for(int i=0;i<NextTexture;i++)
     {
-	if(Textures[i].FrameNumber == FrameNumber && NamesMatch(Name,Textures[i].Name))
+	if(Textures[i].FrameNumber == FrameNumber && CaseInsensitiveMatch(Name,Textures[i].Name))
 	    return &Textures[i];
     }
     return 0;

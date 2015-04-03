@@ -293,3 +293,21 @@ void UnloadUFOSearchResult(UFOSearchResult * Result)
 	free(Result->FileNames);
     }
 }
+
+inline bool32 CaseInsensitiveMatch(const char * String1, const char * String2)
+{
+    while(*String1 && *String2)
+    {
+	char pcomp=*String2, dcomp=*String1;
+	if(pcomp >='a' && pcomp <='z')
+	    pcomp+='A'-'a';
+	if(dcomp >='a' && dcomp <='z')
+	    dcomp+='A'-'a';
+	if(dcomp!=pcomp)
+	    return 0;
+	
+	String2++;
+	String1++;
+    }
+    return *String1 == *String2;
+}
