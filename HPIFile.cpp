@@ -426,6 +426,16 @@ HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, const char * Path)
 
 HPIEntry FindHPIEntry(HPIFile * File, const char * Path)
 {
+    if(!*Path)
+    {
+	HPIEntry Root;
+	Root.Name=(char*)malloc(5);
+	memcpy(Root.Name,"Root",5);
+	Root.Directory=File->Root;
+	Root.IsDirectory=1;
+	Root.ContainedInFile = File;
+	return Root;
+    }
     return FindHPIEntry(File->Root,Path);
 }
 
