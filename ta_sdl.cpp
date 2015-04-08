@@ -143,13 +143,14 @@ void LoadCurrentModel()
 	int size=snprintf(NULL, 0, "%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name)+1;
 	char tmp[size];
 	snprintf(tmp,size,"%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name);
-	TestText=SetupOnScreenText(tmp,350,380, 1,1,1, &Times32);
+	TestText=SetupOnScreenText(tmp,10,30, 1,1,1, &Times32);
 
 	{
-	int size2=snprintf(NULL, 0, "%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name)+1;
-	char tmp2[size2];
-	snprintf(tmp2,size2,"%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name);
-	TestText2=SetupOnScreenText(tmp,350,450, 1,1,1, &Times16);
+	    char * Desc=Units[UnitIndex].GetString("Description");
+	int size=snprintf(NULL, 0, "%s",Desc)+1;
+	char tmp[size];
+	snprintf(tmp,size,"%s",Desc);
+	TestText2=SetupOnScreenText(tmp,15,54, 1,1,1, &Times24);
 	}
 
 	PrepareObject3dForRendering(&temp_model);
@@ -204,7 +205,7 @@ void Setup()
     ViewMatrixLocation = GetUniformLocation(UnitShader,"ViewMatrix");
 
 
-    TestElement=SetupUIElement(350,350, 400,60, 1,1,1, 0,1,0, 5,0.5, 0);
+    TestElement=SetupUIElement(0,0, 600,100, 1,1,1, 0,1,0, 5,0.5, 0);
     
     TestText2=SetupOnScreenText("This is a test, now somewhat longer",0,30, 1,1,1, &Times32);
 
