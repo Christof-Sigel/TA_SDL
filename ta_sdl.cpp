@@ -8,7 +8,9 @@ typedef int32_t bool32;
 
 #include "platform_code.cpp"
 #include "GL.cpp"
+#include "UI.cpp"
 #include "file_formats.cpp"
+
 
 void HandleKeyDown(SDL_Keysym key);
 bool32 quit=0;
@@ -79,123 +81,11 @@ void PrintHPIDirectory(HPIDirectoryEntry dir, int Tabs=0)
 }
 
 ShaderProgram UnitShader;
-ShaderProgram OrthoShader;
-#define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
-#include "stb_truetype.h"
-unsigned char temp_bitmap[512*512];
-stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
-GLuint ftex;
-void my_stbtt_initfont(void)
-{
-    char ttf_buffer[1<<20];
-    FILE * file=fopen("data/times.ttf", "rb");
-    if(!file)
-    {
-	LogError("Failed to load font file");
-//	return;
-    }
-    fread(ttf_buffer, 1, 1<<20, file);
-    fclose(file);
-    stbtt_BakeFontBitmap((const unsigned char*)ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
-    // can free ttf_buffer at this point
-    glGenTextures(1, &ftex);
-    glBindTexture(GL_TEXTURE_2D, ftex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512,512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_bitmap);
-    // can free temp_bitmap at this point
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-}
-
-struct ScreenText
-{
-    GLuint VertexArrayObject;
-    GLuint FontTexture;
-    int NumberOfVertices;
-    float X,Y;
-};
-
-ScreenText SetupOnScreenText(char * Text, float X, float Y)
-{
-    int NumQuads=0;
-    char * t=Text;
-    while (*t) {
-	if (*t >= 32 && *t >0) {
-	    NumQuads++;
-	}
-	t++;
-    }
-    const int NUM_FLOATS_PER_QUAD=2*3*2*2;//2 triangles per quad, 3 verts per triangle, 2 position and 2 texture coords per vert
-    GLfloat VertexAndTexCoordData[NumQuads*NUM_FLOATS_PER_QUAD];
-    ScreenText result;
-    result.X=X;
-    result.Y=Y;
-    result.FontTexture=ftex;
-    result.NumberOfVertices=NumQuads * 6;
-    glGenVertexArrays(1,&result.VertexArrayObject);
-    for(int i=0;i<NumQuads;i++)
-    {
-	if (Text[i] >= 32 && Text[i] >0) {
-	    stbtt_aligned_quad q;
-	    //TODO(Christof): Make this position independant
-	    stbtt_GetBakedQuad(cdata, 512,512, Text[i]-32, &X,&Y,&q,1);
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 0]=q.x0;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 1]=q.y0;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 2]=q.s0;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 3]=q.t0;
-
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 4]=q.x0;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 5]=q.y1;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 6]=q.s0;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 7]=q.t1;
-
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 8]=q.x1;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 9]=q.y1;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 10]=q.s1;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 11]=q.t1;
 
 
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 12]=q.x1;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 13]=q.y1;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 14]=q.s1;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 15]=q.t1;
-
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 16]=q.x1;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 17]=q.y0;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 18]=q.s1;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 19]=q.t0;
-
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 20]=q.x0;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 21]=q.y0;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 22]=q.s0;
-	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 23]=q.t0;
-	}
-    }
-    glBindVertexArray(result.VertexArrayObject);
-
-    GLuint VertexBuffer;
-    glGenBuffers(1,&VertexBuffer);
-
-    glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*NumQuads*NUM_FLOATS_PER_QUAD,VertexAndTexCoordData,GL_STATIC_DRAW);
-    glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*4,0);
-    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*4,(GLvoid*)(sizeof(GLfloat)*2));
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glBindVertexArray(0);
-    //glDeleteBuffers(1,&VertexBuffer);
-    
-    return result;
-}
-
-void RenderOnScreenText(ScreenText Text)
-{
-    glBindVertexArray(Text.VertexArrayObject);
-    glBindTexture(GL_TEXTURE_2D,Text.FontTexture);
-    glDrawArrays(GL_TRIANGLES,0,Text.NumberOfVertices);
-}
 
 ScreenText TestText;
+UIElement TestElement;
 int64_t StartTime=0;
 int NumberOfFrames=0;
 
@@ -252,7 +142,7 @@ void LoadCurrentModel()
 	int size=snprintf(NULL, 0, "%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name)+1;
 	char tmp[size];
 	snprintf(tmp,size,"%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name);
-	TestText=SetupOnScreenText(tmp,0,30);
+	TestText=SetupOnScreenText(tmp,350,380,ftex,cdata, 1,1,1);
 	PrepareObject3dForRendering(&temp_model);
     }
 }
@@ -262,6 +152,7 @@ void HandleKeyDown(SDL_Keysym key)
 {
     switch(key.sym)
     {
+    case SDLK_q:
     case SDLK_ESCAPE:
 	quit=true;
 	break;
@@ -285,9 +176,9 @@ void Setup()
     QueryPerformanceFrequency(&PerfCountFrequencyResult);
     PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
 #endif
-    my_stbtt_initfont();
-
     SetProjectionMatrix(60,float(ScreenWidth)/ScreenHeight,1.0,100.0,&ProjectionMatrix);
+    SetupTextRendering();
+    SetupUIElementRender();
     
     SetTranslationMatrix(0,0,-4,&ViewMatrix);
     SetRotationMatrix(1,0,0,0.5,&ModelMatrix);
@@ -295,10 +186,8 @@ void Setup()
     SetRotationMatrix(0,1,0,PI,&ModelMatrix);
     ViewMatrix = ViewMatrix*ModelMatrix;
 
+    
     UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
-    OrthoShader=LoadShaderProgram("shaders/ortho.vs.glsl","shaders/ortho.fs.glsl");
-    glUseProgram(OrthoShader.ProgramID);
-    glUniform1i(GetUniformLocation(OrthoShader,"UnitTexture"),0);
     
     glUseProgram(UnitShader.ProgramID);
     glUniform1i(GetUniformLocation(UnitShader,"UnitTexture"),0);
@@ -306,8 +195,13 @@ void Setup()
     ProjectionMatrixLocation = GetUniformLocation(UnitShader,"ProjectionMatrix");
     ModelMatrixLocation = GetUniformLocation(UnitShader,"ModelMatrix");
     ViewMatrixLocation = GetUniformLocation(UnitShader,"ViewMatrix");
+
+
+    TestElement=SetupUIElement(350,350, 400,60, 1,1,1, 0,1,0, 5,0.5, 0);
     
-    TestText=SetupOnScreenText("This is a test, now somewhat longer",0,30);
+    TestText=SetupOnScreenText("This is a test, now somewhat longer",0,30,ftex,cdata, 1,1,1);
+
+    
     //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
@@ -317,12 +211,7 @@ void Setup()
     //glDisable(GL_CULL_FACE);
     //glCullFace(GL_BACK);
     //glFrontFace(GL_CW);
-    
-
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    glUseProgram(OrthoShader.ProgramID);
-    glUniform2iv(GetUniformLocation(OrthoShader,"Viewport"),1,viewport+2);
+        
     LoadHPIFileCollection();
     LoadAllTextures();
 
@@ -355,6 +244,9 @@ void Setup()
     StartTime= GetTimeMillis();
 }
 
+const float DR=0.01,DG=0.02,DB=0.015;
+float dr=DR,dg=DG,db=DB;
+
 void Render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -378,18 +270,33 @@ void Render()
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);                      // Turn Blending on
     glDisable(GL_DEPTH_TEST);        //Turn Depth Testing off
-    glUseProgram(OrthoShader.ProgramID);
+
+    RenderUIElement(TestElement);
+
+    glUseProgram(FontShader.ProgramID);
     RenderOnScreenText(TestText);
     //my_stbtt_print(0,0,"Another Test");
+
+    TestText.Color.Red += dr;
+    if(TestText.Color.Red > 1.0)
+	dr=-DR;
+    if(TestText.Color.Red<0.0)
+	dr=DR;
     
+    TestText.Color.Green += dg;
+    if(TestText.Color.Green > 1.0)
+	dg=-DG;
+    if(TestText.Color.Green<0.0)
+	dg=DG;
+    
+    TestText.Color.Blue += db;
+    if(TestText.Color.Blue > 1.0)
+	db=-DB;
+    if(TestText.Color.Blue<0.0)
+	db=DB;
 
 
-
-    GLenum ErrorValue = glGetError();
-    if(ErrorValue!=GL_NO_ERROR)
-    {
-	LogError("failed to render : %s",gluErrorString(ErrorValue));
-    }
+    
     NumberOfFrames++;
 }
 
