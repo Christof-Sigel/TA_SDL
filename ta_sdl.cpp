@@ -176,16 +176,14 @@ void Setup()
     QueryPerformanceFrequency(&PerfCountFrequencyResult);
     PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
 #endif
-    SetProjectionMatrix(60,float(ScreenWidth)/ScreenHeight,1.0,100.0,&ProjectionMatrix);
     SetupTextRendering();
     SetupUIElementRender();
     
-    SetTranslationMatrix(0,0,-4,&ViewMatrix);
-    SetRotationMatrix(1,0,0,0.5,&ModelMatrix);
-    ViewMatrix = ViewMatrix*ModelMatrix;
-    SetRotationMatrix(0,1,0,PI,&ModelMatrix);
-    ViewMatrix = ViewMatrix*ModelMatrix;
+    ProjectionMatrix.SetProjection(60,float(ScreenWidth)/ScreenHeight,1.0,100.0);
 
+    ViewMatrix.SetTranslation(0,0,-4);
+    ViewMatrix.Rotate(1,0,0, 0.5);
+    ViewMatrix.Rotate(0,1,0, PI);
     
     UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
     
@@ -254,13 +252,12 @@ void Render()
     glEnable(GL_DEPTH_TEST);        //Turn Depth Testing off
     glUseProgram(UnitShader.ProgramID);
     glBindTexture(GL_TEXTURE_2D,UnitTexture);
-    UploadMatrix(&ProjectionMatrix,ProjectionMatrixLocation);
+    ProjectionMatrix.Upload(ProjectionMatrixLocation);
 
 
-    SetRotationMatrix(0,1,0,PI/300,&ModelMatrix);
-    ViewMatrix = ViewMatrix*ModelMatrix;
+    ViewMatrix.Rotate(0,1,0, PI/300);
 
-    UploadMatrix(&ViewMatrix,ViewMatrixLocation);
+    ViewMatrix.Upload(ViewMatrixLocation);
     RenderObject3d(&temp_model,0,ModelMatrixLocation);
     
 
