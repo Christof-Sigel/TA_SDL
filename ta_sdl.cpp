@@ -85,6 +85,7 @@ ShaderProgram UnitShader;
 
 
 ScreenText TestText;
+ScreenText TestText2;
 UIElement TestElement;
 int64_t StartTime=0;
 int NumberOfFrames=0;
@@ -142,7 +143,15 @@ void LoadCurrentModel()
 	int size=snprintf(NULL, 0, "%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name)+1;
 	char tmp[size];
 	snprintf(tmp,size,"%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name);
-	TestText=SetupOnScreenText(tmp,350,380,ftex,cdata, 1,1,1);
+	TestText=SetupOnScreenText(tmp,350,380, 1,1,1, &Times32);
+
+	{
+	int size2=snprintf(NULL, 0, "%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name)+1;
+	char tmp2[size2];
+	snprintf(tmp2,size2,"%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name);
+	TestText2=SetupOnScreenText(tmp,350,450, 1,1,1, &Times16);
+	}
+
 	PrepareObject3dForRendering(&temp_model);
     }
 }
@@ -197,7 +206,7 @@ void Setup()
 
     TestElement=SetupUIElement(350,350, 400,60, 1,1,1, 0,1,0, 5,0.5, 0);
     
-    TestText=SetupOnScreenText("This is a test, now somewhat longer",0,30,ftex,cdata, 1,1,1);
+    TestText2=SetupOnScreenText("This is a test, now somewhat longer",0,30, 1,1,1, &Times32);
 
     
     //GL Setup:
@@ -256,7 +265,8 @@ void Render()
 
 
     ViewMatrix.Rotate(0,1,0, PI/300);
-
+    // ViewMatrix.Move(0.01,0,0);
+    
     ViewMatrix.Upload(ViewMatrixLocation);
     RenderObject3d(&temp_model,0,ModelMatrixLocation);
     
@@ -272,8 +282,9 @@ void Render()
 
     glUseProgram(FontShader.ProgramID);
     RenderOnScreenText(TestText);
+    RenderOnScreenText(TestText2);
     //my_stbtt_print(0,0,"Another Test");
-
+    return;
     TestText.Color.Red += dr;
     if(TestText.Color.Red > 1.0)
 	dr=-DR;

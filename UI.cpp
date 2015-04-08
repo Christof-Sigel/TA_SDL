@@ -2,11 +2,18 @@
 #define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
 #include "stb_truetype.h"
 
+struct FontDetails
+{
+    float Height;
+    stbtt_bakedchar FontData[96];
+    GLuint FontTexture;
+};
+
 struct ScreenText
 {
     GLuint VertexArrayObject;
-    GLuint FontTexture;
     int NumberOfVertices;
+    FontDetails * Font;
     union
     {
 	struct
@@ -45,31 +52,47 @@ float TextWidth(char * Text,stbtt_bakedchar * FontData)
 }
 
 ShaderProgram FontShader;
-unsigned char temp_bitmap[512*512];
-stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
-GLuint ftex;
+const int FONT_BITMAP_SIZE=256;
+unsigned char FontBitmap[FONT_BITMAP_SIZE*FONT_BITMAP_SIZE];
 GLuint FontPositionLocation=-1,FontColorLocation=-1;
 
-void SetupTextRendering()
+
+FontDetails LoadFont(const char * File, float Height)
 {
-
-
-    char ttf_buffer[1<<20];
-    FILE * file=fopen("data/times.ttf", "rb");
-    if(!file)
+    MemoryMappedFile FontFile = MemoryMapFile(File);
+    if(!FontFile.MMapBuffer)
     {
-	LogError("Failed to load font file");
-//	return;
+	LogError("Could not load font file %s",File);
+	return {0};
     }
-    fread(ttf_buffer, 1, 1<<20, file);
-    fclose(file);
-    stbtt_BakeFontBitmap((const unsigned char*)ttf_buffer,0, 32.0, temp_bitmap,512,512, 32,96, cdata); // no guarantee this fits!
-    // can free ttf_buffer at this point
-    glGenTextures(1, &ftex);
-    glBindTexture(GL_TEXTURE_2D, ftex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512,512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, temp_bitmap);
+    FontDetails Result;
+    int FirstUnused=stbtt_BakeFontBitmap(FontFile.MMapBuffer,0, Height, FontBitmap,FONT_BITMAP_SIZE,FONT_BITMAP_SIZE, 32,96, Result.FontData); // no guarantee this fits!
+    Result.Height=Height;
+    UnMapFile(FontFile);
+    if(FirstUnused<=0)
+    {
+	LogError("Only %d characters of font %s fit",-FirstUnused,File);
+	return{0};
+    }
+    
+    glGenTextures(1, &Result.FontTexture);
+    glBindTexture(GL_TEXTURE_2D, Result.FontTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, FONT_BITMAP_SIZE,FONT_BITMAP_SIZE, 0, GL_ALPHA, GL_UNSIGNED_BYTE, FontBitmap);
     // can free temp_bitmap at this point
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    return Result;
+}
+
+FontDetails Times32;
+FontDetails Times24;
+FontDetails Times16;
+void SetupTextRendering()
+{
+    Times32=LoadFont("data/times.ttf",32);
+    Times24=LoadFont("data/times.ttf",24);
+    Times16=LoadFont("data/times.ttf",16);
+    
+    
 
     
     FontShader=LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl");
@@ -84,7 +107,7 @@ void SetupTextRendering()
 }
 
 
-ScreenText SetupOnScreenText(char * Text, float X, float Y, GLuint FontTexture,stbtt_bakedchar * FontData,float Red, float Green, float Blue)
+ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Green, float Blue,FontDetails * Font)
 {
     int NumQuads=0;
     char * t=Text;
@@ -97,9 +120,9 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y, GLuint FontTexture,s
     const int NUM_FLOATS_PER_QUAD=2*3*2*2;//2 triangles per quad, 3 verts per triangle, 2 position and 2 texture coords per vert
     GLfloat VertexAndTexCoordData[NumQuads*NUM_FLOATS_PER_QUAD];
     ScreenText result;
+    result.Font=Font;
     result.Position.X=X;
     result.Position.Y=Y;
-    result.FontTexture=FontTexture;
     result.NumberOfVertices=NumQuads * 6;
     result.Color.Red=Red;
     result.Color.Blue=Blue;
@@ -111,7 +134,7 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y, GLuint FontTexture,s
 	if (Text[i] >= 32 && Text[i] >0) {
 	    stbtt_aligned_quad q;
 	    //TODO(Christof): Make this position independant
-	    stbtt_GetBakedQuad(FontData, 512,512, Text[i]-32, &TextX,&TextY,&q,1);
+	    stbtt_GetBakedQuad(Font->FontData, FONT_BITMAP_SIZE,FONT_BITMAP_SIZE, Text[i]-32, &TextX,&TextY,&q,1);
 	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 0]=q.x0;
 	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 1]=q.y0;
 	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 2]=q.s0;
@@ -168,7 +191,7 @@ void RenderOnScreenText(ScreenText Text)
     glUniform2fv(FontPositionLocation,1,Text.Position.Contents);
     glUniform3fv(FontColorLocation,1,Text.Color.Contents);
     glBindVertexArray(Text.VertexArrayObject);
-    glBindTexture(GL_TEXTURE_2D,Text.FontTexture);
+    glBindTexture(GL_TEXTURE_2D,Text.Font->FontTexture);
     glDrawArrays(GL_TRIANGLES,0,Text.NumberOfVertices);
 }
 
