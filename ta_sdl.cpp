@@ -153,8 +153,8 @@ void LoadCurrentModel()
 	TestText2=SetupOnScreenText(tmp,15,54, 1,1,1, &Times24);
 	}
 	ScreenText ** temp=(ScreenText**)malloc(sizeof(ScreenText*)*2);
-	temp[0]=&TempText1;
-	temp[1]=&TempText2;
+	temp[0]=&TestText1;
+	temp[1]=&TestText2;
 	SetupUIElementEnclosingText(0,0, 0.25,0.75,0.25, 1,1,1, 5,1, 2,temp); 
 
 	
@@ -210,7 +210,7 @@ void Setup()
     ViewMatrixLocation = GetUniformLocation(UnitShader,"ViewMatrix");
 
 
-    TestElement=SetupUIElement(0,0, 600,100, 1,1,1, 0,1,0, 5,0.5, 0);
+    TestElement=SetupUIElement(0,0, 600,100, 1,1,1, 0,1,0, 5,0.5);
     
     TestText2=SetupOnScreenText("This is a test, now somewhat longer",0,30, 1,1,1, &Times32);
 

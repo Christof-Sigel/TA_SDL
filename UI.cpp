@@ -318,23 +318,6 @@ void SetupUIElementRender()
     glUniform2iv(GetUniformLocation(UIElementShaderProgram,"Viewport"),1,viewport+2);
 }
 
-UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha, int NumberOfTexts, ScreenText** Texts)
-{
-    float Width=0;
-    float Height=0;
-    for(int i=0;i< NumberOfTexts;i++)
-    {
-	if(Width<Texts[i]->Width)
-	    Width=Texts[i]->Width;
-	Height+=Texts[i]->Font->Height;
-	Texts[i]->X=X+BorderWidth;
-	Texts[i]->Y=Y+BorderWidth+Height;
-    }
-    UIElement Result=SetupUIElement(X,Y,Width+BorderWidth*2,Height+BorderWidth*2,BackgroundRed,BackgroundGreen,BackgroundBlue,BorderRed,BorderGreen,BorderBlue,BorderWidth,Alpha);
-    Result.Texts=Texts;
-    Result.NumberOfTexts=NumberOfTexts;
-    return Result;
-}
 
 UIElement SetupUIElement(float X, float Y, float Width, float Height, float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha)
 {
@@ -358,6 +341,25 @@ UIElement SetupUIElement(float X, float Y, float Width, float Height, float Back
     
     return result;
 }
+
+UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha, int NumberOfTexts, ScreenText** Texts)
+{
+    float Width=0;
+    float Height=0;
+    for(int i=0;i< NumberOfTexts;i++)
+    {
+	if(Width<Texts[i]->Width)
+	    Width=Texts[i]->Width;
+	Height+=Texts[i]->Font->Height;
+	Texts[i]->Position.X=X+BorderWidth;
+	Texts[i]->Position.Y=Y+BorderWidth+Height;
+    }
+    UIElement Result=SetupUIElement(X,Y,Width+BorderWidth*2,Height+BorderWidth*2,BackgroundRed,BackgroundGreen,BackgroundBlue,BorderRed,BorderGreen,BorderBlue,BorderWidth,Alpha);
+    Result.Texts=Texts;
+    Result.NumberOfTexts=NumberOfTexts;
+    return Result;
+}
+
 
 void RenderUIElement(UIElement Element)
 {
