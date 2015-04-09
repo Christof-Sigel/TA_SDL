@@ -99,6 +99,7 @@ float TextWidth(char * Text, FontDetails * Font)
 	    stbtt_aligned_quad q;
 	    stbtt_GetBakedQuad(Font->FontData, FONT_BITMAP_SIZE,FONT_BITMAP_SIZE, *Text-32, &Width,&Y,&q,1);
 	}
+	Text++;
     }
     return Width;
 }
@@ -322,7 +323,7 @@ void SetupUIElementRender()
 UIElement SetupUIElement(float X, float Y, float Width, float Height, float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha)
 {
     //TODO(Christof): Add text rendering
-    UIElement result={0};
+    UIElement result={{{0}}};
 
     result.Position.X=X;
     result.Position.Y=Y;
@@ -342,18 +343,20 @@ UIElement SetupUIElement(float X, float Y, float Width, float Height, float Back
     return result;
 }
 
-UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha, int NumberOfTexts, ScreenText** Texts)
+UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha, int NumberOfTexts, ScreenText** Texts, float TopPadding=0, float BottomPadding=5,float LeftPadding=5,float RightPadding=5)
 {
     float Width=0;
-    float Height=0;
+    float Height=TopPadding;
     for(int i=0;i< NumberOfTexts;i++)
     {
 	if(Width<Texts[i]->Width)
 	    Width=Texts[i]->Width;
 	Height+=Texts[i]->Font->Height;
-	Texts[i]->Position.X=X+BorderWidth;
+	Texts[i]->Position.X=X+LeftPadding+BorderWidth;
 	Texts[i]->Position.Y=Y+BorderWidth+Height;
     }
+    Height+=BottomPadding;
+    Width+=LeftPadding+RightPadding;
     UIElement Result=SetupUIElement(X,Y,Width+BorderWidth*2,Height+BorderWidth*2,BackgroundRed,BackgroundGreen,BackgroundBlue,BorderRed,BorderGreen,BorderBlue,BorderWidth,Alpha);
     Result.Texts=Texts;
     Result.NumberOfTexts=NumberOfTexts;

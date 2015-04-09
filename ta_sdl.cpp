@@ -84,9 +84,7 @@ ShaderProgram UnitShader;
 
 
 
-ScreenText TestText;
-ScreenText TestText2;
-UIElement TestElement;
+UIElement TestElement[5];
 int64_t StartTime=0;
 int NumberOfFrames=0;
 
@@ -106,10 +104,10 @@ std::vector<UnitDetails> Units;
 
 void LoadCurrentModel()
 {
-    if(UnitIndex>Units.size()-1)
-	UnitIndex=Units.size()-1;
-    if(UnitIndex<0)
+    if(UnitIndex>(int)Units.size()-1)
 	UnitIndex=0;
+    if(UnitIndex<0)
+	UnitIndex=Units.size()-1;
 
     char * UnitName=Units[UnitIndex].GetString("UnitName");
     int len=snprintf(0,0,"objects3d/%s.3do",UnitName)+1;
@@ -124,38 +122,51 @@ void LoadCurrentModel()
 	if(temp_model.Name)
 	    Unload3DO(&temp_model);
 	Load3DOFromBuffer(temp,&temp_model);
-	char * Name=Units[UnitIndex].GetString("Name");
-	char * SideName;
-	UnitSide Side=Units[UnitIndex].GetSide();
-	switch(Side)
+	//TODO(Christof): free memory correctly
+	float X=0,Y=0;
+	for(int i=0;i<5;i++)
 	{
-	case SIDE_ARM:
-	    SideName = "ARM";
-	    break;
-	case SIDE_CORE:
-	    SideName = "CORE";
-	    break;
-	default:
-	    SideName="UNKNOWN";
-	    break;
-	}
+	    ScreenText * NameText=(ScreenText*)malloc(sizeof(ScreenText));
+	    ScreenText * DescText=(ScreenText*)malloc(sizeof(ScreenText));
+	    int Index=UnitIndex+(i-2);
+	    if(Index<0)
+		Index+=Units.size();
+	    if(Index>=Units.size())
+		Index-=Units.size();
+	    char * Name=Units[Index].GetString("Name");
+	    char * SideName;
+	    UnitSide Side=Units[Index].GetSide();
+	    switch(Side)
+	    {
+	    case SIDE_ARM:
+		SideName = "ARM";
+		break;
+	    case SIDE_CORE:
+		SideName = "CORE";
+		break;
+	    default:
+		SideName="UNKNOWN";
+		break;
+	    }
 
-	int size=snprintf(NULL, 0, "%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name)+1;
-	char tmp[size];
-	snprintf(tmp,size,"%s - %s (from %s)",SideName,Name,Entry.ContainedInFile->Name);
-	TestText=SetupOnScreenText(tmp,10,30, 1,1,1, &Times32);
+	    int size=snprintf(NULL, 0, "%s: %s",SideName,Name)+1;
+	    char tmp[size];
+	    snprintf(tmp,size,"%s: %s",SideName,Name);
+	    *NameText=SetupOnScreenText(tmp,10,30, 1,1,1, &Times32);
 
-	{
-	    char * Desc=Units[UnitIndex].GetString("Description");
-	int size=snprintf(NULL, 0, "%s",Desc)+1;
-	char tmp[size];
-	snprintf(tmp,size,"%s",Desc);
-	TestText2=SetupOnScreenText(tmp,15,54, 1,1,1, &Times24);
+	    {
+		char * Desc=Units[Index].GetString("Description");
+		int size=snprintf(NULL, 0, "%s",Desc)+1;
+		char tmp[size];
+		snprintf(tmp,size,"%s",Desc);
+		*DescText=SetupOnScreenText(tmp,15,54, 1,1,1, &Times24);
+	    }
+	    ScreenText ** temp=(ScreenText**)malloc(sizeof(ScreenText*)*2);
+	    temp[0]=NameText;
+	    temp[1]=DescText;
+	    TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25,0.75,0.25, 1,1,1, 5,(1.0-fabs(i-2.0)/4), 2,temp);
+	    Y+=TestElement[i].Size.Height+5;
 	}
-	ScreenText ** temp=(ScreenText**)malloc(sizeof(ScreenText*)*2);
-	temp[0]=&TestText;
-	temp[1]=&TestText2;
-	SetupUIElementEnclosingText(0,0, 0.25,0.75,0.25, 1,1,1, 5,1, 2,temp); 
 
 	
 	PrepareObject3dForRendering(&temp_model);
@@ -172,11 +183,11 @@ void HandleKeyDown(SDL_Keysym key)
 	quit=true;
 	break;
     case SDLK_o:
-	UnitIndex++;
+	UnitIndex--;;
 	LoadCurrentModel();
 	break;
     case SDLK_l:
-	UnitIndex--;
+	UnitIndex++;
 	LoadCurrentModel();
 	break;
     }
@@ -210,11 +221,6 @@ void Setup()
     ViewMatrixLocation = GetUniformLocation(UnitShader,"ViewMatrix");
 
 
-    TestElement=SetupUIElement(0,0, 600,100, 1,1,1, 0,1,0, 5,0.5);
-    
-    TestText2=SetupOnScreenText("This is a test, now somewhat longer",0,30, 1,1,1, &Times32);
-
-    
     //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
@@ -284,30 +290,8 @@ void Render()
     glEnable(GL_BLEND);                      // Turn Blending on
     glDisable(GL_DEPTH_TEST);        //Turn Depth Testing off
 
-    RenderUIElement(TestElement);
-
-
-    // RenderOnScreenText(TestText);
-    //RenderOnScreenText(TestText2);
-    //my_stbtt_print(0,0,"Another Test");
-    return;
-    TestText.Color.Red += dr;
-    if(TestText.Color.Red > 1.0)
-	dr=-DR;
-    if(TestText.Color.Red<0.0)
-	dr=DR;
-    
-    TestText.Color.Green += dg;
-    if(TestText.Color.Green > 1.0)
-	dg=-DG;
-    if(TestText.Color.Green<0.0)
-	dg=DG;
-    
-    TestText.Color.Blue += db;
-    if(TestText.Color.Blue > 1.0)
-	db=-DB;
-    if(TestText.Color.Blue<0.0)
-	db=DB;
+    for(int i=0;i<5;i++)
+    RenderUIElement(TestElement[i]);
 
 
     
