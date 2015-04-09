@@ -153,7 +153,7 @@ void LoadCurrentModel()
 	TestText2=SetupOnScreenText(tmp,15,54, 1,1,1, &Times24);
 	}
 	ScreenText ** temp=(ScreenText**)malloc(sizeof(ScreenText*)*2);
-	temp[0]=&TestText1;
+	temp[0]=&TestText;
 	temp[1]=&TestText2;
 	SetupUIElementEnclosingText(0,0, 0.25,0.75,0.25, 1,1,1, 5,1, 2,temp); 
 
