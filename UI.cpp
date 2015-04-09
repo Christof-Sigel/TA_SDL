@@ -14,6 +14,7 @@ struct ScreenText
     GLuint VertexArrayObject;
     int NumberOfVertices;
     FontDetails * Font;
+    float Width;
     union
     {
 	struct
@@ -33,23 +34,6 @@ struct ScreenText
     } Color;
 	
 };
-
-float TextWidth(char * Text,stbtt_bakedchar * FontData)
-{
-    float Width=0;
-    float Y=0;
-    while(*Text)
-    {
-	if (*Text >= 32 && *Text >0) {
-	    stbtt_aligned_quad q;
-	    //TODO(Christof): Make this position independant
-	    stbtt_GetBakedQuad(FontData, 512,512, *Text-32, &Width,&Y,&q,1);
-	}
-	Text++;
-    }
-
-    return Width;
-}
 
 ShaderProgram FontShader;
 const int FONT_BITMAP_SIZE=256;
@@ -106,9 +90,26 @@ void SetupTextRendering()
     FontColorLocation=GetUniformLocation(FontShader,"TextColor");
 }
 
-
-ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Green, float Blue,FontDetails * Font)
+float TextWidth(char * Text, FontDetails * Font)
 {
+    float Width=0,Y=0;
+    while(*Text)
+    {
+	if (*Text >= 32 && *Text >0) {
+	    stbtt_aligned_quad q;
+	    stbtt_GetBakedQuad(Font->FontData, FONT_BITMAP_SIZE,FONT_BITMAP_SIZE, *Text-32, &Width,&Y,&q,1);
+	}
+    }
+    return Width;
+}
+
+
+
+ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Green, float Blue,FontDetails * Font,
+			     float MaxWidth=-1)
+{
+    if(MaxWidth==-1)
+	MaxWidth=TextWidth(Text,Font);
     int NumQuads=0;
     char * t=Text;
     while (*t) {
@@ -123,7 +124,6 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Gree
     result.Font=Font;
     result.Position.X=X;
     result.Position.Y=Y;
-    result.NumberOfVertices=NumQuads * 6;
     result.Color.Red=Red;
     result.Color.Blue=Blue;
     result.Color.Green=Green;
@@ -135,6 +135,11 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Gree
 	    stbtt_aligned_quad q;
 	    //TODO(Christof): Make this position independant
 	    stbtt_GetBakedQuad(Font->FontData, FONT_BITMAP_SIZE,FONT_BITMAP_SIZE, Text[i]-32, &TextX,&TextY,&q,1);
+	    if(TextX>MaxWidth)
+	    {
+		NumQuads = i;
+		break;
+	    }
 	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 0]=q.x0;
 	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 1]=q.y0;
 	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 2]=q.s0;
@@ -165,8 +170,13 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Gree
 	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 21]=q.y0;
 	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 22]=q.s0;
 	    VertexAndTexCoordData[i*NUM_FLOATS_PER_QUAD + 23]=q.t0;
+
+	    result.Width=q.x1;
 	}
     }
+
+    result.NumberOfVertices=NumQuads * 6;
+
     glBindVertexArray(result.VertexArrayObject);
 
     GLuint VertexBuffer;
@@ -188,6 +198,7 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Gree
 
 void RenderOnScreenText(ScreenText Text)
 {
+    glUseProgram(FontShader.ProgramID);
     glUniform2fv(FontPositionLocation,1,Text.Position.Contents);
     glUniform3fv(FontColorLocation,1,Text.Color.Contents);
     glBindVertexArray(Text.VertexArrayObject);
@@ -230,7 +241,8 @@ struct UIElement
     UIElementColor BackgroundColor;
     GLfloat BorderWidth;
     GLfloat Alpha;
-    ScreenText Text;
+    int NumberOfTexts;
+    ScreenText ** Texts;
 };
 
 GLuint UIElementRenderingVertexBuffer=0;
@@ -306,10 +318,28 @@ void SetupUIElementRender()
     glUniform2iv(GetUniformLocation(UIElementShaderProgram,"Viewport"),1,viewport+2);
 }
 
-UIElement SetupUIElement(float X, float Y, float Width, float Height, float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha,char * Text)
+UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha, int NumberOfTexts, ScreenText** Texts)
+{
+    float Width=0;
+    float Height=0;
+    for(int i=0;i< NumberOfTexts;i++)
+    {
+	if(Width<Texts[i]->Width)
+	    Width=Texts[i]->Width;
+	Height+=Texts[i]->Font->Height;
+	Texts[i]->X=X+BorderWidth;
+	Texts[i]->Y=Y+BorderWidth+Height;
+    }
+    UIElement Result=SetupUIElement(X,Y,Width+BorderWidth*2,Height+BorderWidth*2,BackgroundRed,BackgroundGreen,BackgroundBlue,BorderRed,BorderGreen,BorderBlue,BorderWidth,Alpha);
+    Result.Texts=Texts;
+    Result.NumberOfTexts=NumberOfTexts;
+    return Result;
+}
+
+UIElement SetupUIElement(float X, float Y, float Width, float Height, float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha)
 {
     //TODO(Christof): Add text rendering
-    UIElement result;
+    UIElement result={0};
 
     result.Position.X=X;
     result.Position.Y=Y;
@@ -340,5 +370,9 @@ void RenderUIElement(UIElement Element)
     glUniform1f(UIElementAlphaLocation,Element.Alpha);
     glBindVertexArray(UIElementRenderingVertexBuffer);
     glDrawArrays(GL_TRIANGLES,0,6);
+    for(int i=0;i<Element.NumberOfTexts;i++)
+    {
+	RenderOnScreenText(*Element.Texts[i]);
+    }
 }
 

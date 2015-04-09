@@ -152,7 +152,12 @@ void LoadCurrentModel()
 	snprintf(tmp,size,"%s",Desc);
 	TestText2=SetupOnScreenText(tmp,15,54, 1,1,1, &Times24);
 	}
+	ScreenText ** temp=(ScreenText**)malloc(sizeof(ScreenText*)*2);
+	temp[0]=&TempText1;
+	temp[1]=&TempText2;
+	SetupUIElementEnclosingText(0,0, 0.25,0.75,0.25, 1,1,1, 5,1, 2,temp); 
 
+	
 	PrepareObject3dForRendering(&temp_model);
     }
 }
@@ -281,9 +286,9 @@ void Render()
 
     RenderUIElement(TestElement);
 
-    glUseProgram(FontShader.ProgramID);
-    RenderOnScreenText(TestText);
-    RenderOnScreenText(TestText2);
+
+    // RenderOnScreenText(TestText);
+    //RenderOnScreenText(TestText2);
     //my_stbtt_print(0,0,"Another Test");
     return;
     TestText.Color.Red += dr;
