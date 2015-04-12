@@ -190,11 +190,31 @@ void HandleKeyDown(SDL_Keysym key)
 	UnitIndex++;
 	LoadCurrentModel();
 	break;
+    case SDLK_UP:
+	ViewMatrix.Rotate(1,0,0,-0.01f);
+	break;
+    case SDLK_DOWN:
+	ViewMatrix.Rotate(1,0,0,0.01f);
+	break;
+    case SDLK_LEFT:
+	ViewMatrix.Rotate(0,1,0,-0.01f);
+	break;
+    case SDLK_RIGHT:
+	ViewMatrix.Rotate(0,1,0,0.01f);
+	break;
+    case SDLK_KP_PLUS:
+    case SDLK_PLUS:
+	ViewMatrix.Move(0,0,0.1f);
+	break;
+    case SDLK_KP_MINUS:
+    case SDLK_MINUS:
+	ViewMatrix.Move(0,0,-0.1f);
+	break;
     }
 }
 
 
-
+TAMap TestMap={0};
 void Setup()
 {
 #ifdef __WINDOWS__
@@ -205,16 +225,23 @@ void Setup()
     SetupTextRendering();
     SetupUIElementRender();
     
-    ProjectionMatrix.SetProjection(60,float(ScreenWidth)/ScreenHeight,1.0,100.0);
+    ProjectionMatrix.SetProjection(60,float(ScreenWidth)/ScreenHeight,1.0,1000.0);
 
-    ViewMatrix.SetTranslation(0,0,-4);
+    ViewMatrix.SetTranslation(0,0,-2);
     ViewMatrix.Rotate(1,0,0, 0.5);
-    ViewMatrix.Rotate(0,1,0, PI);
+    // ViewMatrix.Rotate(0,1,0, PI);
+    //ViewMatrix.Rotate(0,1,0, -PI/4);
+    //ViewMatrix.Move(1,0,0);
     
     UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
     
     glUseProgram(UnitShader.ProgramID);
     glUniform1i(GetUniformLocation(UnitShader,"UnitTexture"),0);
+
+    MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl");
+    
+    glUseProgram(MapShader.ProgramID);
+    glUniform1i(GetUniformLocation(MapShader,"Texture"),0);
 
     ProjectionMatrixLocation = GetUniformLocation(UnitShader,"ProjectionMatrix");
     ModelMatrixLocation = GetUniformLocation(UnitShader,"ModelMatrix");
@@ -229,11 +256,27 @@ void Setup()
     glEnable(GL_CULL_FACE);
     //glDisable(GL_CULL_FACE);
     //glCullFace(GL_BACK);
-    //glFrontFace(GL_CW);
+    glFrontFace(GL_CCW);
         
     LoadHPIFileCollection();
     LoadAllTextures();
-
+    HPIEntry Map = FindEntryInAllFiles("maps/Seven Islands.tnt");
+    if(Map.Name)
+    {
+	char * temp = (char*)malloc(Map.File.FileSize);
+    
+	if(LoadHPIFileEntryData(Map,temp))
+	{
+	    TestMap=LoadTNTFromBuffer(temp);
+	}
+	else
+	    LogDebug("failed to load map buffer from hpi");
+	free(temp);
+    }
+    else
+	LogDebug("failed to load map");
+    
+	
 
     HPIEntry Entry=FindEntryInAllFiles("units");
     if(Entry.IsDirectory)
@@ -276,11 +319,16 @@ void Render()
     ProjectionMatrix.Upload(ProjectionMatrixLocation);
 
 
-    ViewMatrix.Rotate(0,1,0, PI/300);
-    // ViewMatrix.Move(0.01,0,0);
+    //ViewMatrix.Rotate(0,1,0, PI/300);
+    //ViewMatrix.Move(0.01,-0.01,-0.01);
     
     ViewMatrix.Upload(ViewMatrixLocation);
     RenderObject3d(&temp_model,0,ModelMatrixLocation);
+
+    glUseProgram(MapShader.ProgramID);
+    ProjectionMatrix.Upload(GetUniformLocation(MapShader,"Projection"));
+    ViewMatrix.Upload(GetUniformLocation(MapShader,"View"));
+    TestMap.Render();
     
 
     //TODO(Christof): Unit Rendering here
