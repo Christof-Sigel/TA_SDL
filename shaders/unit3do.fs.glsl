@@ -21,4 +21,5 @@ void main(void)
 	//out_Color=vec4(1.0f,0,1.0f,1);
     }
     //out_Color=vec4(0,0,1,1);
+    //out_Color=vec4(FColor,1)*out_Color;
 }

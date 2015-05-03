@@ -19,6 +19,8 @@ void Render();
 void Setup();
 void Teardown();
 SDL_Window * MainSDLWindow;
+void CheckResources();
+void ReloadShaders();
 
 int ScreenWidth=1024,ScreenHeight=768;
 
@@ -32,6 +34,7 @@ int main(int argc, char * argv[])
     SDL_Event e;
     while( !quit )
     {
+	CheckResources();
 	while( SDL_PollEvent( &e ) != 0 )
 	{
 	    if( e.type == SDL_QUIT )
@@ -178,7 +181,6 @@ void HandleKeyDown(SDL_Keysym key)
 {
     switch(key.sym)
     {
-    case SDLK_q:
     case SDLK_ESCAPE:
 	quit=true;
 	break;
@@ -202,14 +204,25 @@ void HandleKeyDown(SDL_Keysym key)
     case SDLK_RIGHT:
 	ViewMatrix.Rotate(0,1,0,0.01f);
 	break;
-    case SDLK_KP_PLUS:
-    case SDLK_PLUS:
-	ViewMatrix.Move(0,0,0.1f);
+    case SDLK_w:
+	ViewMatrix.Move(0,0,0.1);
 	break;
-    case SDLK_KP_MINUS:
-    case SDLK_MINUS:
-	ViewMatrix.Move(0,0,-0.1f);
+    case SDLK_s:
+	ViewMatrix.Move(0,0,-0.1);
+	break;	
+    case SDLK_a:
+	ViewMatrix.Move(-0.1,0,0);
 	break;
+    case SDLK_d:
+	ViewMatrix.Move(0.1,0,0);
+	break;
+    case SDLK_q:
+	ViewMatrix.Move(0,-0.1,0);
+	break;
+    case SDLK_e:
+	ViewMatrix.Move(0,0.1,0);
+	break;
+	
     }
 }
 
@@ -222,7 +235,7 @@ void Setup()
     QueryPerformanceFrequency(&PerfCountFrequencyResult);
     PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
 #endif
-    SetupTextRendering();
+    LoadFonts();
     SetupUIElementRender();
     
     ProjectionMatrix.SetProjection(60,float(ScreenWidth)/ScreenHeight,1.0,1000.0);
@@ -233,20 +246,7 @@ void Setup()
     //ViewMatrix.Rotate(0,1,0, -PI/4);
     //ViewMatrix.Move(1,0,0);
     
-    UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
-    
-    glUseProgram(UnitShader.ProgramID);
-    glUniform1i(GetUniformLocation(UnitShader,"UnitTexture"),0);
-
-    MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl");
-    
-    glUseProgram(MapShader.ProgramID);
-    glUniform1i(GetUniformLocation(MapShader,"Texture"),0);
-
-    ProjectionMatrixLocation = GetUniformLocation(UnitShader,"ProjectionMatrix");
-    ModelMatrixLocation = GetUniformLocation(UnitShader,"ModelMatrix");
-    ViewMatrixLocation = GetUniformLocation(UnitShader,"ViewMatrix");
-
+    ReloadShaders();
 
     //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
@@ -260,7 +260,7 @@ void Setup()
         
     LoadHPIFileCollection();
     LoadAllTextures();
-    HPIEntry Map = FindEntryInAllFiles("maps/Seven Islands.tnt");
+    HPIEntry Map = FindEntryInAllFiles("maps/Greenhaven.tnt");
     if(Map.Name)
     {
 	char * temp = (char*)malloc(Map.File.FileSize);
@@ -418,5 +418,71 @@ bool32 SetupSDLWindow()
     ErrorValue = glGetError();
 
     return 1;
+}
+
+void ReloadShaders()
+{
+    if(UnitShader.ProgramID)
+	UnloadShaderProgram(UnitShader);
+    if(MapShader.ProgramID)
+	UnloadShaderProgram(MapShader);
+    UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
+    
+    glUseProgram(UnitShader.ProgramID);
+    glUniform1i(GetUniformLocation(UnitShader,"UnitTexture"),0);
+
+    MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl");
+    
+    glUseProgram(MapShader.ProgramID);
+    glUniform1i(GetUniformLocation(MapShader,"Texture"),0);
+
+    ProjectionMatrixLocation = GetUniformLocation(UnitShader,"ProjectionMatrix");
+    ModelMatrixLocation = GetUniformLocation(UnitShader,"ModelMatrix");
+    ViewMatrixLocation = GetUniformLocation(UnitShader,"ViewMatrix");
+
+
+    FontShader=LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl");
+    glUseProgram(FontShader.ProgramID);
+    glUniform1i(GetUniformLocation(FontShader,"Texture"),0);
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    glUniform2iv(GetUniformLocation(FontShader,"Viewport"),1,viewport+2);
+    FontPositionLocation=GetUniformLocation(FontShader,"Position");
+    FontColorLocation=GetUniformLocation(FontShader,"TextColor");
+
+    
+    UIElementShaderProgram=LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl");
+    glUseProgram(UIElementShaderProgram.ProgramID);
+
+    UIElementPositionLocation = GetUniformLocation(UIElementShaderProgram,"Position");
+    UIElementSizeLocation = GetUniformLocation(UIElementShaderProgram,"Size");
+    UIElementColorLocation = GetUniformLocation(UIElementShaderProgram,"Color");
+    UIElementBorderColorLocation = GetUniformLocation(UIElementShaderProgram,"BorderColor");
+    UIElementBorderWidthLocation = GetUniformLocation(UIElementShaderProgram,"BorderWidth");
+    UIElementAlphaLocation = GetUniformLocation(UIElementShaderProgram,"Alpha");
+
+    glUniform2iv(GetUniformLocation(UIElementShaderProgram,"Viewport"),1,viewport+2);
+
+}
+
+void CheckResources()
+{
+    uint64_t UnitVertexShaderTime = GetFileModifiedTime("shaders/unit3do.vs.glsl");
+    uint64_t UnitPixelShaderTime = GetFileModifiedTime("shaders/unit3do.fs.glsl");
+    uint64_t MapVertexShaderTime = GetFileModifiedTime("shaders/map.vs.glsl");
+    uint64_t MapPixelShaderTime = GetFileModifiedTime("shaders/map.fs.glsl");
+
+    uint64_t UIVertexShaderTime = GetFileModifiedTime("shaders/UI.vs.glsl");
+    uint64_t UIPixelShaderTime = GetFileModifiedTime("shaders/UI.fs.glsl");
+
+    uint64_t TextVertexShaderTime = GetFileModifiedTime("shaders/font.vs.glsl");
+    uint64_t TextPixelShaderTime = GetFileModifiedTime("shaders/font.fs.glsl");
+    if(UnitVertexShaderTime > UnitShader.VertexFileModifiedTime || UnitPixelShaderTime > UnitShader.PixelFileModifiedTime
+       || MapPixelShaderTime > MapShader.VertexFileModifiedTime || MapVertexShaderTime > MapShader.PixelFileModifiedTime
+       || UIVertexShaderTime > UIElementShaderProgram.VertexFileModifiedTime || UIPixelShaderTime > UIElementShaderProgram.PixelFileModifiedTime
+       || TextVertexShaderTime > FontShader.VertexFileModifiedTime || TextPixelShaderTime > FontShader.PixelFileModifiedTime
+	)
+    ReloadShaders();
 }
     

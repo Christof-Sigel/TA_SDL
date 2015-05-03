@@ -9,6 +9,7 @@ uniform float BorderWidth;
 
 uniform ivec2 Viewport;
 uniform float Alpha;
+in vec2 Dimension;
 
 void main(void)
 {
@@ -19,9 +20,12 @@ void main(void)
 
     //out_Color=vec4(mix(BorderColor,Color,mixVal),1.0);
     out_Color=vec4(Color,Alpha);
+    float Gradient=1-d1/Dimension.y;
+    Gradient = ((Gradient)+(1-d2/Dimension.x))/2;
+//    Gradient = 1-Gradient;
     if(d1 < BorderWidth || d2 < BorderWidth)
     {
-	out_Color=vec4(BorderColor,Alpha);
+	out_Color=vec4(BorderColor*Gradient,Alpha);
     }
     // out_Color=vec4(d1,d2,1,1);
 //    out_Color=vec4(FEdgeDistance.xyz,1);

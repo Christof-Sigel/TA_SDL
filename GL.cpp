@@ -184,6 +184,7 @@ struct Matrix
 struct ShaderProgram
 {
     GLuint ProgramID, VertexID, PixelID;
+    uint64_t VertexFileModifiedTime, PixelFileModifiedTime;
 };
 
 
@@ -235,7 +236,7 @@ ShaderProgram LoadShaderProgram( const char * VertexShaderFileName, const char *
 	LogError("Failed to load vertex shader file %s",VertexShaderFileName);
 	return {0};
     }
-
+    
     MemoryMappedFile PixelShaderFile=MemoryMapFile(PixelShaderFileName);
     if(!PixelShaderFile.MMapBuffer)
     {
@@ -245,6 +246,8 @@ ShaderProgram LoadShaderProgram( const char * VertexShaderFileName, const char *
     }
     
     ShaderProgram Program;
+    Program.VertexFileModifiedTime = VertexShaderFile.ModifiedTime;
+    Program.PixelFileModifiedTime = PixelShaderFile.ModifiedTime;
     Program.ProgramID = glCreateProgram();
     GLenum ErrorValue = glGetError();
     if(ErrorValue!=GL_NO_ERROR)

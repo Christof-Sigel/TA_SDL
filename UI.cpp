@@ -70,24 +70,11 @@ FontDetails LoadFont(const char * File, float Height)
 FontDetails Times32;
 FontDetails Times24;
 FontDetails Times16;
-void SetupTextRendering()
+void LoadFonts()
 {
     Times32=LoadFont("data/times.ttf",32);
     Times24=LoadFont("data/times.ttf",24);
     Times16=LoadFont("data/times.ttf",16);
-    
-    
-
-    
-    FontShader=LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl");
-    glUseProgram(FontShader.ProgramID);
-    glUniform1i(GetUniformLocation(FontShader,"Texture"),0);
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    glUniform2iv(GetUniformLocation(FontShader,"Viewport"),1,viewport+2);
-    FontPositionLocation=GetUniformLocation(FontShader,"Position");
-    FontColorLocation=GetUniformLocation(FontShader,"TextColor");
 }
 
 float TextWidth(char * Text, FontDetails * Font)
@@ -304,19 +291,6 @@ void SetupUIElementRender()
 
 
 
-    UIElementShaderProgram=LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl");
-    glUseProgram(UIElementShaderProgram.ProgramID);
-
-    UIElementPositionLocation = GetUniformLocation(UIElementShaderProgram,"Position");
-    UIElementSizeLocation = GetUniformLocation(UIElementShaderProgram,"Size");
-    UIElementColorLocation = GetUniformLocation(UIElementShaderProgram,"Color");
-    UIElementBorderColorLocation = GetUniformLocation(UIElementShaderProgram,"BorderColor");
-    UIElementBorderWidthLocation = GetUniformLocation(UIElementShaderProgram,"BorderWidth");
-    UIElementAlphaLocation = GetUniformLocation(UIElementShaderProgram,"Alpha");
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    glUniform2iv(GetUniformLocation(UIElementShaderProgram,"Viewport"),1,viewport+2);
 }
 
 

@@ -99,7 +99,9 @@ struct MemoryMappedFile
 #endif
     unsigned char * MMapBuffer;
     int64_t FileSize;
+    uint64_t ModifiedTime;
 };
+inline uint64_t GetFileModifiedTime(const char * FileName);
 
 MemoryMappedFile MemoryMapFile(const char * FileName)
 {
@@ -110,6 +112,7 @@ MemoryMappedFile MemoryMapFile(const char * FileName)
     if(stat64(FileName,&filestats)==-1)
 	return {0};
     MMFile.FileSize=filestats.st_size;
+    MMFile.ModifiedTime=filestats.st_mtime;
     
     MMFile.File=open(FileName,O_RDONLY);
     if(MMFile.File==-1)
@@ -128,6 +131,7 @@ MemoryMappedFile MemoryMapFile(const char * FileName)
     DWORD high=0;
     DWORD low=GetFileSize(MMFile.File,&high);
     MMFile.FileSize = low | (((int64_t)high) << 32);
+    MMFile.ModifiedTime = GetFileModifiedTime(FileName);
     MMFile.MMFile=CreateFileMapping(MMFile.File,NULL,PAGE_READONLY,0,0,NULL);
     if(!MMFile.MMFile)
     {
@@ -311,3 +315,64 @@ inline bool32 CaseInsensitiveMatch(const char * String1, const char * String2)
     }
     return *String1 == *String2;
 }
+
+inline uint64_t GetCurrentFileTime()
+{
+#ifdef __WINDOWS__
+    FILETIME CurrentFileTime;
+    GetSystemTimeAsFileTime(&CurrentFileTime);
+    ULARGE_INTEGER FileTimeAsLargeInt;
+    FileTimeAsLargeInt.LowPart = CurrentFileTime.dwLowDateTime;
+    FileTimeAsLargeInt.HighPart = CurrentFileTime.dwHighDateTime;
+    return FileTimeAsLargeInt.QuadPart;
+#endif
+#ifdef __LINUX__
+    struct timespec time;
+    clock_gettime(CLOCK_REALTIME,&time);
+    return (time.tv_sec)+(time.tv_nsec/1000/1000/1000);
+#endif
+}
+
+
+inline uint64_t GetFileModifiedTime(const char * FileName)
+{
+#ifdef __WINDOWS__
+    FILETIME FileTime;
+    HANDLE hFile = CreateFile(FileName, GENERIC_READ, FILE_SHARE_READ, NULL,
+        OPEN_EXISTING, 0, NULL);
+
+    if(hFile == INVALID_HANDLE_VALUE)
+    {
+
+	DWORD errorMessageID = GetLastError();
+
+	LPSTR messageBuffer = nullptr;
+	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				     NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+
+	LogError("Failed to open file %s while checking file access time: %s\n",FileName,messageBuffer);
+	LocalFree(messageBuffer);
+
+        return 0;
+    }
+    if(!GetFileTime(hFile,NULL,NULL, &FileTime))
+    {
+	LogError("Could not get file write time for %s",FileName);
+	return 0;
+    }
+        
+    CloseHandle(hFile);    
+
+    ULARGE_INTEGER FileTimeAsLargeInt;
+    FileTimeAsLargeInt.LowPart = FileTime.dwLowDateTime;
+    FileTimeAsLargeInt.HighPart = FileTime.dwHighDateTime;
+    return FileTimeAsLargeInt.QuadPart;
+#endif
+#ifdef __LINUX__
+    struct timespec time;
+    clock_gettime(CLOCK_REALTIME,&time);
+    return (time.tv_sec)+(time.tv_nsec/1000/1000/1000);
+#endif
+}
+
