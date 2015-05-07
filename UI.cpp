@@ -67,15 +67,7 @@ FontDetails LoadFont(const char * File, float Height)
     return Result;
 }
 
-FontDetails Times32;
-FontDetails Times24;
-FontDetails Times16;
-void LoadFonts()
-{
-    Times32=LoadFont("data/times.ttf",32);
-    Times24=LoadFont("data/times.ttf",24);
-    Times16=LoadFont("data/times.ttf",16);
-}
+
 
 float TextWidth(char * Text, FontDetails * Font)
 {
