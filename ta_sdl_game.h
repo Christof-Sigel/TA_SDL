@@ -46,3 +46,34 @@ PushSize_(MemoryArena *Arena, memory_index Size)
     
     return(Result);
 }
+
+
+struct GameState
+{
+    bool32 IsInitialised;
+    MemoryArena GameArena;
+
+    struct Matrix * ProjectionMatrix;
+    Matrix * ModelMatrix;
+    Matrix * ViewMatrix;
+
+    struct ShaderProgram * UnitShader;
+    struct ShaderProgram * MapShader;
+    struct ShaderProgram * FontShader;
+    struct ShaderProgram * UIElementShaderProgram;    
+    int64_t StartTime;
+    int NumberOfFrames;
+    GLuint ProjectionMatrixLocation;
+    GLuint ModelMatrixLocation;
+    GLuint ViewMatrixLocation;
+    GLuint FontPositionLocation,FontColorLocation;
+    GLuint UIElementRenderingVertexBuffer;
+
+    GLuint UIElementPositionLocation,UIElementSizeLocation,UIElementColorLocation,UIElementBorderColorLocation,UIElementBorderWidthLocation,UIElementAlphaLocation;
+
+    struct UIElement * TestElement;
+    struct Object3d * temp_model;
+    struct TAMap * TestMap;
+
+    int ScreenWidth,ScreenHeight;
+};

@@ -101,14 +101,13 @@ float GetHeightFor(int X, int Y, FILE_TNTAttribute * Attributes, int Width,int H
     return result;
 }
 
-TAMap LoadTNTFromBuffer(char * Buffer)
+bool32 LoadTNTFromBuffer(char * Buffer, TAMap * Result)
 {
     FILE_TNTHeader * Header = (FILE_TNTHeader *)Buffer;
     if(Header->IDVersion != TNT_HEADER_ID)
     {
-	return {0};
+	return 0;
     }
-    TAMap Result={0};
     LogDebug("%dx%d",Header->Width,Header->Height);
     uint16_t * TileIndices = (uint16_t*)(Buffer + Header->MapDataOffset);//these map to 32x32 tiles NOT 16x16 half tiles
     int NumberOfHalfTiles = Header->Width*Header->Height;
@@ -166,8 +165,8 @@ TAMap LoadTNTFromBuffer(char * Buffer)
     
 
 texture_done:
-    glGenTextures(1,&Result.MapTexture);
-    glBindTexture(GL_TEXTURE_2D,Result.MapTexture);
+    glGenTextures(1,&Result->MapTexture);
+    glBindTexture(GL_TEXTURE_2D,Result->MapTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TileTextureSide, TileTextureSide,0, GL_RGBA, GL_UNSIGNED_BYTE, TileTextureData);
@@ -230,8 +229,8 @@ texture_done:
     }
 
 
-    glGenVertexArrays(1,&Result.MapVertexBuffer);
-    glBindVertexArray(Result.MapVertexBuffer);
+    glGenVertexArrays(1,&Result->MapVertexBuffer);
+    glBindVertexArray(Result->MapVertexBuffer);
 
     GLuint VertexBuffer;
     glGenBuffers(1,&VertexBuffer);
@@ -246,8 +245,8 @@ texture_done:
 
     glBindVertexArray(0);
     // glDeleteBuffers(1,&VertexBuffer);
-    Result.NumTriangles = NumberOfHalfTiles*2;
+    Result->NumTriangles = NumberOfHalfTiles*2;
     free(PositionAndTexture);
 
-    return Result;
+    return 1;
 }

@@ -225,15 +225,12 @@ struct UIElement
     ScreenText ** Texts;
 };
 
-GLuint UIElementRenderingVertexBuffer=0;
-ShaderProgram UIElementShaderProgram={0};
-GLuint UIElementPositionLocation=0,UIElementSizeLocation=0,UIElementColorLocation=0,UIElementBorderColorLocation=0,UIElementBorderWidthLocation=0,UIElementAlphaLocation;
 
-void SetupUIElementRender()
+void SetupUIElementRender(GameState * CurrentGameState)
 {
     GLfloat RenderData[6*(2+4)];//6 Vert (2 triangles) each 2 position coords and 4 distance to edge "coords"
     
-    glGenVertexArrays(1,&UIElementRenderingVertexBuffer);
+    glGenVertexArrays(1,&CurrentGameState->UIElementRenderingVertexBuffer);
 
     GLfloat Vertices[]={0,0, 1,0, 1,1, 0,1};
     GLfloat EdgeDistance[]={0,1,1,0, 0,0,1,1, 1,0,0,1, 1,1,0,0};
@@ -264,7 +261,7 @@ void SetupUIElementRender()
     }
 		      
     
-    glBindVertexArray(UIElementRenderingVertexBuffer);
+    glBindVertexArray(CurrentGameState->UIElementRenderingVertexBuffer);
 
     GLuint VertexBuffer;
     glGenBuffers(1,&VertexBuffer);
@@ -330,9 +327,9 @@ UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, floa
 }
 
 
-void RenderUIElement(UIElement Element, ShaderProgram * FontShader, GLuint FontPositionLocation, GLuint FontColorLocation)
+void RenderUIElement(UIElement Element,ShaderProgram * UIElementShaderProgram,GLuint UIElementPositionLocation, GLuint UIElementSizeLocation, GLuint UIElementColorLocation,GLuint UIElementBorderColorLocation,GLuint UIElementBorderWidthLocation, GLuint UIElementAlphaLocation, GLuint UIElementRenderingVertexBuffer, ShaderProgram * FontShader, GLuint FontPositionLocation, GLuint FontColorLocation)
 {
-    glUseProgram(UIElementShaderProgram.ProgramID);
+    glUseProgram(UIElementShaderProgram->ProgramID);
     glUniform2fv(UIElementPositionLocation,1,Element.Position.Contents);
     glUniform2fv(UIElementSizeLocation,1,Element.Size.Contents);
     glUniform3fv(UIElementColorLocation,1,Element.BackgroundColor.Contents);

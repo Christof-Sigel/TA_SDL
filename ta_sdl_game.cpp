@@ -1,33 +1,27 @@
 #include <stdio.h>
+#include <SDL2/SDL.h>
+#ifdef __LINUX__
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#include <time.h>
+#else
+#define WIN32_LEAN_AND_MEAN
+#include "windows.h"
+#endif
+typedef int32_t bool32;
+#include <GL/glew.h>
+#include "ta_sdl_game.h"
+
 
 #include "platform_code.cpp"
 #include "GL.cpp"
 #include "UI.cpp"
 #include "file_formats.cpp"
-#include "ta_sdl_game.h"
 
 
-struct GameState
-{
-    bool32 IsInitialised;
-    MemoryArena GameArena;
 
-    Matrix * ProjectionMatrix;
-    Matrix * ModelMatrix;
-    Matrix * ViewMatrix;
-
-    int64_t StartTime=0;
-    int NumberOfFrames=0;
-    ShaderProgram UnitShader;
-    UIElement TestElement[5];
-    Object3d temp_model;
-    GLuint ProjectionMatrixLocation;
-    GLuint ModelMatrixLocation;
-    GLuint ViewMatrixLocation;
-    ShaderProgram MapShader;
-    ShaderProgram FontShader;
-    GLuint FontPositionLocation=-1,FontColorLocation=-1;
-};
 
 
 #include "ta_sdl_game_load.cpp"
@@ -69,9 +63,9 @@ void LoadCurrentModel(GameState * CurrentGameState)
     char temp[Entry.File.FileSize];
     if(LoadHPIFileEntryData(Entry,temp))
     {
-	if(CurrentGameState->temp_model.Name)
-	    Unload3DO(&CurrentGameState->temp_model);
-	Load3DOFromBuffer(temp,&CurrentGameState->temp_model);
+	if(CurrentGameState->temp_model->Name)
+	    Unload3DO(CurrentGameState->temp_model);
+	Load3DOFromBuffer(temp,CurrentGameState->temp_model);
 	//TODO(Christof): free memory correctly
 	float X=0,Y=0;
 	for(int i=0;i<5;i++)
@@ -119,7 +113,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	}
 
 	
-	PrepareObject3dForRendering(&CurrentGameState->temp_model);
+	PrepareObject3dForRendering(CurrentGameState->temp_model);
     }
 }
 
@@ -142,7 +136,7 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	UnitIndex--;;
 	LoadCurrentModel(CurrentGameState);
     }
-    if(Input->KeyIsDown[SDLK_l] && ! Input->KeyWasDown[SDLK_l])
+    if(Input->KeyIsDown[SDLK_l] && !Input->KeyWasDown[SDLK_l])
     {
 	UnitIndex++;
 	LoadCurrentModel(CurrentGameState);
@@ -198,7 +192,17 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->ProjectionMatrix = PushStruct(GameArena,Matrix);
     CurrentGameState->ViewMatrix = PushStruct(GameArena,Matrix);
     CurrentGameState->ModelMatrix = PushStruct(GameArena,Matrix);
-    CurrentGameState->ProjectionMatrix->SetProjection(60,float(ScreenWidth)/ScreenHeight,1.0,1000.0);
+
+    CurrentGameState->MapShader = PushStruct(GameArena, ShaderProgram);
+    CurrentGameState->UnitShader = PushStruct(GameArena, ShaderProgram);
+    CurrentGameState->FontShader = PushStruct(GameArena, ShaderProgram);
+    CurrentGameState->UIElementShaderProgram = PushStruct(GameArena, ShaderProgram);
+
+    CurrentGameState->temp_model = PushStruct(GameArena, Object3d);
+    CurrentGameState->TestMap = PushStruct(GameArena, TAMap);
+    CurrentGameState->TestElement = PushArray(GameArena,5,UIElement);
+    
+    CurrentGameState->ProjectionMatrix->SetProjection(60,float(CurrentGameState->ScreenWidth)/CurrentGameState->ScreenHeight,1.0,1000.0);
 
     CurrentGameState->ViewMatrix->SetTranslation(0,0,-2);
     CurrentGameState->ViewMatrix->Rotate(1,0,0, 0.5);
@@ -212,7 +216,6 @@ void SetupGameState( GameState * CurrentGameState)
     //glDisable(GL_CULL_FACE);
     //glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
-
 }
 
 
@@ -230,7 +233,7 @@ void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
-    glUseProgram(CurrentGameState->UnitShader.ProgramID);
+    glUseProgram(CurrentGameState->UnitShader->ProgramID);
     glBindTexture(GL_TEXTURE_2D,UnitTexture);
     CurrentGameState->ProjectionMatrix->Upload(CurrentGameState->ProjectionMatrixLocation);
 
@@ -239,12 +242,12 @@ void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
     //CurrentGameState->ViewMatrix->Move(0.01,-0.01,-0.01);
     
     CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
-    RenderObject3d(&CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation);
+    RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation);
 
-    glUseProgram(CurrentGameState->MapShader.ProgramID);
+    glUseProgram(CurrentGameState->MapShader->ProgramID);
     CurrentGameState->ProjectionMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));
     CurrentGameState->ViewMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"View"));
-    TestMap.Render(&CurrentGameState->MapShader);
+    CurrentGameState->TestMap->Render(CurrentGameState->MapShader);
     
 
     //TODO(Christof): Unit Rendering here
@@ -255,7 +258,7 @@ void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
     glDisable(GL_DEPTH_TEST);        //Turn Depth Testing off
 
     for(int i=0;i<5;i++)
-	RenderUIElement(CurrentGameState->TestElement[i],&CurrentGameState->FontShader,CurrentGameState->FontPositionLocation,CurrentGameState->FontColorLocation);
+	RenderUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
 
 
     

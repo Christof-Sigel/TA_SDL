@@ -21,8 +21,6 @@ bool32 quit=0;
 
 int main(int argc, char * argv[])
 {
-    if(!SetupSDLWindow())
-	return 1;
 
 
 
@@ -35,8 +33,12 @@ int main(int argc, char * argv[])
     uint64_t TotalSize = GameMemory.PermanentStoreSize + GameMemory.TransientStoreSize;
     GameMemory.PermanentStore = (uint8_t*)calloc(1,TotalSize);
     GameMemory.TransientStore = GameMemory.PermanentStore+GameMemory.TransientStoreSize;
-    
 
+    GameState * CurrentGameState=(GameState *)GameMemory.PermanentStore;
+    
+    if(!SetupSDLWindow(CurrentGameState))
+	return 1;
+    
     GameSetup(&GameMemory);
     SDL_Event e;
     while( !quit )
@@ -59,6 +61,10 @@ int main(int argc, char * argv[])
 	}
 	GameUpdateAndRender(&GameInputState,&GameMemory);
 	SDL_GL_SwapWindow( MainSDLWindow );
+	for(int i=0;i<256;i++)
+	{
+	    GameInputState.KeyWasDown[i]=GameInputState.KeyIsDown[i];
+	}
     }
 
     GameTeardown(&GameMemory);

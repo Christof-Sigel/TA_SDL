@@ -18,14 +18,24 @@ void HandleKeyUp(SDL_Keysym key, InputState * GameInputState)
 
 
 SDL_Window * MainSDLWindow;
-int ScreenWidth=1024,ScreenHeight=768;
+const int DEFAULT_SCREEN_WIDTH=1280;
+const int DEFAULT_SCREEN_HEIGHT=1024;
 
-bool32 SetupSDLWindow()
+bool32 SetupSDLWindow(GameState * CurrentGameState)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
 	LogError("SDL_Init Error: %s", SDL_GetError());
 	return 0;
+    }
+
+    if(CurrentGameState->ScreenWidth == 0)
+    {
+	CurrentGameState->ScreenWidth = DEFAULT_SCREEN_WIDTH;
+    }
+    if(CurrentGameState->ScreenHeight == 0)
+    {
+	CurrentGameState->ScreenHeight = DEFAULT_SCREEN_HEIGHT;
     }
 
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
@@ -34,7 +44,7 @@ bool32 SetupSDLWindow()
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24); 
 
-    MainSDLWindow = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
+    MainSDLWindow = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,CurrentGameState->ScreenWidth, CurrentGameState->ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
     if (!MainSDLWindow)
     {
 	LogError("SDL_CreateWindow Error: %s", SDL_GetError());
