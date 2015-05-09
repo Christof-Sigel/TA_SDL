@@ -2,14 +2,18 @@
 
 
 
-void HandleKeyDown(SDL_Keysym key)
+void HandleKeyDown(SDL_Keysym key, InputState * GameInputState)
 {
-    GlobalInputState.KeyPressed[key.sym&255]=1;
+    uint8_t Index = key.sym&255;
+    GameInputState->KeyWasDown[Index]=GameInputState->KeyIsDown[Index];
+    GameInputState->KeyIsDown[Index]=1;
 }
 
-void HandleKeyUp(SDL_Keysym key)
+void HandleKeyUp(SDL_Keysym key, InputState * GameInputState)
 {
-    GlobalInputState.KeyPressed[key.sym&255]=0;
+    uint8_t Index = key.sym & 255;
+    GameInputState->KeyWasDown[Index]=GameInputState->KeyIsDown[Index];
+    GameInputState->KeyIsDown[Index]=0;
 }
 
 
@@ -28,6 +32,7 @@ bool32 SetupSDLWindow()
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 0 );
 
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24); 
 
     MainSDLWindow = SDL_CreateWindow("Hello World!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,ScreenWidth, ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
     if (!MainSDLWindow)

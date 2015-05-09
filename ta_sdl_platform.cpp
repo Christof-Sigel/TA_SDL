@@ -5,14 +5,14 @@
 #include "ta_sdl_platform.h"
 #include "ta_sdl_game.h"
 
-InputState GlobalInputState;
+
 #include "sdl.cpp"
 
 //TODO(Christof): Make these load from dynamic library
-void Setup();
-void CheckResources();
-void GameUpdateAndRender(InputState *Input);
-void Teardown();
+void GameSetup(Memory * GameMemory);
+void CheckResources(Memory * GameMemory);
+void GameUpdateAndRender(InputState *Input, Memory * GameMemory);
+void GameTeardown(Memory * GameMemory);
 
 
 
@@ -24,12 +24,24 @@ int main(int argc, char * argv[])
     if(!SetupSDLWindow())
 	return 1;
 
-    Setup();
+
+
+    InputState GameInputState={};
+    Memory GameMemory={};
+
+    GameMemory.PermanentStoreSize = 500 * 1024 * 1024;//TODO(Christof): convenience macros for size
+    GameMemory.TransientStoreSize = 500 * 1024 * 1024;
+
+    uint64_t TotalSize = GameMemory.PermanentStoreSize + GameMemory.TransientStoreSize;
+    GameMemory.PermanentStore = (uint8_t*)calloc(1,TotalSize);
+    GameMemory.TransientStore = GameMemory.PermanentStore+GameMemory.TransientStoreSize;
     
+
+    GameSetup(&GameMemory);
     SDL_Event e;
     while( !quit )
     {
-	CheckResources();
+	CheckResources(&GameMemory);
 	while( SDL_PollEvent( &e ) != 0 )
 	{
 	    if( e.type == SDL_QUIT )
@@ -38,18 +50,18 @@ int main(int argc, char * argv[])
 	    }
 	    else if( e.type == SDL_KEYDOWN)
 	    {
-		HandleKeyDown(e.key.keysym);
+		HandleKeyDown(e.key.keysym,&GameInputState);
 	    }
 	    else if( e.type == SDL_KEYUP)
 	    {
-		HandleKeyUp(e.key.keysym);
+		HandleKeyUp(e.key.keysym,&GameInputState);
 	    }
 	}
-	GameUpdateAndRender(&GlobalInputState);
+	GameUpdateAndRender(&GameInputState,&GameMemory);
 	SDL_GL_SwapWindow( MainSDLWindow );
     }
 
-    Teardown();
+    GameTeardown(&GameMemory);
     SDL_DestroyWindow(MainSDLWindow);
     SDL_Quit();
 

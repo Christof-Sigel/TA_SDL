@@ -11,24 +11,64 @@ void LoadFonts()
     Times16=LoadFont("data/times.ttf",16);
 }
 
-void ReloadShaders();
+
 TAMap TestMap={0};
 std::vector<UnitDetails> Units;
-void LoadCurrentModel();
-int64_t StartTime=0;
-int NumberOfFrames=0;
-ShaderProgram UnitShader;
-UIElement TestElement[5];
-Object3d temp_model;
-GLuint ProjectionMatrixLocation;
-GLuint ModelMatrixLocation;
-GLuint ViewMatrixLocation;
+void LoadCurrentModel(GameState * CurrentGameState);
 
 extern int ScreenWidth;
 extern int ScreenHeight;
 
-void Setup()
+void ReloadShaders(Memory * GameMemory)
 {
+    GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
+    if(CurrentGameState->UnitShader.ProgramID)
+	UnloadShaderProgram(CurrentGameState->UnitShader);
+    if(CurrentGameState->MapShader.ProgramID)
+	UnloadShaderProgram(CurrentGameState->MapShader);
+    CurrentGameState->UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
+    
+    glUseProgram(CurrentGameState->UnitShader.ProgramID);
+    glUniform1i(GetUniformLocation(CurrentGameState->UnitShader,"UnitTexture"),0);
+
+    CurrentGameState->MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl");
+    
+    glUseProgram(CurrentGameState->MapShader.ProgramID);
+    glUniform1i(GetUniformLocation(CurrentGameState->MapShader,"Texture"),0);
+
+    CurrentGameState->ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ProjectionMatrix");
+    CurrentGameState->ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ModelMatrix");
+    CurrentGameState->ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ViewMatrix");
+
+
+    CurrentGameState->FontShader=LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl");
+    glUseProgram(CurrentGameState->FontShader.ProgramID);
+    glUniform1i(GetUniformLocation(CurrentGameState->FontShader,"Texture"),0);
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    glUniform2iv(GetUniformLocation(CurrentGameState->FontShader,"Viewport"),1,viewport+2);
+    CurrentGameState->FontPositionLocation=GetUniformLocation(CurrentGameState->FontShader,"Position");
+    CurrentGameState->FontColorLocation=GetUniformLocation(CurrentGameState->FontShader,"TextColor");
+
+    
+    UIElementShaderProgram=LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl");
+    glUseProgram(UIElementShaderProgram.ProgramID);
+
+    UIElementPositionLocation = GetUniformLocation(UIElementShaderProgram,"Position");
+    UIElementSizeLocation = GetUniformLocation(UIElementShaderProgram,"Size");
+    UIElementColorLocation = GetUniformLocation(UIElementShaderProgram,"Color");
+    UIElementBorderColorLocation = GetUniformLocation(UIElementShaderProgram,"BorderColor");
+    UIElementBorderWidthLocation = GetUniformLocation(UIElementShaderProgram,"BorderWidth");
+    UIElementAlphaLocation = GetUniformLocation(UIElementShaderProgram,"Alpha");
+
+    glUniform2iv(GetUniformLocation(UIElementShaderProgram,"Viewport"),1,viewport+2);
+
+}
+
+void GameSetup(Memory * GameMemory)
+{
+    GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
 #ifdef __WINDOWS__
     LARGE_INTEGER PerfCountFrequencyResult;
     QueryPerformanceFrequency(&PerfCountFrequencyResult);
@@ -41,7 +81,7 @@ void Setup()
     //ViewMatrix.Rotate(0,1,0, -PI/4);
     //ViewMatrix.Move(1,0,0);
     
-    ReloadShaders();
+    ReloadShaders(GameMemory);
 
         
     LoadHPIFileCollection();
@@ -83,70 +123,30 @@ void Setup()
     }
     UnloadCompositeEntry(&Entry);
 
-    LoadCurrentModel();
+    LoadCurrentModel(CurrentGameState);
 
-    StartTime= GetTimeMillis();
+    CurrentGameState->StartTime= GetTimeMillis();
 }
 
 
-void Teardown()
+void GameTeardown(Memory * GameMemory)
 {
+    GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     int64_t EndTime=GetTimeMillis();
+    int64_t StartTime=CurrentGameState->StartTime;
+    int NumberOfFrames=CurrentGameState->NumberOfFrames;
     LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
-    UnloadShaderProgram(UnitShader);
+    UnloadShaderProgram(CurrentGameState->UnitShader);
     UnloadHPIFileCollection();
-    Unload3DO(&temp_model);
+    Unload3DO(&CurrentGameState->temp_model);
 }
 
 
-void ReloadShaders()
+
+
+void CheckResources(Memory * GameMemory)
 {
-    if(UnitShader.ProgramID)
-	UnloadShaderProgram(UnitShader);
-    if(MapShader.ProgramID)
-	UnloadShaderProgram(MapShader);
-    UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl");
-    
-    glUseProgram(UnitShader.ProgramID);
-    glUniform1i(GetUniformLocation(UnitShader,"UnitTexture"),0);
-
-    MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl");
-    
-    glUseProgram(MapShader.ProgramID);
-    glUniform1i(GetUniformLocation(MapShader,"Texture"),0);
-
-    ProjectionMatrixLocation = GetUniformLocation(UnitShader,"ProjectionMatrix");
-    ModelMatrixLocation = GetUniformLocation(UnitShader,"ModelMatrix");
-    ViewMatrixLocation = GetUniformLocation(UnitShader,"ViewMatrix");
-
-
-    FontShader=LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl");
-    glUseProgram(FontShader.ProgramID);
-    glUniform1i(GetUniformLocation(FontShader,"Texture"),0);
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT, viewport);
-
-    glUniform2iv(GetUniformLocation(FontShader,"Viewport"),1,viewport+2);
-    FontPositionLocation=GetUniformLocation(FontShader,"Position");
-    FontColorLocation=GetUniformLocation(FontShader,"TextColor");
-
-    
-    UIElementShaderProgram=LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl");
-    glUseProgram(UIElementShaderProgram.ProgramID);
-
-    UIElementPositionLocation = GetUniformLocation(UIElementShaderProgram,"Position");
-    UIElementSizeLocation = GetUniformLocation(UIElementShaderProgram,"Size");
-    UIElementColorLocation = GetUniformLocation(UIElementShaderProgram,"Color");
-    UIElementBorderColorLocation = GetUniformLocation(UIElementShaderProgram,"BorderColor");
-    UIElementBorderWidthLocation = GetUniformLocation(UIElementShaderProgram,"BorderWidth");
-    UIElementAlphaLocation = GetUniformLocation(UIElementShaderProgram,"Alpha");
-
-    glUniform2iv(GetUniformLocation(UIElementShaderProgram,"Viewport"),1,viewport+2);
-
-}
-
-void CheckResources()
-{
+    GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     uint64_t UnitVertexShaderTime = GetFileModifiedTime("shaders/unit3do.vs.glsl");
     uint64_t UnitPixelShaderTime = GetFileModifiedTime("shaders/unit3do.fs.glsl");
     uint64_t MapVertexShaderTime = GetFileModifiedTime("shaders/map.vs.glsl");
@@ -157,11 +157,11 @@ void CheckResources()
 
     uint64_t TextVertexShaderTime = GetFileModifiedTime("shaders/font.vs.glsl");
     uint64_t TextPixelShaderTime = GetFileModifiedTime("shaders/font.fs.glsl");
-    if(UnitVertexShaderTime > UnitShader.VertexFileModifiedTime || UnitPixelShaderTime > UnitShader.PixelFileModifiedTime
-       || MapPixelShaderTime > MapShader.VertexFileModifiedTime || MapVertexShaderTime > MapShader.PixelFileModifiedTime
+    if(UnitVertexShaderTime > CurrentGameState->UnitShader.VertexFileModifiedTime || UnitPixelShaderTime > CurrentGameState->UnitShader.PixelFileModifiedTime
+       || MapPixelShaderTime > CurrentGameState->MapShader.VertexFileModifiedTime || MapVertexShaderTime > CurrentGameState->MapShader.PixelFileModifiedTime
        || UIVertexShaderTime > UIElementShaderProgram.VertexFileModifiedTime || UIPixelShaderTime > UIElementShaderProgram.PixelFileModifiedTime
-       || TextVertexShaderTime > FontShader.VertexFileModifiedTime || TextPixelShaderTime > FontShader.PixelFileModifiedTime
+       || TextVertexShaderTime > CurrentGameState->FontShader.VertexFileModifiedTime || TextPixelShaderTime > CurrentGameState->FontShader.PixelFileModifiedTime
 	)
-    ReloadShaders();
+    ReloadShaders(GameMemory);
 }
     

@@ -35,10 +35,10 @@ struct ScreenText
 	
 };
 
-ShaderProgram FontShader;
+
 const int FONT_BITMAP_SIZE=256;
 unsigned char FontBitmap[FONT_BITMAP_SIZE*FONT_BITMAP_SIZE];
-GLuint FontPositionLocation=-1,FontColorLocation=-1;
+
 
 
 FontDetails LoadFont(const char * File, float Height)
@@ -176,9 +176,9 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Gree
     return result;
 }
 
-void RenderOnScreenText(ScreenText Text)
+void RenderOnScreenText(ScreenText Text, ShaderProgram * FontShader, GLuint FontPositionLocation, GLuint FontColorLocation)
 {
-    glUseProgram(FontShader.ProgramID);
+    glUseProgram(FontShader->ProgramID);
     glUniform2fv(FontPositionLocation,1,Text.Position.Contents);
     glUniform3fv(FontColorLocation,1,Text.Color.Contents);
     glBindVertexArray(Text.VertexArrayObject);
@@ -330,7 +330,7 @@ UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, floa
 }
 
 
-void RenderUIElement(UIElement Element)
+void RenderUIElement(UIElement Element, ShaderProgram * FontShader, GLuint FontPositionLocation, GLuint FontColorLocation)
 {
     glUseProgram(UIElementShaderProgram.ProgramID);
     glUniform2fv(UIElementPositionLocation,1,Element.Position.Contents);
@@ -343,7 +343,7 @@ void RenderUIElement(UIElement Element)
     glDrawArrays(GL_TRIANGLES,0,6);
     for(int i=0;i<Element.NumberOfTexts;i++)
     {
-	RenderOnScreenText(*Element.Texts[i]);
+	RenderOnScreenText(*Element.Texts[i], FontShader, FontPositionLocation, FontColorLocation);
     }
 }
 
