@@ -60,6 +60,7 @@ MemoryMappedFile MemoryMapFile(const char * FileName)
     MMFile.File=(HANDLE)OpenFile(FileName,&of,OF_READ);
     if(MMFile.File==(HANDLE)HFILE_ERROR)
     {
+	LogError("Could not get file handle for %s",FileName);
 	return {0};
     }
 

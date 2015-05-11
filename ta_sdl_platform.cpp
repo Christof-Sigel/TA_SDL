@@ -24,8 +24,8 @@ int main(int argc, char * argv[])
     InputState GameInputState={};
     Memory GameMemory={};
 
-    GameMemory.PermanentStoreSize = 500 * 1024 * 1024;//TODO(Christof): convenience macros for size
-    GameMemory.TransientStoreSize = 500 * 1024 * 1024;
+    GameMemory.PermanentStoreSize = 256 * 1024 * 1024;//TODO(Christof): convenience macros for size
+    GameMemory.TransientStoreSize = 64 * 1024 * 1024;
 
     uint64_t TotalSize = GameMemory.PermanentStoreSize + GameMemory.TransientStoreSize;
     GameMemory.PermanentStore = (uint8_t*)calloc(1,TotalSize);
