@@ -1,5 +1,11 @@
 #include "Logging.h"
 #include <stdio.h>
+#include <SDL2/SDL.h>
+
+#ifdef __WINDOWS__
+#define WIN32_LEAN_AND_MEAN
+#include "windows.h"
+#endif
 
 #ifdef __LINUX__
 #define CONSOLE_COLOR_NORMAL  "\x1B[0m"
