@@ -15,7 +15,7 @@ void LoadFonts(GameState * CurrentGameState)
 
 
 void LoadCurrentModel(GameState * CurrentGameState);
-
+void InitialiseGame(Memory * GameMemory);
 
 void ReloadShaders(Memory * GameMemory)
 {
@@ -71,9 +71,7 @@ void GameSetup(Memory * GameMemory)
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     if(!CurrentGameState->IsInitialised)
     {
-    	CurrentGameState->IsInitialised=1;
-	InitializeArena(&CurrentGameState->GameArena,GameMemory->PermanentStoreSize-sizeof(GameState),GameMemory->PermanentStore+sizeof(GameState));
-	SetupGameState(CurrentGameState);
+	InitialiseGame(GameMemory);
     }
 #ifdef __WINDOWS__
     LARGE_INTEGER PerfCountFrequencyResult;
@@ -127,7 +125,7 @@ void GameSetup(Memory * GameMemory)
 	    }
 	}
     }
-    UnloadCompositeEntry(&Entry);
+    UnloadCompositeEntry(&Entry,&CurrentGameState->TempArena);
 
     LoadCurrentModel(CurrentGameState);
 

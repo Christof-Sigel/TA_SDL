@@ -216,16 +216,23 @@ void SetupGameState( GameState * CurrentGameState)
     glFrontFace(GL_CCW);
 }
 
+void InitialiseGame(Memory * GameMemory)
+{
+    GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
+    CurrentGameState->IsInitialised=1;
+    InitializeArena(&CurrentGameState->GameArena,GameMemory->PermanentStoreSize-sizeof(GameState),GameMemory->PermanentStore+sizeof(GameState));
+    InitializeArena(&CurrentGameState->TempArena,GameMemory->TransientStoreSize-sizeof(GameState),GameMemory->TransientStore);
+    SetupGameState(CurrentGameState);
+}
 
 void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
 {
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     if(!CurrentGameState->IsInitialised)
     {
-	CurrentGameState->IsInitialised=1;
-	InitializeArena(&CurrentGameState->GameArena,GameMemory->PermanentStoreSize-sizeof(GameState),GameMemory->PermanentStore+sizeof(GameState));
-	SetupGameState(CurrentGameState);
+	InitialiseGame(GameMemory);
     }
+    
     HandleInput(Input,CurrentGameState);
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

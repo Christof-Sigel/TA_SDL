@@ -212,7 +212,7 @@ bool32 LoadAllTextures(GameState * CurrentGameState)
 	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer);
 	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
     }
-    UnloadCompositeEntry(&Textures);
+    UnloadCompositeEntry(&Textures,&CurrentGameState->TempArena);
     
     glGenTextures(1,&CurrentGameState->UnitTexture);
     glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTexture);

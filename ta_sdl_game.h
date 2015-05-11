@@ -40,6 +40,7 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 #define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type),__func__,__LINE__,__FILE__)
 #define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (Count)*sizeof(type),__func__,__LINE__,__FILE__)
 #define PushSize(Arena, Size) PushSize_(Arena, Size,__func__,__LINE__,__FILE__)
+#define PopArray(Arena, Memory, Count, type) PopSize_(Arena,Memory,(Count)*sizeof(type),__func__,__LINE__,__FILE__)
 
 inline void *
 PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, const char * file)
@@ -52,11 +53,25 @@ PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, 
     return(Result);
 }
 
+
+inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, const char * caller, int line, const char * file)
+{
+    printf("Popping %d from %s in %s:%d\n",Size,caller, file,line);
+    if((uint64_t)Memory + Size != Arena->Used + (uint64_t)Arena->Base)
+    {
+	printf("NOPE, NOT ALLOWED TO POP THIS!");
+	return;
+    }
+    Arena->Used -=Size;
+}
+
+
 #else
 
 #define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type))
 #define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (Count)*sizeof(type))
 #define PushSize(Arena, Size) PushSize_(Arena, Size)
+#define PopArray(Arena, Memory, Count, type) PopSize_(Arena,Memory,(Count)*sizeof(type))
 
 inline void *
 PushSize_(MemoryArena *Arena, memory_index Size)
@@ -68,6 +83,16 @@ PushSize_(MemoryArena *Arena, memory_index Size)
     return(Result);
 }
 
+inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
+{
+    if((uint64_t)Memory + Size != Arena->Used + (uint64_t)Arena->Base)
+    {
+	printf("NOPE, NOT ALLOWED TO POP THIS!");
+	return;
+    }
+    Arena->Used -=Size;
+}
+
 #endif
 
 #include <vector>
@@ -76,6 +101,7 @@ struct GameState
 {
     bool32 IsInitialised;
     MemoryArena GameArena;
+    MemoryArena TempArena;
     bool32 Quit;
 
 
