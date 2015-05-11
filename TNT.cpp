@@ -101,7 +101,7 @@ float GetHeightFor(int X, int Y, FILE_TNTAttribute * Attributes, int Width,int H
     return result;
 }
 
-bool32 LoadTNTFromBuffer(char * Buffer, TAMap * Result)
+bool32 LoadTNTFromBuffer(uint8_t * Buffer, TAMap * Result,uint8_t * PaletteData)
 {
     FILE_TNTHeader * Header = (FILE_TNTHeader *)Buffer;
     if(Header->IDVersion != TNT_HEADER_ID)

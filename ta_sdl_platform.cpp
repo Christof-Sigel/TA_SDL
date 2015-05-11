@@ -16,9 +16,6 @@ void GameTeardown(Memory * GameMemory);
 
 
 
-bool32 quit=0;
-
-
 int main(int argc, char * argv[])
 {
 
@@ -41,14 +38,14 @@ int main(int argc, char * argv[])
     
     GameSetup(&GameMemory);
     SDL_Event e;
-    while( !quit )
+    while( !CurrentGameState->Quit )
     {
 	CheckResources(&GameMemory);
 	while( SDL_PollEvent( &e ) != 0 )
 	{
 	    if( e.type == SDL_QUIT )
 	    {
-		quit = true;
+		CurrentGameState->Quit=1;
 	    }
 	    else if( e.type == SDL_KEYDOWN)
 	    {

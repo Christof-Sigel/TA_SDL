@@ -4,16 +4,16 @@ FontDetails Times32;
 FontDetails Times24;
 FontDetails Times16;
 
-void LoadFonts()
+void LoadFonts(GameState * CurrentGameState)
 {
-    Times32=LoadFont("data/times.ttf",32);
-    Times24=LoadFont("data/times.ttf",24);
-    Times16=LoadFont("data/times.ttf",16);
+    Times32=LoadFont("data/times.ttf",32,CurrentGameState->FontBitmap);
+    Times24=LoadFont("data/times.ttf",24,CurrentGameState->FontBitmap);
+    Times16=LoadFont("data/times.ttf",16,CurrentGameState->FontBitmap);
 }
 
 
 
-std::vector<UnitDetails> Units;
+
 void LoadCurrentModel(GameState * CurrentGameState);
 
 
@@ -80,7 +80,7 @@ void GameSetup(Memory * GameMemory)
     QueryPerformanceFrequency(&PerfCountFrequencyResult);
     PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
 #endif
-    LoadFonts();
+    LoadFonts(CurrentGameState);
     SetupUIElementRender(CurrentGameState);
     
     // ViewMatrix.Rotate(0,1,0, PI);
@@ -90,16 +90,16 @@ void GameSetup(Memory * GameMemory)
     ReloadShaders(GameMemory);
 
         
-    LoadHPIFileCollection();
-    LoadAllTextures();
-    HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt");
+    LoadHPIFileCollection(CurrentGameState);
+    LoadAllTextures(CurrentGameState);
+    HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",CurrentGameState);
     if(Map.Name)
     {
-	char * temp = (char*)malloc(Map.File.FileSize);
+	uint8_t * temp = (uint8_t*)malloc(Map.File.FileSize);
     
 	if(LoadHPIFileEntryData(Map,temp))
 	{
-	    LoadTNTFromBuffer(temp,CurrentGameState->TestMap);
+	    LoadTNTFromBuffer(temp,CurrentGameState->TestMap,CurrentGameState->PaletteData);
 	}
 	else
 	    LogDebug("failed to load map buffer from hpi");
@@ -110,19 +110,19 @@ void GameSetup(Memory * GameMemory)
     
 	
 
-    HPIEntry Entry=FindEntryInAllFiles("units");
+    HPIEntry Entry=FindEntryInAllFiles("units",CurrentGameState);
     if(Entry.IsDirectory)
     {
 	for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
 	{
 	    char temp[Entry.Directory.Entries[i].File.FileSize];
-	    if(LoadHPIFileEntryData(Entry.Directory.Entries[i],temp))
+	    if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(uint8_t*)temp))
 	    {
 		UnitDetails deets;
 		if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
 		{
 		    LoadFBIFileFromBuffer(&deets,temp);
-		    Units.push_back(deets);
+		    CurrentGameState->Units.push_back(deets);
 		}
 	    }
 	}
@@ -143,7 +143,7 @@ void GameTeardown(Memory * GameMemory)
     int NumberOfFrames=CurrentGameState->NumberOfFrames;
     LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
     UnloadShaderProgram(CurrentGameState->UnitShader);
-    UnloadHPIFileCollection();
+    UnloadHPIFileCollection(CurrentGameState);
     Unload3DO(CurrentGameState->temp_model);
 }
 

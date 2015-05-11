@@ -36,12 +36,10 @@ struct ScreenText
 };
 
 
-const int FONT_BITMAP_SIZE=256;
-unsigned char FontBitmap[FONT_BITMAP_SIZE*FONT_BITMAP_SIZE];
 
 
 
-FontDetails LoadFont(const char * File, float Height)
+FontDetails LoadFont(const char * File, float Height,uint8_t * FontBitmap)
 {
     MemoryMappedFile FontFile = MemoryMapFile(File);
     if(!FontFile.MMapBuffer)

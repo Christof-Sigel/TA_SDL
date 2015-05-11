@@ -50,7 +50,7 @@ struct HPIFileCollection
     HPIFile * Files;
 };
 
-HPIFileCollection GlobalArchiveCollection;
+
 
 
 const int32_t SAVE_MARKER= 'B' << 0 | 'A' <<8 | 'N' << 16 | 'K' <<24;
@@ -101,11 +101,11 @@ struct FILE_HPIChunk
 };
 #pragma pack(pop)
 
-void DecryptHPIBuffer(HPIFile * HPI, char * Destination, int32_t Length, int32_t FileOffset);
-void LoadEntries(HPIDirectoryEntry * Root, char * Buffer, int Offset, HPIFile * File);
-char * LoadChunk(char * SourceBuffer, char * Destination);
-void DecompressZLibChunk(char * Source, int CompressedSize, int DecompressedSize, char * Destination);
-void DecompressLZ77Chunk(char * Source, int CompressedSize, int DecompressedSize, char * Destination);
+void DecryptHPIBuffer(HPIFile * HPI, uint8_t * Destination, int32_t Length, int32_t FileOffset);
+void LoadEntries(HPIDirectoryEntry * Root, uint8_t * Buffer, int Offset, HPIFile * File);
+uint8_t * LoadChunk(uint8_t * SourceBuffer, uint8_t * Destination);
+void DecompressZLibChunk(uint8_t * Source, int CompressedSize, int DecompressedSize, uint8_t * Destination);
+void DecompressLZ77Chunk(uint8_t * Source, int CompressedSize, int DecompressedSize, uint8_t * Destination);
 
 
 void UnloadHPIDirectory(HPIDirectoryEntry * Directory)
@@ -165,7 +165,7 @@ bool32 LoadHPIFile(const char * FileName, HPIFile * HPI)
     HPI->Name[NameLength]=0;
 
     //TODO(Christof): Figure out a memory alloc scheme, just use malloc for now
-    char * DecryptedDirectory = (char *)malloc(header->DirectorySize);
+    uint8_t * DecryptedDirectory = (uint8_t *)malloc(header->DirectorySize);
     DecryptHPIBuffer(HPI,DecryptedDirectory,header->DirectorySize, 0);
     LoadEntries(&HPI->Root, DecryptedDirectory, header->Offset,HPI);
     free(DecryptedDirectory);
@@ -173,7 +173,7 @@ bool32 LoadHPIFile(const char * FileName, HPIFile * HPI)
     return 1;
 }
 
-void LoadEntries(HPIDirectoryEntry * Root, char * Buffer, int Offset,HPIFile * File)
+void LoadEntries(HPIDirectoryEntry * Root, uint8_t * Buffer, int Offset,HPIFile * File)
 {
     FILE_HPIDirectoryHeader * directory_header = (FILE_HPIDirectoryHeader *)(Buffer + Offset);
 
@@ -185,7 +185,7 @@ void LoadEntries(HPIDirectoryEntry * Root, char * Buffer, int Offset,HPIFile * F
     {
 	Root->Entries[EntryIndex].IsDirectory = EntriesInFile[EntryIndex].Flag;
 	Root->Entries[EntryIndex].ContainedInFile = File;
-	int NameLength = strlen(Buffer + EntriesInFile[EntryIndex].NameOffset)+1;
+	int NameLength = strlen((char*) (Buffer + EntriesInFile[EntryIndex].NameOffset))+1;
 	Root->Entries[EntryIndex].Name = (char *)malloc(NameLength);
 	memcpy(Root->Entries[EntryIndex].Name,Buffer+EntriesInFile[EntryIndex].NameOffset,NameLength);
 	if(Root->Entries[EntryIndex].IsDirectory)
@@ -202,7 +202,7 @@ void LoadEntries(HPIDirectoryEntry * Root, char * Buffer, int Offset,HPIFile * F
     }
 }
 
-void DecryptHPIBuffer(HPIFile * HPI, char * Destination, int32_t Length, int32_t FileOffset)
+void DecryptHPIBuffer(HPIFile * HPI, uint8_t * Destination, int32_t Length, int32_t FileOffset)
 {
     int CurrentKey=0;
     if(HPI->DecryptionKey == -1)//Header key was 0 -> No Encryption
@@ -217,7 +217,7 @@ void DecryptHPIBuffer(HPIFile * HPI, char * Destination, int32_t Length, int32_t
     }
 }
 
-bool32 LoadHPIFileEntryData(HPIEntry Entry, char * Destination)
+bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination)
 {
     if(Entry.IsDirectory)
     {
@@ -239,16 +239,16 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, char * Destination)
 	    NumChunks++;
 	}
 	int32_t ChunkSizes[NumChunks];
-	DecryptHPIBuffer(Entry.ContainedInFile,(char*)ChunkSizes,NumChunks*sizeof(int32_t),Entry.File.Offset);
+	DecryptHPIBuffer(Entry.ContainedInFile,(uint8_t*)ChunkSizes,NumChunks*sizeof(int32_t),Entry.File.Offset);
 	int ChunkDataSize=NumChunks*sizeof(FILE_HPIChunk);//size of all the headers
 	int ChunkDataOffset = Entry.File.Offset + NumChunks*sizeof(int32_t);
 	for(int i=0;i<NumChunks;i++)
 	{
 	    ChunkDataSize += ChunkSizes[i];
 	}
-	char DecryptedChunkData[ChunkDataSize];
+	uint8_t DecryptedChunkData[ChunkDataSize];
 	DecryptHPIBuffer(Entry.ContainedInFile,DecryptedChunkData,ChunkDataSize,ChunkDataOffset);
-	char * DataSource=DecryptedChunkData;
+	uint8_t * DataSource=DecryptedChunkData;
 	for(int i=0;i<NumChunks;i++)
 	{
 	    if(!DataSource)
@@ -264,7 +264,7 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, char * Destination)
     return 1;
 }
 
-char * LoadChunk(char * Source, char * Destination)
+uint8_t * LoadChunk(uint8_t * Source, uint8_t * Destination)
 {
     FILE_HPIChunk * header=(FILE_HPIChunk *)Source;
     if(header->Marker != CHUNK_MARKER)
@@ -272,7 +272,7 @@ char * LoadChunk(char * Source, char * Destination)
 	LogError("chunk with incorrect marker %d",header->Marker);
 	return 0;
     }
-    char * data=Source+sizeof(FILE_HPIChunk);
+    uint8_t * data=Source+sizeof(FILE_HPIChunk);
     int32_t ComputedChecksum=0;
     for(int i=0;i<header->CompressedSize;i++)
     {
@@ -305,7 +305,7 @@ char * LoadChunk(char * Source, char * Destination)
     return data + header->CompressedSize;
 }
 
-void DecompressZLibChunk(char * Source, int CompressedSize, int DecompressedSize, char * Destination)
+void DecompressZLibChunk(uint8_t * Source, int CompressedSize, int DecompressedSize, uint8_t * Destination)
 {
     z_stream zs;
     int result;
@@ -342,7 +342,7 @@ void DecompressZLibChunk(char * Source, int CompressedSize, int DecompressedSize
 
 const int LZ77_WINDOW_SIZE=4096;
 const int LZ77_LENGTH_MASK=0x0f;
-void DecompressLZ77Chunk(char * Source, int CompressedSize, int DecompressedSize, char * Destination)
+void DecompressLZ77Chunk(uint8_t * Source, int CompressedSize, int DecompressedSize, uint8_t * Destination)
 {
     unsigned char Window[LZ77_WINDOW_SIZE];
     
@@ -445,12 +445,12 @@ const char * HPIFileNames[]={"rev31.gp3","btdata.ccx","ccdata.ccx","tactics1.hpi
 
 const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
 
-bool32 LoadHPIFileCollection()
+bool32 LoadHPIFileCollection(GameState * CurrentGameState)
 {
     UFOSearchResult UfoFiles=GetUfoFiles();
-    GlobalArchiveCollection.NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
-    GlobalArchiveCollection.Files = (HPIFile*)malloc(sizeof(HPIFile)*GlobalArchiveCollection.NumberOfFiles);
-    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
+    CurrentGameState->GlobalArchiveCollection->NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
+    CurrentGameState->GlobalArchiveCollection->Files = (HPIFile*)malloc(sizeof(HPIFile)*CurrentGameState->GlobalArchiveCollection->NumberOfFiles);
+    for(int i=0;i<CurrentGameState->GlobalArchiveCollection->NumberOfFiles;i++)
     {
 	char * FileName=0;
 	if(i>=UfoFiles.NumberOfFiles)
@@ -464,7 +464,7 @@ bool32 LoadHPIFileCollection()
 	int size=snprintf(0,0,"data/%s",FileName)+1;
 	char temp[size];
 	snprintf(temp,size,"data/%s",FileName);
-	LoadHPIFile(temp,&GlobalArchiveCollection.Files[i]);
+	LoadHPIFile(temp,&CurrentGameState->GlobalArchiveCollection->Files[i]);
     }
 
     UnloadUFOSearchResult(&UfoFiles);
@@ -472,20 +472,20 @@ bool32 LoadHPIFileCollection()
     return 1;
 }
 
-HPIEntry FindEntryInAllFiles(const char * Path)
+HPIEntry FindEntryInAllFiles(const char * Path,GameState * CurrentGameState)
 {
     HPIEntry Result={0};
     std::vector<HPIEntry> Entries;
-    for(int ArchiveIndex=0;ArchiveIndex<GlobalArchiveCollection.NumberOfFiles;ArchiveIndex++)
+    for(int ArchiveIndex=0;ArchiveIndex<CurrentGameState->GlobalArchiveCollection->NumberOfFiles;ArchiveIndex++)
     {
-	HPIEntry temp=FindHPIEntry(&GlobalArchiveCollection.Files[ArchiveIndex],Path);
+	HPIEntry temp=FindHPIEntry(&CurrentGameState->GlobalArchiveCollection->Files[ArchiveIndex],Path);
 	if(temp.Name)
 	{
 	    if(!temp.IsDirectory)
 	    {
 		if(Entries.size())
 		{
-		    LogError("Found file in %s while loading directory %s",GlobalArchiveCollection.Files[ArchiveIndex].Name,Path);
+		    LogError("Found file in %s while loading directory %s",CurrentGameState->GlobalArchiveCollection->Files[ArchiveIndex].Name,Path);
 		    return {0};
 		}
 		else
@@ -528,13 +528,13 @@ void UnloadCompositeEntry(HPIEntry * Entry)
 }
 
 
-void UnloadHPIFileCollection()
+void UnloadHPIFileCollection(GameState * CurrentGameState)
 {
-    for(int i=0;i<GlobalArchiveCollection.NumberOfFiles;i++)
+    for(int i=0;i<CurrentGameState->GlobalArchiveCollection->NumberOfFiles;i++)
     {
-	UnloadHPIFile(&GlobalArchiveCollection.Files[i]);
+	UnloadHPIFile(&CurrentGameState->GlobalArchiveCollection->Files[i]);
     }
-    free(GlobalArchiveCollection.Files);
-    GlobalArchiveCollection.NumberOfFiles=0;
-    GlobalArchiveCollection.Files=0;
+    free(CurrentGameState->GlobalArchiveCollection->Files);
+    CurrentGameState->GlobalArchiveCollection->NumberOfFiles=0;
+    CurrentGameState->GlobalArchiveCollection->Files=0;
 }

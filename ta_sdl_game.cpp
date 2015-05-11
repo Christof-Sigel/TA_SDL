@@ -27,7 +27,6 @@ typedef int32_t bool32;
 #include "ta_sdl_game_load.cpp"
 
 void HandleKeyDown(SDL_Keysym key);
-extern bool32 quit;
 bool32 SetupSDLWindow();
 void Render();
 void Setup();
@@ -44,42 +43,42 @@ void ReloadShaders();
 
 
 
-int UnitIndex=0;
+
 
 
 void LoadCurrentModel(GameState * CurrentGameState)
 {
-    if(UnitIndex>(int)Units.size()-1)
-	UnitIndex=0;
-    if(UnitIndex<0)
-	UnitIndex=Units.size()-1;
+    if(CurrentGameState->UnitIndex>(int)CurrentGameState->Units.size()-1)
+	CurrentGameState->UnitIndex=0;
+    if(CurrentGameState->UnitIndex<0)
+	CurrentGameState->UnitIndex=CurrentGameState->Units.size()-1;
 
-    char * UnitName=Units[UnitIndex].GetString("UnitName");
+    char * UnitName=CurrentGameState->Units[CurrentGameState->UnitIndex].GetString("UnitName");
     int len=snprintf(0,0,"objects3d/%s.3do",UnitName)+1;
     char ModelName[len];
     snprintf(ModelName,len,"objects3d/%s.3do",UnitName);
     
-    HPIEntry Entry=FindEntryInAllFiles(ModelName); 
-    char temp[Entry.File.FileSize];
+    HPIEntry Entry=FindEntryInAllFiles(ModelName,CurrentGameState); 
+    uint8_t temp[Entry.File.FileSize];
     if(LoadHPIFileEntryData(Entry,temp))
     {
 	if(CurrentGameState->temp_model->Name)
 	    Unload3DO(CurrentGameState->temp_model);
-	Load3DOFromBuffer(temp,CurrentGameState->temp_model);
+	Load3DOFromBuffer(temp,CurrentGameState->temp_model,CurrentGameState->NextTexture,CurrentGameState->Textures);
 	//TODO(Christof): free memory correctly
 	float X=0,Y=0;
 	for(int i=0;i<5;i++)
 	{
 	    ScreenText * NameText=(ScreenText*)malloc(sizeof(ScreenText));
 	    ScreenText * DescText=(ScreenText*)malloc(sizeof(ScreenText));
-	    int Index=UnitIndex+(i-2);
+	    int Index=CurrentGameState->UnitIndex+(i-2);
 	    if(Index<0)
-		Index+=Units.size();
-	    if(Index>=Units.size())
-		Index-=Units.size();
-	    char * Name=Units[Index].GetString("Name");
+		Index+=CurrentGameState->Units.size();
+	    if(Index>=CurrentGameState->Units.size())
+		Index-=CurrentGameState->Units.size();
+	    char * Name=CurrentGameState->Units[Index].GetString("Name");
 	    char * SideName;
-	    UnitSide Side=Units[Index].GetSide();
+	    UnitSide Side=CurrentGameState->Units[Index].GetSide();
 	    switch(Side)
 	    {
 	    case SIDE_ARM:
@@ -99,7 +98,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    *NameText=SetupOnScreenText(tmp,10,30, 1,1,1, &Times32);
 
 	    {
-		char * Desc=Units[Index].GetString("Description");
+		char * Desc=CurrentGameState->Units[Index].GetString("Description");
 		int size=snprintf(NULL, 0, "%s",Desc)+1;
 		char tmp[size];
 		snprintf(tmp,size,"%s",Desc);
@@ -113,32 +112,24 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	}
 
 	
-	PrepareObject3dForRendering(CurrentGameState->temp_model);
+	PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
     }
 }
-
-
-
-
-
-
-const float DR=0.01,DG=0.02,DB=0.015;
-float dr=DR,dg=DG,db=DB;
 
 void HandleInput(InputState * Input, GameState * CurrentGameState)
 {
     if(Input->KeyIsDown[SDLK_ESCAPE])
     {
-	quit=true;
+	CurrentGameState->Quit=true;
     }
     if(Input->KeyIsDown[SDLK_o] && !Input->KeyWasDown[SDLK_o])
     {
-	UnitIndex--;;
+	CurrentGameState->UnitIndex--;;
 	LoadCurrentModel(CurrentGameState);
     }
     if(Input->KeyIsDown[SDLK_l] && !Input->KeyWasDown[SDLK_l])
     {
-	UnitIndex++;
+	CurrentGameState->UnitIndex++;
 	LoadCurrentModel(CurrentGameState);
     }
     //HACK: FIX THIS SHIT
@@ -200,12 +191,19 @@ void SetupGameState( GameState * CurrentGameState)
 
     CurrentGameState->temp_model = PushStruct(GameArena, Object3d);
     CurrentGameState->TestMap = PushStruct(GameArena, TAMap);
+    CurrentGameState->GlobalArchiveCollection = PushStruct(GameArena,HPIFileCollection);
     CurrentGameState->TestElement = PushArray(GameArena,5,UIElement);
     
     CurrentGameState->ProjectionMatrix->SetProjection(60,float(CurrentGameState->ScreenWidth)/CurrentGameState->ScreenHeight,1.0,1000.0);
 
     CurrentGameState->ViewMatrix->SetTranslation(0,0,-2);
     CurrentGameState->ViewMatrix->Rotate(1,0,0, 0.5);
+
+
+    CurrentGameState->Textures = PushArray(GameArena,MAX_NUMBER_OF_TEXTURE,Texture);
+    CurrentGameState->TextureData = PushArray(GameArena,TEXTURE_HEIGHT*TEXTURE_WIDTH*4,uint8_t);
+    CurrentGameState->PaletteData = PushArray(GameArena,1024,uint8_t);
+    CurrentGameState->FontBitmap = PushArray(GameArena,FONT_BITMAP_SIZE*FONT_BITMAP_SIZE,uint8_t);
 
         //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
@@ -234,7 +232,7 @@ void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
     glDisable(GL_BLEND);
     glEnable(GL_DEPTH_TEST);
     glUseProgram(CurrentGameState->UnitShader->ProgramID);
-    glBindTexture(GL_TEXTURE_2D,UnitTexture);
+    glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTexture);
     CurrentGameState->ProjectionMatrix->Upload(CurrentGameState->ProjectionMatrixLocation);
 
 

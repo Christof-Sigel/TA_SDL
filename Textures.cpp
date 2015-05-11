@@ -54,20 +54,12 @@ struct Texture
     FILE_GafEntry * From;
 };
 
-const int TEXTURE_WIDTH=2048;
-const int TEXTURE_HEIGHT=2048;
-const int MAX_NUMBER_OF_TEXTURE=1024;
-Texture Textures[MAX_NUMBER_OF_TEXTURE];
-int NextTexture=0;
-char TextureData[TEXTURE_HEIGHT*TEXTURE_WIDTH*4];
 
-char PaletteData[1024];
-bool32 PaletteLoaded=0;
 
-TexturePosition GetAvailableTextureLocation(int Width, int Height);
+TexturePosition GetAvailableTextureLocation(int Width, int Height,uint8_t * TextureData);
 void SetTextureLocationUsed(int X, int Y, int Width, int Height);
 
-Texture * GetTexture(const char * Name,int FrameNumber)
+Texture * GetTexture(const char * Name,int FrameNumber,int NextTexture,Texture * Textures)
 {
     //TODO(Christof): some better storage/retrieval mechanism for texture lookup?
     for(int i=0;i<NextTexture;i++)
@@ -78,10 +70,13 @@ Texture * GetTexture(const char * Name,int FrameNumber)
     return 0;
 }
 
-void LoadGafFrameEntry(char * Buffer, int Offset)
+void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState)
 {
     FILE_GafEntry * Entry = (FILE_GafEntry*)(Buffer +Offset);
     FILE_GafFrameEntry * FrameEntries=(FILE_GafFrameEntry *)(Buffer + Offset + sizeof(*Entry));
+    Texture * Textures = CurrentGameState->Textures;
+    uint8_t * TextureData = CurrentGameState->TextureData;
+    uint8_t * PaletteData = CurrentGameState->PaletteData;
 
     for(int i=0;i<Entry->NumberOfFrames;i++)
     {
@@ -92,7 +87,7 @@ void LoadGafFrameEntry(char * Buffer, int Offset)
 	    LogError("%s(%d) has %d subframes",Entry->Name,i,Frame->NumberOfSubframes);
 	    continue;
 	}
-	Texture * Texture=GetTexture(Entry->Name,i);
+	Texture * Texture=GetTexture(Entry->Name,i,CurrentGameState->NextTexture,CurrentGameState->Textures);
 	if(Texture)
 	{
 	    // LogInformation("Skipping %s(%d of %d) as already loaded from %s(%d)",Entry->Name,i,Entry->NumberOfFrames,Texture->From->Name,Texture->From->NumberOfFrames);
@@ -101,7 +96,7 @@ void LoadGafFrameEntry(char * Buffer, int Offset)
 	
 	//NOTE: Many textures have non-zero X and/or Y, perhaps this influences texture coord gen in some way? rendering in the past has ignored these values and seemed fine, so going to just ignore them for now
 
-	TexturePosition PositionToStore = GetAvailableTextureLocation(Frame->Width,Frame->Height);
+	TexturePosition PositionToStore = GetAvailableTextureLocation(Frame->Width,Frame->Height, CurrentGameState->TextureData);
 	if(PositionToStore.X==-1)
 	{
 	    LogError("Unable to get storage location for texture: %s(%d of %d)",Entry->Name,i,Entry->NumberOfFrames);
@@ -125,6 +120,7 @@ void LoadGafFrameEntry(char * Buffer, int Offset)
 		}
 	    }
 	    //NOTE: Move this out if we ever start handling Compressed textures
+	    int NextTexture = CurrentGameState->NextTexture;
 	    memcpy(Textures[NextTexture].Name,Entry->Name,32);
 	    Textures[NextTexture].FrameNumber = i;
 	    Textures[NextTexture].U=PositionToStore.X/float(TEXTURE_WIDTH);
@@ -132,12 +128,12 @@ void LoadGafFrameEntry(char * Buffer, int Offset)
 	    Textures[NextTexture].Width=Frame->Width/float(TEXTURE_WIDTH);
 	    Textures[NextTexture].Height=Frame->Height/float(TEXTURE_HEIGHT);
 	    Textures[NextTexture].From = Entry;
-	    NextTexture++;
+	    CurrentGameState->NextTexture++;
 	}
     }
 }
 
-void LoadTexturesFromGafBuffer(char * Buffer)
+void LoadTexturesFromGafBuffer(uint8_t * Buffer,GameState * CurrentGameState)
 {
     FILE_GafHeader * header= (FILE_GafHeader *)Buffer;
     if(header->IDVersion != GAF_IDVERSION)
@@ -148,16 +144,16 @@ void LoadTexturesFromGafBuffer(char * Buffer)
     int32_t * EntryOffsets = (int32_t *)(Buffer + sizeof(*header));
     for(int i=0;i<header->NumberOfEntries;i++)
     {
-	LoadGafFrameEntry(Buffer, EntryOffsets[i]);
+	LoadGafFrameEntry(Buffer, EntryOffsets[i], CurrentGameState);
     }
 }
 
 
 #include <math.h>
-void LoadPalette()
+void LoadPalette(GameState * CurrentGameState)
 {
 
-    HPIEntry Palette = FindEntryInAllFiles("palettes/PALETTE.PAL");
+    HPIEntry Palette = FindEntryInAllFiles("palettes/PALETTE.PAL",CurrentGameState);
     if(!Palette.Name)
     {
 	LogWarning("No Palette found in data files");
@@ -168,8 +164,8 @@ void LoadPalette()
     }
     else
     {
-	PaletteLoaded=1;
-	LoadHPIFileEntryData(Palette,PaletteData);
+	CurrentGameState->PaletteLoaded=1;
+	LoadHPIFileEntryData(Palette,CurrentGameState->PaletteData);
     }
 }
 
@@ -180,21 +176,21 @@ void LoadTextures(HPIFile* HPI)
 }
 
 
-GLuint UnitTexture;
 
-bool32 LoadAllTextures()
+
+bool32 LoadAllTextures(GameState * CurrentGameState)
 {
     //Clear Texture data so we can lookup whether a space is free
     int size=TEXTURE_WIDTH *TEXTURE_HEIGHT*4/4;
-    int32_t * ClearDataPointer=(int32_t *)TextureData;
+    int32_t * ClearDataPointer=(int32_t *)CurrentGameState->TextureData;
     for(int i=0;i<size;i++)
 	ClearDataPointer[i]=0xdeadbeef;
 
-    if(!PaletteLoaded)
+    if(!CurrentGameState->PaletteLoaded)
     {
-	LoadPalette();
+	LoadPalette(CurrentGameState);
     }
-    HPIEntry Textures = FindEntryInAllFiles("textures");
+    HPIEntry Textures = FindEntryInAllFiles("textures",CurrentGameState);
     if(!Textures.Name)
     {
 	LogWarning("No Textures found in archives");
@@ -212,30 +208,31 @@ bool32 LoadAllTextures()
 	    LogWarning("Unexpectedly found directory %s inside textures directory of %s",Textures.Directory.Entries[i].Name,
 		       Textures.Directory.Entries[i].ContainedInFile->Name);
 	}
-	char GafBuffer[Textures.Directory.Entries[i].File.FileSize];
+	uint8_t GafBuffer[Textures.Directory.Entries[i].File.FileSize];
 	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer);
-	LoadTexturesFromGafBuffer(GafBuffer);
+	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
     }
     UnloadCompositeEntry(&Textures);
     
-    glGenTextures(1,&UnitTexture);
-    glBindTexture(GL_TEXTURE_2D,UnitTexture);
+    glGenTextures(1,&CurrentGameState->UnitTexture);
+    glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TEXTURE_WIDTH,TEXTURE_HEIGHT,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TEXTURE_WIDTH,TEXTURE_HEIGHT,0, GL_RGBA, GL_UNSIGNED_BYTE, CurrentGameState->TextureData);
     return 1;
 
 }
 
-inline bool32 TexturePixelFree(int X, int Y)
+inline bool32 TexturePixelFree(int X, int Y,uint8_t * TextureData)
 {
     return *(int32_t *)&TextureData[(X+Y*TEXTURE_WIDTH)*4]==0xdeadbeef;
 }
 
-TexturePosition FirstFreeTexture={0,0};
 
-TexturePosition GetAvailableTextureLocation(int Width, int Height)
+
+TexturePosition GetAvailableTextureLocation(int Width, int Height, uint8_t *TextureData)
 {
+    static TexturePosition FirstFreeTexture = {};
     int StartX=FirstFreeTexture.X;
     for(int Y=FirstFreeTexture.Y;Y<TEXTURE_HEIGHT;Y++)
     {
@@ -248,7 +245,7 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height)
 	    {
 		for(int TexX=0;TexX<Width;TexX++)
 		{
-		    if(!TexturePixelFree(X+TexX,Y+TexY))
+		    if(!TexturePixelFree(X+TexX,Y+TexY,TextureData))
 		    {
 			goto next;
 		    }

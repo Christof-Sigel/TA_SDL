@@ -34,9 +34,30 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
     Arena->TempCount = 0;
 }
 
+#define VERBOSE_ALLOCATIONS 0
+
+#if VERBOSE_ALLOCATIONS
+#define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type),__func__,__LINE__,__FILE__)
+#define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (Count)*sizeof(type),__func__,__LINE__,__FILE__)
+#define PushSize(Arena, Size) PushSize_(Arena, Size,__func__,__LINE__,__FILE__)
+
+inline void *
+PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, const char * file)
+{
+    //Assert((Arena->Used + Size) <= Arena->Size);
+    printf("Allocating %d from %s in %s:%d\n",Size,caller, file,line);
+    void *Result = Arena->Base + Arena->Used;
+    Arena->Used += Size;
+    
+    return(Result);
+}
+
+#else
+
 #define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type))
 #define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (Count)*sizeof(type))
 #define PushSize(Arena, Size) PushSize_(Arena, Size)
+
 inline void *
 PushSize_(MemoryArena *Arena, memory_index Size)
 {
@@ -47,11 +68,16 @@ PushSize_(MemoryArena *Arena, memory_index Size)
     return(Result);
 }
 
+#endif
+
+#include <vector>
 
 struct GameState
 {
     bool32 IsInitialised;
     MemoryArena GameArena;
+    bool32 Quit;
+
 
     struct Matrix * ProjectionMatrix;
     Matrix * ModelMatrix;
@@ -74,6 +100,30 @@ struct GameState
     struct UIElement * TestElement;
     struct Object3d * temp_model;
     struct TAMap * TestMap;
+    int UnitIndex;
+
+    std::vector<struct UnitDetails> Units;
 
     int ScreenWidth,ScreenHeight;
+
+    struct HPIFileCollection * GlobalArchiveCollection;
+    
+    struct Texture * Textures;
+    int NextTexture;
+    uint8_t * TextureData;
+
+    uint8_t * PaletteData;
+    bool32 PaletteLoaded;
+    GLuint UnitTexture;
+    uint8_t * FontBitmap;
+
 };
+
+const int TEXTURE_WIDTH=2048;
+const int TEXTURE_HEIGHT=2048;
+const int MAX_NUMBER_OF_TEXTURE=1024;
+
+
+const double TA_TO_GL_SCALE=1.0f/2500000.0f;
+const double PI = 3.14159265358979323846;
+const int FONT_BITMAP_SIZE=256;

@@ -69,7 +69,7 @@ struct Object3dPrimitive
 
 
 
-void FillObject3dData(GLfloat * Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive)
+void FillObject3dData(GLfloat * Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,uint8_t * PaletteData)
 {
     int Offset=CurrentTriangle*(3+2+3)*3;
     Data+=Offset;
@@ -87,12 +87,13 @@ void FillObject3dData(GLfloat * Data, int CurrentTriangle,int * VertexIndices,GL
 	Data[i*8+5]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0;
 	Data[i*8+6]=(uint8_t)PaletteData[Primitive->ColorIndex*4+1]/255.0;
 	Data[i*8+7]=(uint8_t)PaletteData[Primitive->ColorIndex*4+2]/255.0;
+
     }
 }
 
 Texture NoTexture={"",0,-2,-2,-1,-1,0};
 
-bool32 PrepareObject3dForRendering(Object3d * Object)
+bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
 {
     if(Object->VertexBuffer)
     {
@@ -125,7 +126,7 @@ bool32 PrepareObject3dForRendering(Object3d * Object)
 	{
 	    GLfloat UVCoords[]={0,1, 1,1, 0,0};
 	    int Vertexes[]={0,1,2};
-	    FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive);
+	    FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData);
 	    CurrentTriangle++;
 	}
 	    break;
@@ -133,11 +134,11 @@ bool32 PrepareObject3dForRendering(Object3d * Object)
 	{
 	    GLfloat UVCoords1[]={1,0, 0,1, 1,1};
 	    int Vertexes1[]={0,2,3};
-	    FillObject3dData(Data,CurrentTriangle,Vertexes1,UVCoords1,Texture,Object,CurrentPrimitive);
+	    FillObject3dData(Data,CurrentTriangle,Vertexes1,UVCoords1,Texture,Object,CurrentPrimitive,PaletteData);
 	    CurrentTriangle++;
 	    GLfloat UVCoords2[]={1,0, 0,0, 0,1};
 	    int Vertexes2[]={0,1,2};
-	    FillObject3dData(Data,CurrentTriangle,Vertexes2,UVCoords2,Texture,Object,CurrentPrimitive);
+	    FillObject3dData(Data,CurrentTriangle,Vertexes2,UVCoords2,Texture,Object,CurrentPrimitive,PaletteData);
 	    CurrentTriangle++;
 	}
 	    break;
@@ -158,7 +159,7 @@ bool32 PrepareObject3dForRendering(Object3d * Object)
 		    UVCoords[j*2]=0.5f*(1-(sin((2.0f*(i+j)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
 		    UVCoords[j*2+1]=0.5f*(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(i+j)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
 		}
-		FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive);
+		FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData);
 		CurrentTriangle++;
 	    }
 	}
@@ -184,11 +185,11 @@ bool32 PrepareObject3dForRendering(Object3d * Object)
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
-    glDeleteBuffers(1,&VertexBuffer);
+    //glDeleteBuffers(1,&VertexBuffer);
 
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	if(!PrepareObject3dForRendering(&Object->Children[i]))
+	if(!PrepareObject3dForRendering(&Object->Children[i],PaletteData))
 	    return 0;
     }
 	      
@@ -235,7 +236,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 /*TODO(Christof): Figure out if we can/need to use bindless textures or something similar for rendering, for now lets just go with the simple solution
  Probably just load all the textures into one big (1024x1024 or 2048x2048 - will need to check what size we need) texture and use offsets, since the textures are all quite small*/
 
-int Count3DOChildren(char * Buffer,FILE_Object3dHeader * header)
+int Count3DOChildren(uint8_t * Buffer,FILE_Object3dHeader * header)
 {
     int NumChildren = 0;
     if(header->OffsetToChildObject)
@@ -252,9 +253,9 @@ int Count3DOChildren(char * Buffer,FILE_Object3dHeader * header)
 }
 
 
-const double TA_TO_GL_SCALE=1.0f/2500000.0f;
 
-bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
+
+bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Texture * Textures, int Offset=0)
 {
     FILE_Object3dHeader * header = (FILE_Object3dHeader *)(Buffer+Offset);
     if(header->Version != 1)
@@ -268,7 +269,7 @@ bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
 	return 0;
     }
 
-    int NameLength=strlen(Buffer + header->OffsetToObjectName)+1;
+    int NameLength=strlen((char*)Buffer + header->OffsetToObjectName)+1;
     Object->Name = (char *)malloc(NameLength);
     memcpy(Object->Name,Buffer+header->OffsetToObjectName,NameLength);
     Object->Position.X=header->XFromParent*TA_TO_GL_SCALE;
@@ -283,7 +284,7 @@ bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
     {
 	if(CurrentPrimitive->OffsetToTextureName)
 	{
-	    Object->Primitives[i].Texture = GetTexture(Buffer+CurrentPrimitive->OffsetToTextureName,0);
+	    Object->Primitives[i].Texture = GetTexture((char*)Buffer+CurrentPrimitive->OffsetToTextureName,0,NextTexture,Textures);
 	    if(!Object->Primitives[i].Texture)
 	    {
 		LogError("Could not get texture for primitive %d in %s, %s",i,Object->Name,Buffer+CurrentPrimitive->OffsetToTextureName);
@@ -323,7 +324,7 @@ bool32 Load3DOFromBuffer(char * Buffer, Object3d * Object, int Offset=0)
     int ChildOffset=header->OffsetToChildObject;
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	Load3DOFromBuffer(Buffer, &(Object->Children[i]),ChildOffset);
+	Load3DOFromBuffer(Buffer, &(Object->Children[i]),NextTexture,Textures,ChildOffset);
 	header = (FILE_Object3dHeader *)(Buffer+ChildOffset);
 	ChildOffset=header->OffsetToSiblingObject;
     }
