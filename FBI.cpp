@@ -178,7 +178,7 @@ void UnloadFBIFile(UnitDetails * UnitDeets)
     }
 }
 
-void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer)
+void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, MemoryArena * GameArena)
 {
     //TODO(Christof): Bounds checking?
     //[UNITINFO]
@@ -218,11 +218,11 @@ void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer)
 
 	UnitKeyValue temp;
 	int length=strlen(Name)+1;
-	temp.Name=(char*)malloc(length);
+	temp.Name=PushArray(GameArena,length,char);
 	memcpy(temp.Name,Name,length);
 
 	length=strlen(Value)+1;
-	temp.Value=(char*)malloc(length);
+	temp.Value=PushArray(GameArena,length,char);
 	memcpy(temp.Value,Value,length);
 
 	UnitDeets->Details.push_back(temp);

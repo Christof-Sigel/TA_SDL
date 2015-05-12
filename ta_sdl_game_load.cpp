@@ -119,7 +119,7 @@ void GameSetup(Memory * GameMemory)
 		UnitDetails deets;
 		if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
 		{
-		    LoadFBIFileFromBuffer(&deets,temp);
+		    LoadFBIFileFromBuffer(&deets,temp,&CurrentGameState->GameArena);
 		    CurrentGameState->Units.push_back(deets);
 		}
 	    }
