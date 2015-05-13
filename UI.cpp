@@ -220,7 +220,7 @@ struct UIElement
     GLfloat BorderWidth;
     GLfloat Alpha;
     int NumberOfTexts;
-    ScreenText ** Texts;
+    ScreenText * Texts;
 };
 
 
@@ -304,17 +304,17 @@ UIElement SetupUIElement(float X, float Y, float Width, float Height, float Back
     return result;
 }
 
-UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha, int NumberOfTexts, ScreenText** Texts, float TopPadding=0, float BottomPadding=5,float LeftPadding=5,float RightPadding=5)
+UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, float BackgroundGreen, float BackgroundBlue, float BorderRed, float BorderGreen, float BorderBlue, float BorderWidth, float Alpha, int NumberOfTexts, ScreenText* Texts, float TopPadding=0, float BottomPadding=5,float LeftPadding=5,float RightPadding=5)
 {
     float Width=0;
     float Height=TopPadding;
     for(int i=0;i< NumberOfTexts;i++)
     {
-	if(Width<Texts[i]->Width)
-	    Width=Texts[i]->Width;
-	Height+=Texts[i]->Font->Height;
-	Texts[i]->Position.X=X+LeftPadding+BorderWidth;
-	Texts[i]->Position.Y=Y+BorderWidth+Height;
+	if(Width<Texts[i].Width)
+	    Width=Texts[i].Width;
+	Height+=Texts[i].Font->Height;
+	Texts[i].Position.X=X+LeftPadding+BorderWidth;
+	Texts[i].Position.Y=Y+BorderWidth+Height;
     }
     Height+=BottomPadding;
     Width+=LeftPadding+RightPadding;
@@ -338,7 +338,7 @@ void RenderUIElement(UIElement Element,ShaderProgram * UIElementShaderProgram,GL
     glDrawArrays(GL_TRIANGLES,0,6);
     for(int i=0;i<Element.NumberOfTexts;i++)
     {
-	RenderOnScreenText(*Element.Texts[i], FontShader, FontPositionLocation, FontColorLocation);
+	RenderOnScreenText(Element.Texts[i], FontShader, FontPositionLocation, FontColorLocation);
     }
 }
 

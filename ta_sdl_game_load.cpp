@@ -93,15 +93,15 @@ void GameSetup(Memory * GameMemory)
     HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",CurrentGameState);
     if(Map.Name)
     {
-	uint8_t * temp = (uint8_t*)malloc(Map.File.FileSize);
+	uint8_t * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,uint8_t);
     
 	if(LoadHPIFileEntryData(Map,temp))
 	{
-	    LoadTNTFromBuffer(temp,CurrentGameState->TestMap,CurrentGameState->PaletteData);
+	    LoadTNTFromBuffer(temp,CurrentGameState->TestMap,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
 	}
 	else
 	    LogDebug("failed to load map buffer from hpi");
-	free(temp);
+	PopArray(&CurrentGameState->TempArena,temp,Map.File.FileSize,uint8_t);
     }
     else
 	LogDebug("failed to load map");
@@ -119,8 +119,14 @@ void GameSetup(Memory * GameMemory)
 		UnitDetails deets;
 		if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
 		{
-		    LoadFBIFileFromBuffer(&deets,temp,&CurrentGameState->GameArena);
-		    CurrentGameState->Units.push_back(deets);
+		    if(CurrentGameState->Units.Size>=MAX_UNITS_LOADED)
+		    {
+			LogError("TOO MANY UNITS");
+		    }
+		    else
+		    {
+			LoadFBIFileFromBuffer(&CurrentGameState->Units.Details[CurrentGameState->Units.Size++],temp,&CurrentGameState->GameArena);
+		    }
 		}
 	    }
 	}
@@ -150,6 +156,7 @@ void GameTeardown(Memory * GameMemory)
 
 void CheckResources(Memory * GameMemory)
 {
+    //TODO(Christof): Fix shaders unecessarily reloading here (cause of the blue flickering)
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     uint64_t UnitVertexShaderTime = GetFileModifiedTime("shaders/unit3do.vs.glsl");
     uint64_t UnitPixelShaderTime = GetFileModifiedTime("shaders/unit3do.fs.glsl");

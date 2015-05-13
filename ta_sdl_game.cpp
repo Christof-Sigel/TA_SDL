@@ -48,12 +48,12 @@ void ReloadShaders();
 
 void LoadCurrentModel(GameState * CurrentGameState)
 {
-    if(CurrentGameState->UnitIndex>(int)CurrentGameState->Units.size()-1)
+    if(CurrentGameState->UnitIndex>(int)CurrentGameState->Units.Size-1)
 	CurrentGameState->UnitIndex=0;
     if(CurrentGameState->UnitIndex<0)
-	CurrentGameState->UnitIndex=CurrentGameState->Units.size()-1;
+	CurrentGameState->UnitIndex=CurrentGameState->Units.Size-1;
 
-    char * UnitName=CurrentGameState->Units[CurrentGameState->UnitIndex].GetString("UnitName");
+    char * UnitName=CurrentGameState->Units.Details[CurrentGameState->UnitIndex].GetString("UnitName");
     int len=snprintf(0,0,"objects3d/%s.3do",UnitName)+1;
     char ModelName[len];
     snprintf(ModelName,len,"objects3d/%s.3do",UnitName);
@@ -62,23 +62,21 @@ void LoadCurrentModel(GameState * CurrentGameState)
     uint8_t temp[Entry.File.FileSize];
     if(LoadHPIFileEntryData(Entry,temp))
     {
-	if(CurrentGameState->temp_model->Name)
+	if(CurrentGameState->temp_model->Vertices)
 	    Unload3DO(CurrentGameState->temp_model);
-	Load3DOFromBuffer(temp,CurrentGameState->temp_model,CurrentGameState->NextTexture,CurrentGameState->Textures);
+	Load3DOFromBuffer(temp,CurrentGameState->temp_model,CurrentGameState->NextTexture,CurrentGameState->Textures,&CurrentGameState->GameArena);
 	//TODO(Christof): free memory correctly
 	float X=0,Y=0;
 	for(int i=0;i<5;i++)
 	{
-	    ScreenText * NameText=(ScreenText*)malloc(sizeof(ScreenText));
-	    ScreenText * DescText=(ScreenText*)malloc(sizeof(ScreenText));
 	    int Index=CurrentGameState->UnitIndex+(i-2);
 	    if(Index<0)
-		Index+=CurrentGameState->Units.size();
-	    if(Index>=CurrentGameState->Units.size())
-		Index-=CurrentGameState->Units.size();
-	    char * Name=CurrentGameState->Units[Index].GetString("Name");
+		Index+=CurrentGameState->Units.Size;
+	    if(Index>=CurrentGameState->Units.Size)
+		Index-=CurrentGameState->Units.Size;
+	    char * Name=CurrentGameState->Units.Details[Index].GetString("Name");
 	    char * SideName;
-	    UnitSide Side=CurrentGameState->Units[Index].GetSide();
+	    UnitSide Side=CurrentGameState->Units.Details[Index].GetSide();
 	    switch(Side)
 	    {
 	    case SIDE_ARM:
@@ -95,19 +93,16 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    int size=snprintf(NULL, 0, "%s: %s",SideName,Name)+1;
 	    char tmp[size];
 	    snprintf(tmp,size,"%s: %s",SideName,Name);
-	    *NameText=SetupOnScreenText(tmp,10,30, 1,1,1, &Times32);
+	    CurrentGameState->NameAndDescText[i*2+0]=SetupOnScreenText(tmp,10,30, 1,1,1, &Times32);
 
 	    {
-		char * Desc=CurrentGameState->Units[Index].GetString("Description");
+		char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
 		int size=snprintf(NULL, 0, "%s",Desc)+1;
 		char tmp[size];
 		snprintf(tmp,size,"%s",Desc);
-		*DescText=SetupOnScreenText(tmp,15,54, 1,1,1, &Times24);
+		CurrentGameState->NameAndDescText[i*2+1]=SetupOnScreenText(tmp,15,54, 1,1,1, &Times24);
 	    }
-	    ScreenText ** temp=(ScreenText**)malloc(sizeof(ScreenText*)*2);
-	    temp[0]=NameText;
-	    temp[1]=DescText;
-	    CurrentGameState->TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25,0.75,0.25, 1,1,1, 5,(1.0-fabs(i-2.0)/4), 2,temp);
+	    CurrentGameState->TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25,0.75,0.25, 1,1,1, 5,(1.0-fabs(i-2.0)/4), 2,&CurrentGameState->NameAndDescText[i*2]);
 	    Y+=CurrentGameState->TestElement[i].Size.Height+5;
 	}
 
@@ -204,6 +199,9 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->TextureData = PushArray(GameArena,TEXTURE_HEIGHT*TEXTURE_WIDTH*4,uint8_t);
     CurrentGameState->PaletteData = PushArray(GameArena,1024,uint8_t);
     CurrentGameState->FontBitmap = PushArray(GameArena,FONT_BITMAP_SIZE*FONT_BITMAP_SIZE,uint8_t);
+    CurrentGameState->Units.Details = PushArray(GameArena,MAX_UNITS_LOADED,UnitDetails);
+
+    CurrentGameState->NameAndDescText = PushArray(GameArena,5*2,ScreenText);
 
         //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );

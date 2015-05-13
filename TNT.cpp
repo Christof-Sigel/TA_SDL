@@ -101,7 +101,7 @@ float GetHeightFor(int X, int Y, FILE_TNTAttribute * Attributes, int Width,int H
     return result;
 }
 
-bool32 LoadTNTFromBuffer(uint8_t * Buffer, TAMap * Result,uint8_t * PaletteData)
+bool32 LoadTNTFromBuffer(uint8_t * Buffer, TAMap * Result,uint8_t * PaletteData, MemoryArena * TempArena)
 {
     FILE_TNTHeader * Header = (FILE_TNTHeader *)Buffer;
     if(Header->IDVersion != TNT_HEADER_ID)
@@ -125,7 +125,7 @@ bool32 LoadTNTFromBuffer(uint8_t * Buffer, TAMap * Result,uint8_t * PaletteData)
 
     int TileTextureSide = ceil(sqrt(Header->NumberOfTiles *32*32));
     TileTextureSide += 32-(TileTextureSide%32);
-    uint8_t * TileTextureData = (uint8_t*)malloc(TileTextureSide*TileTextureSide *4);
+    uint8_t * TileTextureData = PushArray(TempArena,TileTextureSide*TileTextureSide*4,uint8_t);
     memset(TileTextureData, 0, TileTextureSide*TileTextureSide*4);
     int i=0;
 
@@ -170,12 +170,12 @@ texture_done:
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TileTextureSide, TileTextureSide,0, GL_RGBA, GL_UNSIGNED_BYTE, TileTextureData);
-    free(TileTextureData);
+    PopArray(TempArena,TileTextureData,TileTextureSide*TileTextureSide*4,uint8_t);
 
 
     
     const int NUM_FLOATS_PER_HALFTILE=2*3*(3+2);//2 triangles per half tile, 3 verts per tri, 3 poscoords + 2 texcoords per vert
-    GLfloat * PositionAndTexture = (GLfloat *)malloc(sizeof(GLfloat)*NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE);
+    GLfloat * PositionAndTexture = PushArray(TempArena,NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,GLfloat);
 
     //TODO(Christof): Store heightmap at least for collision stuff later?
     for(int X=0;X<Header->Width;X++)
@@ -246,7 +246,7 @@ texture_done:
     glBindVertexArray(0);
     // glDeleteBuffers(1,&VertexBuffer);
     Result->NumTriangles = NumberOfHalfTiles*2;
-    free(PositionAndTexture);
+    PopArray(TempArena,PositionAndTexture,NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,GLfloat);
 
     return 1;
 }

@@ -55,10 +55,12 @@ enum
     UNIT_CATEGORY_KAMIKAZE//40
 };
 
+#define MAX_UNIT_DETAILS 128
 
 struct UnitDetails
 {
-    std::vector<UnitKeyValue> Details;
+    UnitKeyValue Details[MAX_UNIT_DETAILS];
+    int DetailsSize;
     int GetInt(const char * Name)
     {
 	char * Value=GetString(Name);
@@ -77,7 +79,7 @@ struct UnitDetails
     
     char * GetString(const char * Name)
     {
-	for(int i=0;i<Details.size();i++)
+	for(int i=0;i<DetailsSize;i++)
 	    if(CaseInsensitiveMatch(Details[i].Name,Name))
 		return Details[i].Value;
 	return 0;
@@ -165,19 +167,6 @@ struct UnitDetails
     }
 };
 
-
-void UnloadFBIFile(UnitDetails * UnitDeets)
-{
-    if(UnitDeets)
-    {
-	for(int i=0;i<UnitDeets->Details.size();i++)
-	{
-	    free(UnitDeets->Details[i].Name);
-	    free(UnitDeets->Details[i].Value);
-	}
-    }
-}
-
 void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, MemoryArena * GameArena)
 {
     //TODO(Christof): Bounds checking?
@@ -225,7 +214,7 @@ void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, MemoryArena *
 	temp.Value=PushArray(GameArena,length,char);
 	memcpy(temp.Value,Value,length);
 
-	UnitDeets->Details.push_back(temp);
+	UnitDeets->Details[UnitDeets->DetailsSize++]=temp;
 	
 	while(*Start==' ' || *Start =='\t' || *Start == '\r' || *Start == '\n')
 	{

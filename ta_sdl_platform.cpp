@@ -29,7 +29,7 @@ int main(int argc, char * argv[])
 
     uint64_t TotalSize = GameMemory.PermanentStoreSize + GameMemory.TransientStoreSize;
     GameMemory.PermanentStore = (uint8_t*)calloc(1,TotalSize);
-    GameMemory.TransientStore = GameMemory.PermanentStore+GameMemory.TransientStoreSize;
+    GameMemory.TransientStore = GameMemory.PermanentStore+GameMemory.PermanentStoreSize;
 
     GameState * CurrentGameState=(GameState *)GameMemory.PermanentStore;
     

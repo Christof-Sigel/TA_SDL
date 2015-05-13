@@ -45,9 +45,10 @@ struct Position3d
     double X,Y,Z;
 };
 
+#define MAX_3DO_NAME_LENGTH 32
 struct Object3d
 {
-    char * Name;
+    char Name[MAX_3DO_NAME_LENGTH];
     Object3d * Children;
     int NumberOfChildren;
     Position3d Position;
@@ -255,7 +256,7 @@ int Count3DOChildren(uint8_t * Buffer,FILE_Object3dHeader * header)
 
 
 
-bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Texture * Textures, int Offset=0)
+bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Texture * Textures, MemoryArena * GameArena, int Offset=0)
 {
     FILE_Object3dHeader * header = (FILE_Object3dHeader *)(Buffer+Offset);
     if(header->Version != 1)
@@ -269,8 +270,8 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
 	return 0;
     }
 
+    //TODO(Christof): Bounds check
     int NameLength=strlen((char*)Buffer + header->OffsetToObjectName)+1;
-    Object->Name = (char *)malloc(NameLength);
     memcpy(Object->Name,Buffer+header->OffsetToObjectName,NameLength);
     Object->Position.X=header->XFromParent*TA_TO_GL_SCALE;
     Object->Position.Y=header->YFromParent*TA_TO_GL_SCALE;
@@ -279,7 +280,7 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     FILE_Object3dPrimitive * Primitives=(FILE_Object3dPrimitive*)(Buffer+header->OffsetToPrimitiveArray);
     FILE_Object3dPrimitive * CurrentPrimitive = Primitives;
     Object->NumberOfPrimitives = header->NumberOfPrimitives;
-    Object->Primitives = (Object3dPrimitive *)malloc(sizeof(Object3dPrimitive)*Object->NumberOfPrimitives);
+    Object->Primitives = PushArray(GameArena,Object->NumberOfPrimitives,Object3dPrimitive);
     for(int i=0;i<header->NumberOfPrimitives;i++)
     {
 	if(CurrentPrimitive->OffsetToTextureName)
@@ -295,7 +296,7 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
 	    Object->Primitives[i].Texture=0;
 	}
 	Object->Primitives[i].NumberOfVertices = CurrentPrimitive->NumberOfVertexIndexes;
-	Object->Primitives[i].VertexIndexes = (int *)malloc(sizeof(int)*Object->Primitives[i].NumberOfVertices);
+	Object->Primitives[i].VertexIndexes = PushArray(GameArena,Object->Primitives[i].NumberOfVertices,int);
 	int16_t * VertexIndexes = (int16_t *)(Buffer + CurrentPrimitive->OffsetToVertexIndexArray);
 	for(int j=0;j<Object->Primitives[i].NumberOfVertices;j++)
 	    Object->Primitives[i].VertexIndexes[j]=VertexIndexes[j];
@@ -306,7 +307,7 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     }
 
     Object->NumberOfVertices = header->NumberOfVertexes;
-    Object->Vertices = (float *)malloc(sizeof(float)*3*Object->NumberOfVertices);
+    Object->Vertices = PushArray(GameArena,3*Object->NumberOfVertices,float);
 
     FILE_Object3dVertex * Vertices= (FILE_Object3dVertex *)(Buffer + header->OffsetToVertexArray);
     for(int i=0;i<Object->NumberOfVertices;i++)
@@ -319,12 +320,12 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     
 
     Object->NumberOfChildren = Count3DOChildren(Buffer,header);
-    Object->Children = (Object3d *)malloc(sizeof(Object3d)*Object->NumberOfChildren);
+    Object->Children = PushArray(GameArena,Object->NumberOfChildren,Object3d);
     memset(Object->Children,0,sizeof(Object3d)*Object->NumberOfChildren);
     int ChildOffset=header->OffsetToChildObject;
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	Load3DOFromBuffer(Buffer, &(Object->Children[i]),NextTexture,Textures,ChildOffset);
+	Load3DOFromBuffer(Buffer, &(Object->Children[i]),NextTexture,Textures,GameArena,ChildOffset);
 	header = (FILE_Object3dHeader *)(Buffer+ChildOffset);
 	ChildOffset=header->OffsetToSiblingObject;
     }
@@ -339,22 +340,10 @@ void Unload3DO(Object3d * Object)
 {
     if(!Object)
 	return;
-    if(Object->Name)
-	free(Object->Name);
-    if(Object->Vertices)
-	free(Object->Vertices);
-    if(Object->Primitives)
-    {
-	for(int i=0;i<Object->NumberOfPrimitives;i++)
-	    free(Object->Primitives[i].VertexIndexes);
-	free(Object->Primitives);
-    }
     if(Object->VertexBuffer)
 	glDeleteBuffers(1,&Object->VertexBuffer);
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
 	Unload3DO(&Object->Children[i]);
     }
-    if(Object->Children)
-	free(Object->Children);
 }

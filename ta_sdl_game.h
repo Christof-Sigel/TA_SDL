@@ -94,8 +94,13 @@ inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
 }
 
 #endif
+#define MAX_UNITS_LOADED 1024
 
-#include <vector>
+struct TempUnitList
+{
+    struct UnitDetails * Details;
+    int Size;
+};
 
 struct GameState
 {
@@ -128,7 +133,7 @@ struct GameState
     struct TAMap * TestMap;
     int UnitIndex;
 
-    std::vector<struct UnitDetails> Units;
+    TempUnitList Units;
 
     int ScreenWidth,ScreenHeight;
 
@@ -143,6 +148,7 @@ struct GameState
     GLuint UnitTexture;
     uint8_t * FontBitmap;
 
+    struct ScreenText * NameAndDescText;
 };
 
 const int TEXTURE_WIDTH=2048;

@@ -193,7 +193,7 @@ bool32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena
     uint8_t * DecryptedDirectory = PushArray(TempArena,header->DirectorySize,uint8_t);
     DecryptHPIBuffer(HPI,DecryptedDirectory,header->DirectorySize, 0);
     LoadEntries(&HPI->Root, DecryptedDirectory, header->Offset,HPI,FileArena);
-
+    PopArray(TempArena,DecryptedDirectory,header->DirectorySize,uint8_t);
 
     return 1;
 }
