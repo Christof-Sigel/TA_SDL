@@ -26,25 +26,6 @@ typedef int32_t bool32;
 
 #include "ta_sdl_game_load.cpp"
 
-void HandleKeyDown(SDL_Keysym key);
-bool32 SetupSDLWindow();
-void Render();
-void Setup();
-void Teardown();
-
-void CheckResources();
-void ReloadShaders();
-
-
-
-
-
-
-
-
-
-
-
 
 void LoadCurrentModel(GameState * CurrentGameState)
 {
@@ -93,14 +74,14 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    int size=snprintf(NULL, 0, "%s: %s",SideName,Name)+1;
 	    char tmp[size];
 	    snprintf(tmp,size,"%s: %s",SideName,Name);
-	    CurrentGameState->NameAndDescText[i*2+0]=SetupOnScreenText(tmp,10,30, 1,1,1, &Times32);
+	    CurrentGameState->NameAndDescText[i*2+0]=SetupOnScreenText(tmp,10,30, 1,1,1, CurrentGameState->Times32);
 
 	    {
 		char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
 		int size=snprintf(NULL, 0, "%s",Desc)+1;
 		char tmp[size];
 		snprintf(tmp,size,"%s",Desc);
-		CurrentGameState->NameAndDescText[i*2+1]=SetupOnScreenText(tmp,15,54, 1,1,1, &Times24);
+		CurrentGameState->NameAndDescText[i*2+1]=SetupOnScreenText(tmp,15,54, 1,1,1, CurrentGameState->Times24);
 	    }
 	    CurrentGameState->TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25,0.75,0.25, 1,1,1, 5,(1.0-fabs(i-2.0)/4), 2,&CurrentGameState->NameAndDescText[i*2]);
 	    Y+=CurrentGameState->TestElement[i].Size.Height+5;
@@ -201,6 +182,10 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->FontBitmap = PushArray(GameArena,FONT_BITMAP_SIZE*FONT_BITMAP_SIZE,uint8_t);
     CurrentGameState->Units.Details = PushArray(GameArena,MAX_UNITS_LOADED,UnitDetails);
 
+    CurrentGameState->Times32 = PushStruct(GameArena,FontDetails);
+    CurrentGameState->Times24 = PushStruct(GameArena,FontDetails);
+    CurrentGameState->Times16 = PushStruct(GameArena,FontDetails);
+
     CurrentGameState->NameAndDescText = PushArray(GameArena,5*2,ScreenText);
 
         //GL Setup:
@@ -247,7 +232,9 @@ extern "C"
 	//CurrentGameState->ViewMatrix->Move(0.01,-0.01,-0.01);
     
 	CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
-	RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation);
+	Matrix ModelMatrix;
+	ModelMatrix.SetTranslation(0.5,1.4,0.5);
+	RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation,ModelMatrix);
 
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
 	CurrentGameState->ProjectionMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));

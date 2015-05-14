@@ -15,6 +15,50 @@ void (*GameSetup)(Memory * GameMemory) = NULL;
 void (*CheckResources)(Memory * GameMemory) = NULL;
 void (*GameUpdateAndRender)(InputState * Input, Memory* GameMemory) = NULL;
 void (*GameTeardown)(Memory * GameMemory) = NULL;
+void * LibObject=NULL;
+
+void LoadGameLibrary()
+{
+    LibObject= SDL_LoadObject("./ta_sdl_game.so");
+    if(!LibObject)
+    {
+	LogError("Failed to load DLL: %s",SDL_GetError());
+	return;
+    }
+    GameSetup = (void(*)(Memory *))SDL_LoadFunction(LibObject,"GameSetup");
+    if(!GameSetup)
+    {
+	LogError("Failed to load function pointer: %s",SDL_GetError());
+	return;
+    }
+    CheckResources = (void(*)(Memory *))SDL_LoadFunction(LibObject,"CheckResources");
+    if(!CheckResources)
+    {
+	LogError("Failed to load function pointer: %s",SDL_GetError());
+	return;
+    }
+    GameUpdateAndRender = (void(*)(InputState*, Memory*))SDL_LoadFunction(LibObject,"GameUpdateAndRender");
+    if(!GameUpdateAndRender)
+    {
+	LogError("Failed to load function pointer: %s",SDL_GetError());
+	return;
+    }
+    GameTeardown = (void(*)(Memory *))SDL_LoadFunction(LibObject,"GameTeardown");
+    if(!GameTeardown)
+    {
+	LogError("Failed to load function pointer: %s",SDL_GetError());
+	return;
+    }
+}
+
+void UnloadGameLibrary()
+{
+    GameSetup=0;
+    CheckResources=0;
+    GameUpdateAndRender=0;
+    GameTeardown=0;
+    SDL_UnloadObject(LibObject);
+}
 
 int main(int argc, char * argv[])
 {
@@ -23,23 +67,8 @@ int main(int argc, char * argv[])
 	LogError("SDL_Init Error: %s", SDL_GetError());
 	return 0;
     }
-
-    void * LibObject = SDL_LoadObject("./ta_sdl_game.so");
-    if(!LibObject)
-    {
-	LogError("Failed to load DLL: %s",SDL_GetError());
-	return 0;
-    }
-    GameSetup = (void(*)(Memory *))SDL_LoadFunction(LibObject,"GameSetup");
-    if(!GameSetup)
-    {
-	LogError("Failed to load function pointer: %s",SDL_GetError());
-	return 0;
-    }
-    CheckResources = (void(*)(Memory *))SDL_LoadFunction(LibObject,"CheckResources");
-    GameUpdateAndRender = (void(*)(InputState*, Memory*))SDL_LoadFunction(LibObject,"GameUpdateAndRender");
-    GameTeardown = (void(*)(Memory *))SDL_LoadFunction(LibObject,"GameTeardown");
-
+    LoadGameLibrary();
+ 
     InputState GameInputState={};
     Memory GameMemory={};
 
@@ -60,6 +89,9 @@ int main(int argc, char * argv[])
     while( !CurrentGameState->Quit )
     {
 	CheckResources(&GameMemory);
+	UnloadGameLibrary();
+	LoadGameLibrary();
+
 	while( SDL_PollEvent( &e ) != 0 )
 	{
 	    if( e.type == SDL_QUIT )
@@ -75,6 +107,8 @@ int main(int argc, char * argv[])
 		HandleKeyUp(e.key.keysym,&GameInputState);
 	    }
 	}
+	
+
 	GameUpdateAndRender(&GameInputState,&GameMemory);
 	SDL_GL_SwapWindow( MainSDLWindow );
 	for(int i=0;i<256;i++)
@@ -83,7 +117,6 @@ int main(int argc, char * argv[])
 	}
     }
     GameTeardown(&GameMemory);
-    SDL_UnloadObject(LibObject);
     SDL_DestroyWindow(MainSDLWindow);
     SDL_Quit();
 

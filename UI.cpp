@@ -1,5 +1,6 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
+
 #include "stb_truetype.h"
 
 struct FontDetails
@@ -39,30 +40,29 @@ struct ScreenText
 
 
 
-FontDetails LoadFont(const char * File, float Height,uint8_t * FontBitmap)
+bool32 LoadFont(FontDetails * Font,const char * File, float Height,uint8_t * FontBitmap)
 {
     MemoryMappedFile FontFile = MemoryMapFile(File);
     if(!FontFile.MMapBuffer)
     {
 	LogError("Could not load font file %s",File);
-	return {0};
+	return 0;
     }
-    FontDetails Result;
-    int FirstUnused=stbtt_BakeFontBitmap(FontFile.MMapBuffer,0, Height, FontBitmap,FONT_BITMAP_SIZE,FONT_BITMAP_SIZE, 32,96, Result.FontData); // no guarantee this fits!
-    Result.Height=Height;
+    int FirstUnused=stbtt_BakeFontBitmap(FontFile.MMapBuffer,0, Height, FontBitmap,FONT_BITMAP_SIZE,FONT_BITMAP_SIZE, 32,96, Font->FontData); // no guarantee this fits!
+    Font->Height=Height;
     UnMapFile(FontFile);
     if(FirstUnused<=0)
     {
 	LogError("Only %d characters of font %s fit",-FirstUnused,File);
-	return{0};
+	return 0;
     }
     
-    glGenTextures(1, &Result.FontTexture);
-    glBindTexture(GL_TEXTURE_2D, Result.FontTexture);
+    glGenTextures(1, &Font->FontTexture);
+    glBindTexture(GL_TEXTURE_2D, Font->FontTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, FONT_BITMAP_SIZE,FONT_BITMAP_SIZE, 0, GL_ALPHA, GL_UNSIGNED_BYTE, FontBitmap);
     // can free temp_bitmap at this point
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    return Result;
+    return 1;
 }
 
 
@@ -169,7 +169,7 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Gree
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
-    glDeleteBuffers(1,&VertexBuffer);
+//    glDeleteBuffers(1,&VertexBuffer);
     
     return result;
 }

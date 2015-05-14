@@ -149,6 +149,11 @@ struct GameState
     uint8_t * FontBitmap;
 
     struct ScreenText * NameAndDescText;
+    
+    struct FontDetails * Times32;
+    struct FontDetails * Times24;
+    struct FontDetails * Times16;
+
 };
 
 const int TEXTURE_WIDTH=2048;

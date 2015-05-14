@@ -1,14 +1,11 @@
 
 
-FontDetails Times32;
-FontDetails Times24;
-FontDetails Times16;
 
 void LoadFonts(GameState * CurrentGameState)
 {
-    Times32=LoadFont("data/times.ttf",32,CurrentGameState->FontBitmap);
-    Times24=LoadFont("data/times.ttf",24,CurrentGameState->FontBitmap);
-    Times16=LoadFont("data/times.ttf",16,CurrentGameState->FontBitmap);
+    LoadFont(CurrentGameState->Times32,"data/times.ttf",32,CurrentGameState->FontBitmap);
+    LoadFont(CurrentGameState->Times24,"data/times.ttf",24,CurrentGameState->FontBitmap);
+    LoadFont(CurrentGameState->Times16,"data/times.ttf",16,CurrentGameState->FontBitmap);
 }
 
 
@@ -45,7 +42,7 @@ void ReloadShaders(Memory * GameMemory)
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 
-    glUniform2iv(GetUniformLocation(CurrentGameState->FontShader,"Viewport"),1,viewport+2);
+   glUniform2iv(GetUniformLocation(CurrentGameState->FontShader,"Viewport"),1,viewport+2);
     CurrentGameState->FontPositionLocation=GetUniformLocation(CurrentGameState->FontShader,"Position");
     CurrentGameState->FontColorLocation=GetUniformLocation(CurrentGameState->FontShader,"TextColor");
 
@@ -156,6 +153,7 @@ extern "C"{
 
     void CheckResources(Memory * GameMemory)
     {
+	//return;
 	//TODO(Christof): Fix shaders unecessarily reloading here (cause of the blue flickering)
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
 	uint64_t UnitVertexShaderTime = GetFileModifiedTime("shaders/unit3do.vs.glsl");
