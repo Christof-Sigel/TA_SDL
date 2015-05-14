@@ -77,13 +77,8 @@ extern "C"{
 #endif
 	LoadFonts(CurrentGameState);
 	SetupUIElementRender(CurrentGameState);
-    
-	// ViewMatrix.Rotate(0,1,0, PI);
-	//ViewMatrix.Rotate(0,1,0, -PI/4);
-	//ViewMatrix.Move(1,0,0);
-    
-	ReloadShaders(GameMemory);
 
+	ReloadShaders(GameMemory);
         
 	LoadHPIFileCollection(CurrentGameState);
 	LoadAllTextures(CurrentGameState);

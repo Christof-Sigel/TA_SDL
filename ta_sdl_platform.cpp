@@ -1,49 +1,52 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
-#include "Logging.h"
 #include <SDL2/SDL_loadso.h>
 
 #include "ta_sdl_platform.h"
 #include "ta_sdl_game.h"
+#include "platform_code.cpp"
 
 
 #include "sdl.cpp"
-
-//TODO(Christof): Make these load from dynamic library
+#define QUOTE2(X) #X
+#define QUOTE(X) QUOTE2(X)
+#define GAME_LIBRARY_OBJECT QUOTE(DLL_NAME)
 
 void (*GameSetup)(Memory * GameMemory) = NULL;
 void (*CheckResources)(Memory * GameMemory) = NULL;
 void (*GameUpdateAndRender)(InputState * Input, Memory* GameMemory) = NULL;
 void (*GameTeardown)(Memory * GameMemory) = NULL;
-void * LibObject=NULL;
+void * GameLibraryObject=NULL;
+int64_t GameLibraryObjectModifyTime=0;
 
 void LoadGameLibrary()
 {
-    LibObject= SDL_LoadObject("./ta_sdl_game.so");
-    if(!LibObject)
+    GameLibraryObjectModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
+    GameLibraryObject= SDL_LoadObject(GAME_LIBRARY_OBJECT);
+    if(!GameLibraryObject)
     {
 	LogError("Failed to load DLL: %s",SDL_GetError());
 	return;
     }
-    GameSetup = (void(*)(Memory *))SDL_LoadFunction(LibObject,"GameSetup");
+    GameSetup = (void(*)(Memory *))SDL_LoadFunction(GameLibraryObject,"GameSetup");
     if(!GameSetup)
     {
 	LogError("Failed to load function pointer: %s",SDL_GetError());
 	return;
     }
-    CheckResources = (void(*)(Memory *))SDL_LoadFunction(LibObject,"CheckResources");
+    CheckResources = (void(*)(Memory *))SDL_LoadFunction(GameLibraryObject,"CheckResources");
     if(!CheckResources)
     {
 	LogError("Failed to load function pointer: %s",SDL_GetError());
 	return;
     }
-    GameUpdateAndRender = (void(*)(InputState*, Memory*))SDL_LoadFunction(LibObject,"GameUpdateAndRender");
+    GameUpdateAndRender = (void(*)(InputState*, Memory*))SDL_LoadFunction(GameLibraryObject,"GameUpdateAndRender");
     if(!GameUpdateAndRender)
     {
 	LogError("Failed to load function pointer: %s",SDL_GetError());
 	return;
     }
-    GameTeardown = (void(*)(Memory *))SDL_LoadFunction(LibObject,"GameTeardown");
+    GameTeardown = (void(*)(Memory *))SDL_LoadFunction(GameLibraryObject,"GameTeardown");
     if(!GameTeardown)
     {
 	LogError("Failed to load function pointer: %s",SDL_GetError());
@@ -57,7 +60,13 @@ void UnloadGameLibrary()
     CheckResources=0;
     GameUpdateAndRender=0;
     GameTeardown=0;
-    SDL_UnloadObject(LibObject);
+    SDL_UnloadObject(GameLibraryObject);
+}
+
+inline bool32 HasGameLibraryBeenUpdated()
+{
+    int64_t CurrentModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
+    return CurrentModifyTime > GameLibraryObjectModifyTime;
 }
 
 int main(int argc, char * argv[])
@@ -89,8 +98,11 @@ int main(int argc, char * argv[])
     while( !CurrentGameState->Quit )
     {
 	CheckResources(&GameMemory);
-	UnloadGameLibrary();
-	LoadGameLibrary();
+	if(HasGameLibraryBeenUpdated())
+	{
+	    UnloadGameLibrary();
+	    LoadGameLibrary();
+	}
 
 	while( SDL_PollEvent( &e ) != 0 )
 	{

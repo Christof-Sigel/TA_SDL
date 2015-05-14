@@ -172,8 +172,10 @@ void SetupGameState( GameState * CurrentGameState)
     
     CurrentGameState->ProjectionMatrix->SetProjection(60,float(CurrentGameState->ScreenWidth)/CurrentGameState->ScreenHeight,1.0,1000.0);
 
-    CurrentGameState->ViewMatrix->SetTranslation(0,0,-2);
-    CurrentGameState->ViewMatrix->Rotate(1,0,0, 0.5);
+
+    
+    CurrentGameState->ViewMatrix->SetTranslation(1,-2.5,2);
+    CurrentGameState->ViewMatrix->Rotate(0,1,0, PI*0.75);
 
 
     CurrentGameState->Textures = PushArray(GameArena,MAX_NUMBER_OF_TEXTURE,Texture);
