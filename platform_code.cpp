@@ -306,9 +306,12 @@ inline uint64_t GetFileModifiedTime(const char * FileName)
     return FileTimeAsLargeInt.QuadPart;
 #endif
 #ifdef __LINUX__
-    struct timespec time;
-    clock_gettime(CLOCK_REALTIME,&time);
-    return (time.tv_sec)+(time.tv_nsec/1000/1000/1000);
+    struct stat64 filestats;
+    
+    if(stat64(FileName,&filestats)==-1)
+	return {0};
+  
+    return filestats.st_mtime;
 #endif
 }
 
