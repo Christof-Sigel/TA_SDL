@@ -223,48 +223,51 @@ void InitialiseGame(Memory * GameMemory)
     SetupGameState(CurrentGameState);
 }
 
-void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
+extern "C"
 {
-    GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-    if(!CurrentGameState->IsInitialised)
+    void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
     {
-	InitialiseGame(GameMemory);
+	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
+	if(!CurrentGameState->IsInitialised)
+	{
+	    InitialiseGame(GameMemory);
+	}
+    
+	HandleInput(Input,CurrentGameState);
+    
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glUseProgram(CurrentGameState->UnitShader->ProgramID);
+	glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTexture);
+	CurrentGameState->ProjectionMatrix->Upload(CurrentGameState->ProjectionMatrixLocation);
+
+
+	//CurrentGameState->ViewMatrix->Rotate(0,1,0, PI/300);
+	//CurrentGameState->ViewMatrix->Move(0.01,-0.01,-0.01);
+    
+	CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
+	RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation);
+
+	glUseProgram(CurrentGameState->MapShader->ProgramID);
+	CurrentGameState->ProjectionMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));
+	CurrentGameState->ViewMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"View"));
+	CurrentGameState->TestMap->Render(CurrentGameState->MapShader);
+    
+
+	//TODO(Christof): Unit Rendering here
+
+
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);                      // Turn Blending on
+	glDisable(GL_DEPTH_TEST);        //Turn Depth Testing off
+
+	for(int i=0;i<5;i++)
+	    RenderUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
+
+
+    
+	CurrentGameState->NumberOfFrames++;
     }
-    
-    HandleInput(Input,CurrentGameState);
-    
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDisable(GL_BLEND);
-    glEnable(GL_DEPTH_TEST);
-    glUseProgram(CurrentGameState->UnitShader->ProgramID);
-    glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTexture);
-    CurrentGameState->ProjectionMatrix->Upload(CurrentGameState->ProjectionMatrixLocation);
 
-
-    //CurrentGameState->ViewMatrix->Rotate(0,1,0, PI/300);
-    //CurrentGameState->ViewMatrix->Move(0.01,-0.01,-0.01);
-    
-    CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
-    RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation);
-
-    glUseProgram(CurrentGameState->MapShader->ProgramID);
-    CurrentGameState->ProjectionMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));
-    CurrentGameState->ViewMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"View"));
-    CurrentGameState->TestMap->Render(CurrentGameState->MapShader);
-    
-
-    //TODO(Christof): Unit Rendering here
-
-
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);                      // Turn Blending on
-    glDisable(GL_DEPTH_TEST);        //Turn Depth Testing off
-
-    for(int i=0;i<5;i++)
-	RenderUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
-
-
-    
-    CurrentGameState->NumberOfFrames++;
 }
-

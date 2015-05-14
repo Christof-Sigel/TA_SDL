@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include "Logging.h"
+#include <SDL2/SDL_loadso.h>
 
 #include "ta_sdl_platform.h"
 #include "ta_sdl_game.h"
@@ -9,17 +10,35 @@
 #include "sdl.cpp"
 
 //TODO(Christof): Make these load from dynamic library
-void GameSetup(Memory * GameMemory);
-void CheckResources(Memory * GameMemory);
-void GameUpdateAndRender(InputState *Input, Memory * GameMemory);
-void GameTeardown(Memory * GameMemory);
 
-
+void (*GameSetup)(Memory * GameMemory) = NULL;
+void (*CheckResources)(Memory * GameMemory) = NULL;
+void (*GameUpdateAndRender)(InputState * Input, Memory* GameMemory) = NULL;
+void (*GameTeardown)(Memory * GameMemory) = NULL;
 
 int main(int argc, char * argv[])
 {
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+    {
+	LogError("SDL_Init Error: %s", SDL_GetError());
+	return 0;
+    }
 
-
+    void * LibObject = SDL_LoadObject("./ta_sdl_game.so");
+    if(!LibObject)
+    {
+	LogError("Failed to load DLL: %s",SDL_GetError());
+	return 0;
+    }
+    GameSetup = (void(*)(Memory *))SDL_LoadFunction(LibObject,"GameSetup");
+    if(!GameSetup)
+    {
+	LogError("Failed to load function pointer: %s",SDL_GetError());
+	return 0;
+    }
+    CheckResources = (void(*)(Memory *))SDL_LoadFunction(LibObject,"CheckResources");
+    GameUpdateAndRender = (void(*)(InputState*, Memory*))SDL_LoadFunction(LibObject,"GameUpdateAndRender");
+    GameTeardown = (void(*)(Memory *))SDL_LoadFunction(LibObject,"GameTeardown");
 
     InputState GameInputState={};
     Memory GameMemory={};
@@ -63,8 +82,8 @@ int main(int argc, char * argv[])
 	    GameInputState.KeyWasDown[i]=GameInputState.KeyIsDown[i];
 	}
     }
-
     GameTeardown(&GameMemory);
+    SDL_UnloadObject(LibObject);
     SDL_DestroyWindow(MainSDLWindow);
     SDL_Quit();
 

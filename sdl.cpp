@@ -23,11 +23,6 @@ const int DEFAULT_SCREEN_HEIGHT=1024;
 
 bool32 SetupSDLWindow(GameState * CurrentGameState)
 {
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-    {
-	LogError("SDL_Init Error: %s", SDL_GetError());
-	return 0;
-    }
 
     if(CurrentGameState->ScreenWidth == 0)
     {

@@ -65,114 +65,115 @@ void ReloadShaders(Memory * GameMemory)
 }
 
 void SetupGameState( GameState * CurrentGameState);
-
-void GameSetup(Memory * GameMemory)
-{
-    GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-    if(!CurrentGameState->IsInitialised)
+extern "C"{
+    void GameSetup(Memory * GameMemory)
     {
-	InitialiseGame(GameMemory);
-    }
+	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
+	if(!CurrentGameState->IsInitialised)
+	{
+	    InitialiseGame(GameMemory);
+	}
 #ifdef __WINDOWS__
-    LARGE_INTEGER PerfCountFrequencyResult;
-    QueryPerformanceFrequency(&PerfCountFrequencyResult);
-    PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
+	LARGE_INTEGER PerfCountFrequencyResult;
+	QueryPerformanceFrequency(&PerfCountFrequencyResult);
+	PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
 #endif
-    LoadFonts(CurrentGameState);
-    SetupUIElementRender(CurrentGameState);
+	LoadFonts(CurrentGameState);
+	SetupUIElementRender(CurrentGameState);
     
-    // ViewMatrix.Rotate(0,1,0, PI);
-    //ViewMatrix.Rotate(0,1,0, -PI/4);
-    //ViewMatrix.Move(1,0,0);
+	// ViewMatrix.Rotate(0,1,0, PI);
+	//ViewMatrix.Rotate(0,1,0, -PI/4);
+	//ViewMatrix.Move(1,0,0);
     
-    ReloadShaders(GameMemory);
+	ReloadShaders(GameMemory);
 
         
-    LoadHPIFileCollection(CurrentGameState);
-    LoadAllTextures(CurrentGameState);
-    HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",CurrentGameState);
-    if(Map.Name)
-    {
-	uint8_t * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,uint8_t);
-    
-	if(LoadHPIFileEntryData(Map,temp))
+	LoadHPIFileCollection(CurrentGameState);
+	LoadAllTextures(CurrentGameState);
+	HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",CurrentGameState);
+	if(Map.Name)
 	{
-	    LoadTNTFromBuffer(temp,CurrentGameState->TestMap,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
+	    uint8_t * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,uint8_t);
+    
+	    if(LoadHPIFileEntryData(Map,temp))
+	    {
+		LoadTNTFromBuffer(temp,CurrentGameState->TestMap,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
+	    }
+	    else
+		LogDebug("failed to load map buffer from hpi");
+	    PopArray(&CurrentGameState->TempArena,temp,Map.File.FileSize,uint8_t);
 	}
 	else
-	    LogDebug("failed to load map buffer from hpi");
-	PopArray(&CurrentGameState->TempArena,temp,Map.File.FileSize,uint8_t);
-    }
-    else
-	LogDebug("failed to load map");
+	    LogDebug("failed to load map");
     
 	
 
-    HPIEntry Entry=FindEntryInAllFiles("units",CurrentGameState);
-    if(Entry.IsDirectory)
-    {
-	for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
+	HPIEntry Entry=FindEntryInAllFiles("units",CurrentGameState);
+	if(Entry.IsDirectory)
 	{
-	    char temp[Entry.Directory.Entries[i].File.FileSize];
-	    if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(uint8_t*)temp))
+	    for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
 	    {
-		UnitDetails deets;
-		if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
+		char temp[Entry.Directory.Entries[i].File.FileSize];
+		if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(uint8_t*)temp))
 		{
-		    if(CurrentGameState->Units.Size>=MAX_UNITS_LOADED)
+		    UnitDetails deets;
+		    if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
 		    {
-			LogError("TOO MANY UNITS");
-		    }
-		    else
-		    {
-			LoadFBIFileFromBuffer(&CurrentGameState->Units.Details[CurrentGameState->Units.Size++],temp,&CurrentGameState->GameArena);
+			if(CurrentGameState->Units.Size>=MAX_UNITS_LOADED)
+			{
+			    LogError("TOO MANY UNITS");
+			}
+			else
+			{
+			    LoadFBIFileFromBuffer(&CurrentGameState->Units.Details[CurrentGameState->Units.Size++],temp,&CurrentGameState->GameArena);
+			}
 		    }
 		}
 	    }
 	}
+	UnloadCompositeEntry(&Entry,&CurrentGameState->TempArena);
+
+	LoadCurrentModel(CurrentGameState);
+
+	CurrentGameState->StartTime= GetTimeMillis();
     }
-    UnloadCompositeEntry(&Entry,&CurrentGameState->TempArena);
-
-    LoadCurrentModel(CurrentGameState);
-
-    CurrentGameState->StartTime= GetTimeMillis();
-}
 
 
-void GameTeardown(Memory * GameMemory)
-{
-    GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-    int64_t EndTime=GetTimeMillis();
-    int64_t StartTime=CurrentGameState->StartTime;
-    int NumberOfFrames=CurrentGameState->NumberOfFrames;
-    LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
-    UnloadShaderProgram(CurrentGameState->UnitShader);
-    UnloadHPIFileCollection(CurrentGameState);
-    Unload3DO(CurrentGameState->temp_model);
-}
+    void GameTeardown(Memory * GameMemory)
+    {
+	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
+	int64_t EndTime=GetTimeMillis();
+	int64_t StartTime=CurrentGameState->StartTime;
+	int NumberOfFrames=CurrentGameState->NumberOfFrames;
+	LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
+	UnloadShaderProgram(CurrentGameState->UnitShader);
+	UnloadHPIFileCollection(CurrentGameState);
+	Unload3DO(CurrentGameState->temp_model);
+    }
 
 
 
 
-void CheckResources(Memory * GameMemory)
-{
-    //TODO(Christof): Fix shaders unecessarily reloading here (cause of the blue flickering)
-    GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-    uint64_t UnitVertexShaderTime = GetFileModifiedTime("shaders/unit3do.vs.glsl");
-    uint64_t UnitPixelShaderTime = GetFileModifiedTime("shaders/unit3do.fs.glsl");
-    uint64_t MapVertexShaderTime = GetFileModifiedTime("shaders/map.vs.glsl");
-    uint64_t MapPixelShaderTime = GetFileModifiedTime("shaders/map.fs.glsl");
+    void CheckResources(Memory * GameMemory)
+    {
+	//TODO(Christof): Fix shaders unecessarily reloading here (cause of the blue flickering)
+	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
+	uint64_t UnitVertexShaderTime = GetFileModifiedTime("shaders/unit3do.vs.glsl");
+	uint64_t UnitPixelShaderTime = GetFileModifiedTime("shaders/unit3do.fs.glsl");
+	uint64_t MapVertexShaderTime = GetFileModifiedTime("shaders/map.vs.glsl");
+	uint64_t MapPixelShaderTime = GetFileModifiedTime("shaders/map.fs.glsl");
 
-    uint64_t UIVertexShaderTime = GetFileModifiedTime("shaders/UI.vs.glsl");
-    uint64_t UIPixelShaderTime = GetFileModifiedTime("shaders/UI.fs.glsl");
+	uint64_t UIVertexShaderTime = GetFileModifiedTime("shaders/UI.vs.glsl");
+	uint64_t UIPixelShaderTime = GetFileModifiedTime("shaders/UI.fs.glsl");
 
-    uint64_t TextVertexShaderTime = GetFileModifiedTime("shaders/font.vs.glsl");
-    uint64_t TextPixelShaderTime = GetFileModifiedTime("shaders/font.fs.glsl");
-    if(UnitVertexShaderTime > CurrentGameState->UnitShader->VertexFileModifiedTime || UnitPixelShaderTime > CurrentGameState->UnitShader->PixelFileModifiedTime
-       || MapPixelShaderTime > CurrentGameState->MapShader->VertexFileModifiedTime || MapVertexShaderTime > CurrentGameState->MapShader->PixelFileModifiedTime
-       || UIVertexShaderTime > CurrentGameState->UIElementShaderProgram->VertexFileModifiedTime || UIPixelShaderTime > CurrentGameState->UIElementShaderProgram->PixelFileModifiedTime
-       || TextVertexShaderTime > CurrentGameState->FontShader->VertexFileModifiedTime || TextPixelShaderTime > CurrentGameState->FontShader->PixelFileModifiedTime
-	)
-    ReloadShaders(GameMemory);
-}
+	uint64_t TextVertexShaderTime = GetFileModifiedTime("shaders/font.vs.glsl");
+	uint64_t TextPixelShaderTime = GetFileModifiedTime("shaders/font.fs.glsl");
+	if(UnitVertexShaderTime > CurrentGameState->UnitShader->VertexFileModifiedTime || UnitPixelShaderTime > CurrentGameState->UnitShader->PixelFileModifiedTime
+	   || MapPixelShaderTime > CurrentGameState->MapShader->VertexFileModifiedTime || MapVertexShaderTime > CurrentGameState->MapShader->PixelFileModifiedTime
+	   || UIVertexShaderTime > CurrentGameState->UIElementShaderProgram->VertexFileModifiedTime || UIPixelShaderTime > CurrentGameState->UIElementShaderProgram->PixelFileModifiedTime
+	   || TextVertexShaderTime > CurrentGameState->FontShader->VertexFileModifiedTime || TextPixelShaderTime > CurrentGameState->FontShader->PixelFileModifiedTime
+	    )
+	    ReloadShaders(GameMemory);
+    }
     
+}
