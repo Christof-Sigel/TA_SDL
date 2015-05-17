@@ -97,7 +97,8 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Gree
 	t++;
     }
     const int NUM_FLOATS_PER_QUAD=2*3*2*2;//2 triangles per quad, 3 verts per triangle, 2 position and 2 texture coords per vert
-    GLfloat VertexAndTexCoordData[NumQuads*NUM_FLOATS_PER_QUAD];
+    //GLfloat * VertexAndTexCoordData=alloca[NumQuads*NUM_FLOATS_PER_QUAD];
+    STACK_ARRAY(VertexAndTexCoordData,NumQuads*NUM_FLOATS_PER_QUAD,GLfloat);
     ScreenText result;
     result.Font=Font;
     result.Position.X=X;

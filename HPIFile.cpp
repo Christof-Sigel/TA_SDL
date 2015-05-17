@@ -344,7 +344,8 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination)
 	{
 	    NumChunks++;
 	}
-	int32_t ChunkSizes[NumChunks];
+	//int32_t ChunkSizes[NumChunks];
+	STACK_ARRAY(ChunkSizes,NumChunks,int32_t);
 	DecryptHPIBuffer(Entry.ContainedInFile,(uint8_t*)ChunkSizes,NumChunks*sizeof(int32_t),Entry.File.Offset);
 	int ChunkDataSize=NumChunks*sizeof(FILE_HPIChunk);//size of all the headers
 	int ChunkDataOffset = Entry.File.Offset + NumChunks*sizeof(int32_t);
@@ -352,7 +353,8 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination)
 	{
 	    ChunkDataSize += ChunkSizes[i];
 	}
-	uint8_t DecryptedChunkData[ChunkDataSize];
+	//uint8_t DecryptedChunkData[ChunkDataSize];
+	STACK_ARRAY(DecryptedChunkData,ChunkDataSize,uint8_t);
 	DecryptHPIBuffer(Entry.ContainedInFile,DecryptedChunkData,ChunkDataSize,ChunkDataOffset);
 	uint8_t * DataSource=DecryptedChunkData;
 	for(int i=0;i<NumChunks;i++)
@@ -447,7 +449,8 @@ bool32 LoadHPIFileCollection(GameState * CurrentGameState)
 	    FileName=UfoFiles.FileNames[i];
 	}
 	int size=snprintf(0,0,"data/%s",FileName)+1;
-	char temp[size];
+	//char temp[size];
+	STACK_ARRAY(temp,size,char);
 	snprintf(temp,size,"data/%s",FileName);
 	//TODO(Christof): Determine if file memory stuff should go in a seperate arena
 	LoadHPIFile(temp,&CurrentGameState->GlobalArchiveCollection->Files[i],&CurrentGameState->GameArena,&CurrentGameState->TempArena);

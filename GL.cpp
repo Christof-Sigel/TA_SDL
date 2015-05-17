@@ -203,7 +203,8 @@ inline GLuint LoadShader(GLenum Type,MemoryMappedFile ShaderFile, const
     {
 	int LogLen;
 	glGetShaderiv(ShaderID,GL_INFO_LOG_LENGTH,&LogLen);
-	GLchar ShaderLog[LogLen];
+	//GLchar * ShaderLog = (GLchar *)alloca(LogLen);
+	STACK_ARRAY(ShaderLog, LogLen, GLchar);
 	glGetShaderInfoLog(ShaderID,LogLen,NULL,ShaderLog);
 	LogError("Compile error while compiling shader %s:",FileName);
 	LogDebug("%s",ShaderLog);

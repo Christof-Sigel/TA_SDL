@@ -5,6 +5,9 @@ enum
     LOG_INFORMATION,
     LOG_DEBUG
 };
+#ifdef _MSC_VER
+#define __func__ __FUNCTION__
+#endif
 
 const int LOG_LEVEL=LOG_DEBUG; //controls up to what level of errors is logged
 #define Log(ll,fmt,...) __LOG(ll,fmt,__func__,__LINE__,__FILE__,##__VA_ARGS__)

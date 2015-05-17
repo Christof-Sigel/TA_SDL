@@ -68,9 +68,7 @@ struct Object3dPrimitive
     int * VertexIndexes;
 };
 
-
-
-void FillObject3dData(GLfloat * Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,uint8_t * PaletteData)
+void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive)
 {
     int Offset=CurrentTriangle*(3+2+3)*3;
     Data+=Offset;

@@ -208,7 +208,8 @@ bool32 LoadAllTextures(GameState * CurrentGameState)
 	    LogWarning("Unexpectedly found directory %s inside textures directory of %s",Textures.Directory.Entries[i].Name,
 		       Textures.Directory.Entries[i].ContainedInFile->Name);
 	}
-	uint8_t GafBuffer[Textures.Directory.Entries[i].File.FileSize];
+	//uint8_t GafBuffer[Textures.Directory.Entries[i].File.FileSize];
+	STACK_ARRAY(GafBuffer,Textures.Directory.Entries[i].FileSize.FileSize,uint8_t);
 	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer);
 	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
     }

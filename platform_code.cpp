@@ -92,9 +92,12 @@ void UnMapFile(MemoryMappedFile MMFile)
 #endif
 }
 
+#ifdef __LINUX__
 #include <png.h>
+#endif
 #include "zlib.h"
 
+#ifdef __LINUX__
 void SaveDataToPng(char * ImageData, char * FileName, int Width, int Height)
 {
     png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL, NULL);
@@ -141,7 +144,7 @@ void SaveDataToPng(char * ImageData, char * FileName, int Width, int Height)
     delete[] row_pointers;
 
 }
-
+#endif
 
 #ifdef __LINUX__
 #include <dirent.h>

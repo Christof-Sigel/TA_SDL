@@ -1,3 +1,10 @@
+#define STACK_ARRAY(Name, Length, Type) Type * Name = (Type *)alloca(sizeof(Type)*Length);
+//TODO(Christof): Proper snprintf wrapper for MSVC
+//NOTE(Christof): This will only work for the specific cases we use it for, i.e. calc length with 0,NULL
+// _snprintf return value for buffer size too small IS NOT WHAT WE EXPECT!!!
+#ifdef _MSC_VER
+#define snprintf _snprintf
+#endif
 
 struct InputState
 {
