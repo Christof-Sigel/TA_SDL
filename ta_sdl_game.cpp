@@ -36,18 +36,22 @@ void LoadCurrentModel(GameState * CurrentGameState)
 
     char * UnitName=CurrentGameState->Units.Details[CurrentGameState->UnitIndex].GetString("UnitName");
     int len=snprintf(0,0,"objects3d/%s.3do",UnitName)+1;
-    char ModelName[len];
+    //char ModelName[len];
+    STACK_ARRAY(ModelName,len,char);
     snprintf(ModelName,len,"objects3d/%s.3do",UnitName);
     
     HPIEntry Entry=FindEntryInAllFiles(ModelName,CurrentGameState); 
-    uint8_t temp[Entry.File.FileSize];
+    //uint8_t temp[Entry.File.FileSize];
+    STACK_ARRAY(temp,Entry.File.FileSize,uint8_t);
     if(LoadHPIFileEntryData(Entry,temp))
     {
 	int ScriptLength=snprintf(0,0,"scripts/%s.cob",UnitName)+1;
-	char ScriptName[ScriptLength];
+	//char ScriptName[ScriptLength];
+	STACK_ARRAY(ScriptName,ScriptLength,char);
 	snprintf(ScriptName,ScriptLength,"scripts/%s.cob",UnitName);
 	HPIEntry ScriptEntry=FindEntryInAllFiles(ScriptName,CurrentGameState); 
-	uint8_t ScriptBuffer[ScriptEntry.File.FileSize];
+	//uint8_t ScriptBuffer[ScriptEntry.File.FileSize];
+	STACK_ARRAY(ScriptBuffer, ScriptEntry.File.FileSize, uint8_t);
 	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer))
 	{
 	    LoadUnitScriptFromBuffer(CurrentGameState->CurrentUnitScript, ScriptBuffer,ScriptEntry.File.FileSize,&CurrentGameState->GameArena);
@@ -81,18 +85,20 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		}
 
 		int size=snprintf(NULL, 0, "%s: %s",SideName,Name)+1;
-		char tmp[size];
+		//char tmp[size];
+		STACK_ARRAY(tmp,size,char);
 		snprintf(tmp,size,"%s: %s",SideName,Name);
 		CurrentGameState->NameAndDescText[i*2+0]=SetupOnScreenText(tmp,10,30, 1,1,1, CurrentGameState->Times32);
 
 		{
 		    char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
 		    int size=snprintf(NULL, 0, "%s",Desc)+1;
-		    char tmp[size];
+		    //char tmp[size];
+		    STACK_ARRAY(tmp,size,char);
 		    snprintf(tmp,size,"%s",Desc);
 		    CurrentGameState->NameAndDescText[i*2+1]=SetupOnScreenText(tmp,15,54, 1,1,1, CurrentGameState->Times24);
 		}
-		CurrentGameState->TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25,0.75,0.25, 1,1,1, 5,(1.0-fabs(i-2.0)/4), 2,&CurrentGameState->NameAndDescText[i*2]);
+		CurrentGameState->TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25f,0.75f,0.25f, 1,1,1, 5,(float)(1.0-fabs(i-2.0)/4), 2,&CurrentGameState->NameAndDescText[i*2]);
 		Y+=CurrentGameState->TestElement[i].Size.Height+5;
 	    }
 	
@@ -100,11 +106,12 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    for(int i=0;i<NUMBER_OF_UNIT_DETAILS && i<CurrentUnit->DetailsSize;i++)
 	    {
 		int size = snprintf(NULL,0,"%d) %s : %s",i+1,CurrentUnit->Details[i].Name,CurrentUnit->Details[i].Value)+1;
-		char temp[size];
+		//char temp[size];
+		STACK_ARRAY(temp,size,char);
 
 		snprintf(temp,size,"%d) %s : %s",i+1,CurrentUnit->Details[i].Name,CurrentUnit->Details[i].Value);
 
-		CurrentGameState->UnitDetailsText[i] = SetupOnScreenText(temp, CurrentGameState->ScreenWidth-350, i*(CurrentGameState->Times24->Height+5)+20,  0,0.75,0, CurrentGameState->Times24);
+		CurrentGameState->UnitDetailsText[i] = SetupOnScreenText(temp, (float)CurrentGameState->ScreenWidth-350, (float)(i*(CurrentGameState->Times24->Height+5)+20),  0,0.75f,0, CurrentGameState->Times24);
 	    }
 	
 	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
@@ -195,7 +202,7 @@ void SetupGameState( GameState * CurrentGameState)
 
     
     CurrentGameState->ViewMatrix->SetTranslation(1,-2.5,2);
-    CurrentGameState->ViewMatrix->Rotate(0,1,0, PI*0.75);
+    CurrentGameState->ViewMatrix->Rotate(0,1,0, (float)PI*0.75f);
 
 
     CurrentGameState->Textures = PushArray(GameArena,MAX_NUMBER_OF_TEXTURE,Texture);

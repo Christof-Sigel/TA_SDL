@@ -209,9 +209,11 @@ bool32 LoadAllTextures(GameState * CurrentGameState)
 		       Textures.Directory.Entries[i].ContainedInFile->Name);
 	}
 	//uint8_t GafBuffer[Textures.Directory.Entries[i].File.FileSize];
-	STACK_ARRAY(GafBuffer,Textures.Directory.Entries[i].File.FileSize,uint8_t);
+	//STACK_ARRAY(GafBuffer,Textures.Directory.Entries[i].File.FileSize,uint8_t);
+	uint8_t * GafBuffer = PushArray(&CurrentGameState->TempArena, Textures.Directory.Entries[i].File.FileSize,uint8_t);
 	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer);
 	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
+	PopArray(&CurrentGameState->TempArena, GafBuffer,  Textures.Directory.Entries[i].File.FileSize,uint8_t);
     }
     UnloadCompositeEntry(&Textures,&CurrentGameState->TempArena);
     

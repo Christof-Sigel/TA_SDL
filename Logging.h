@@ -1,3 +1,4 @@
+#define STACK_ARRAY(Name, Length, Type) Type * Name = (Type *)alloca(sizeof(Type)*Length);
 enum
 {
     LOG_ERROR,

@@ -42,7 +42,7 @@ struct FILE_Object3dPrimitive
 
 struct Position3d
 {
-    double X,Y,Z;
+    float X,Y,Z;
 };
 
 #define MAX_3DO_NAME_LENGTH 32
@@ -83,9 +83,9 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
 	Data[i*8+4]=Texture->V+Texture->Height*UV[i*2+1];
 	
 
-	Data[i*8+5]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0;
-	Data[i*8+6]=(uint8_t)PaletteData[Primitive->ColorIndex*4+1]/255.0;
-	Data[i*8+7]=(uint8_t)PaletteData[Primitive->ColorIndex*4+2]/255.0;
+	Data[i*8+5]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0f;
+	Data[i*8+6]=(uint8_t)PaletteData[Primitive->ColorIndex*4+1]/255.0f;
+	Data[i*8+7]=(uint8_t)PaletteData[Primitive->ColorIndex*4+2]/255.0f;
 
     }
 }
@@ -104,7 +104,8 @@ bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
     {
 	Object->NumTriangles += Object->Primitives[i].NumberOfVertices-2>0?Object->Primitives[i].NumberOfVertices-2:0;
     }
-    GLfloat Data[Object->NumTriangles * (3+2+3)*3];//3 coord, 2 tex, 3 color
+    //GLfloat Data[Object->NumTriangles * (3+2+3)*3];//3 coord, 2 tex, 3 color
+    STACK_ARRAY(Data,Object->NumTriangles * (3+2+3)*3, GLfloat);
     //NOTE: signal no texture in some way, perhaps negative texture coords?
     int CurrentTriangle=0;
     for(int PrimitiveIndex=0;PrimitiveIndex<Object->NumberOfPrimitives;PrimitiveIndex++)
@@ -145,8 +146,8 @@ bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
 	{
 	    GLfloat UVCoords[6];
 	    //Map sin/cos unit circle at (0,0) onto 1/2 unit circle at (0.5,0.5)
-	    UVCoords[2*2]=0.5f*(1-(sin((2.0f*(CurrentPrimitive->NumberOfVertices-1)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
-	    UVCoords[2*2+1]=0.5f*(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(CurrentPrimitive->NumberOfVertices-1)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
+	    UVCoords[2*2]=0.5f*(float)(1.0f-(sin((2.0f*(CurrentPrimitive->NumberOfVertices-1)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
+	    UVCoords[2*2+1]=0.5f*(float)(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(CurrentPrimitive->NumberOfVertices-1)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
 
 	    for(int i=0;i<CurrentPrimitive->NumberOfVertices-2;i++)
 	    {
@@ -155,8 +156,8 @@ bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
 		for(int j=0;j<2;j++)
 		{
 		    //Map sin/cos unit circle at (0,0) onto 1/2 unit circle at (0.5,0.5)
-		    UVCoords[j*2]=0.5f*(1-(sin((2.0f*(i+j)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
-		    UVCoords[j*2+1]=0.5f*(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(i+j)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
+		    UVCoords[j*2]=0.5f*(float)(1-(sin((2.0f*(i+j)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
+		    UVCoords[j*2+1]=0.5f*(float)(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(i+j)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
 		}
 		FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData);
 		CurrentTriangle++;
@@ -269,7 +270,7 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     }
 
     //TODO(Christof): Bounds check
-    int NameLength=strlen((char*)Buffer + header->OffsetToObjectName)+1;
+    int NameLength=(int)strlen((char*)Buffer + header->OffsetToObjectName)+1;
     memcpy(Object->Name,Buffer+header->OffsetToObjectName,NameLength);
     Object->Position.X=header->XFromParent*TA_TO_GL_SCALE;
     Object->Position.Y=header->YFromParent*TA_TO_GL_SCALE;

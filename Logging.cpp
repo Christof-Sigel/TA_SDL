@@ -45,7 +45,8 @@ void __LOG(int loglevel,const char * fmt, const char* caller , int line,const ch
     va_list argptr;
     va_start(argptr,file);
     int size=vsnprintf(NULL, 0, fmt, argptr);
-    char tmp[size];
+    //char tmp[size];
+    STACK_ARRAY(tmp,size,char);
     va_end(argptr);
     va_start(argptr,file);
     vsnprintf(tmp,size+1,fmt,argptr);

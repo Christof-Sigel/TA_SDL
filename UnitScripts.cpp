@@ -48,7 +48,7 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, int Buffe
     int32_t * NameOffsetArray = (int32_t *)(Buffer + Header->OffsetToScriptNameOffsetArray);
     for(int i=0;i<Script->NumberOfScripts;i++)
     {
-	int Length = strlen((char*)Buffer + NameOffsetArray[i]);
+	int Length = (int)strlen((char*)Buffer + NameOffsetArray[i]);
 	Length= Length<SCRIPT_NAME_STORAGE_SIZE?Length:SCRIPT_NAME_STORAGE_SIZE-1;
 	memcpy(Script->ScriptNames[i],Buffer + NameOffsetArray[i], Length);
 	Script->ScriptNames[i][Length]=0;
@@ -63,7 +63,7 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, int Buffe
     NameOffsetArray = (int32_t *)(Buffer + Header->OffsetToPieceNameOffsetArray);
     for(int i=0;i<Script->NumberOfPieces;i++)
     {
-	int Length = strlen((char*)Buffer + NameOffsetArray[i]);
+	int Length = (int)strlen((char*)Buffer + NameOffsetArray[i]);
 	Length= Length<SCRIPT_NAME_STORAGE_SIZE?Length:SCRIPT_NAME_STORAGE_SIZE-1;
 	memcpy(Script->PieceNames[i],Buffer + NameOffsetArray[i], Length);
 	Script->PieceNames[i][Length]=0;

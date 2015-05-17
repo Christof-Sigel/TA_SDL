@@ -16,7 +16,7 @@ struct Matrix
     void SetProjection(float VerticalFieldOfView,float AspectRatio,float NearPlane,float FarPlane)
     {
 	SetIdentity();
-	const float yscale=1.0/tan((VerticalFieldOfView/2)*PI/180.0),//cot(degtorad(vfow/2));
+	const float yscale=1.0f/(float)tan((VerticalFieldOfView/2)*PI/180.0f),//cot(degtorad(vfow/2));
 	    xscale= yscale/AspectRatio,
 	    frustumlength=FarPlane-NearPlane;
 	memset(Contents,0,16*sizeof(GLfloat));
@@ -194,7 +194,7 @@ inline GLuint LoadShader(GLenum Type,MemoryMappedFile ShaderFile, const
 			 char * FileName)
 {
     GLuint ShaderID = glCreateShader(Type);
-    GLint length=ShaderFile.FileSize;
+    GLint length=(int)ShaderFile.FileSize;
     glShaderSource(ShaderID,1,(const char **)&ShaderFile.MMapBuffer,&length);
     glCompileShader(ShaderID);
     GLint ShaderSuccess;
@@ -275,9 +275,9 @@ bool32 LoadShaderProgram( const char * VertexShaderFileName, const char * PixelS
     return 1;
 }
 
-inline GLuint GetUniformLocation(ShaderProgram * Program, const char * UniformName)
+inline GLint GetUniformLocation(ShaderProgram * Program, const char * UniformName)
 {
-    GLuint Location=glGetUniformLocation(Program->ProgramID,UniformName);
+    GLint Location=glGetUniformLocation(Program->ProgramID,UniformName);
     GLenum ErrorValue = glGetError();
     if(ErrorValue != GL_NO_ERROR)
     {

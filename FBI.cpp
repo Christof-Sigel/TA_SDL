@@ -73,7 +73,7 @@ struct UnitDetails
     {
 	char * Value= GetString(Name);
 	if(Value)
-	    return atof(Value);
+	    return (float)atof(Value);
 	return -1;
     }
     
@@ -206,11 +206,11 @@ void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, MemoryArena *
 	*Start++ = 0;
 
 	UnitKeyValue temp;
-	int length=strlen(Name)+1;
+	int length=(int)strlen(Name)+1;
 	temp.Name=PushArray(GameArena,length,char);
 	memcpy(temp.Name,Name,length);
 
-	length=strlen(Value)+1;
+	length=(int)strlen(Value)+1;
 	temp.Value=PushArray(GameArena,length,char);
 	memcpy(temp.Value,Value,length);
 

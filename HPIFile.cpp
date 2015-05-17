@@ -119,7 +119,7 @@ void LoadEntries(HPIDirectoryEntry * Root, uint8_t * Buffer, int Offset,HPIFile 
     {
 	Root->Entries[EntryIndex].IsDirectory = EntriesInFile[EntryIndex].Flag;
 	Root->Entries[EntryIndex].ContainedInFile = File;
-	int NameLength = strlen((char*) (Buffer + EntriesInFile[EntryIndex].NameOffset))+1;
+	int NameLength = (int)strlen((char*) (Buffer + EntriesInFile[EntryIndex].NameOffset))+1;
 	Root->Entries[EntryIndex].Name = PushArray(FileArena,NameLength,char);
 	memcpy(Root->Entries[EntryIndex].Name,Buffer+EntriesInFile[EntryIndex].NameOffset,NameLength);
 	if(Root->Entries[EntryIndex].IsDirectory)
@@ -147,7 +147,7 @@ void DecryptHPIBuffer(HPIFile * HPI, uint8_t * Destination, int32_t Length, int3
     for(int BufferIndex=0;BufferIndex < Length; BufferIndex++)
     {
 	CurrentKey =  (BufferIndex + FileOffset) ^ HPI->DecryptionKey;
-	Destination[BufferIndex] = CurrentKey ^ ~ (HPI->MMFile.MMapBuffer[BufferIndex+FileOffset]);
+	Destination[BufferIndex] = (uint8_t)(CurrentKey ^ ~ (HPI->MMFile.MMapBuffer[BufferIndex+FileOffset]));
     }
 }
     
@@ -179,7 +179,7 @@ bool32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena
     HPI->MMFile = HPIMemory;
     
     HPI->DecryptionKey = ~((header->HeaderKey *4) | (header->HeaderKey >> 6));
-    int NameLength=strlen(FileName);
+    int NameLength=(int)strlen(FileName);
     static int MaxLength=0;
     if(NameLength>MaxLength)
     {
@@ -241,7 +241,8 @@ void DecompressLZ77Chunk(uint8_t * Source, int CompressedSize, int DecompressedS
     unsigned char Window[LZ77_WINDOW_SIZE];
     
     int windowIndex=1;
-    while(true)
+    int done = 0;
+    while(!done)
     {
 	int tag=*Source++;
 	int mask=1;
@@ -264,6 +265,7 @@ void DecompressLZ77Chunk(uint8_t * Source, int CompressedSize, int DecompressedS
 		length+=2;
 		if(offset==0)
 		{
+		    done=1;
 		    return;
 		}
 		Source+=2;
@@ -303,7 +305,7 @@ uint8_t * LoadChunk(uint8_t * Source, uint8_t * Destination)
     if(header->Encrypt)
     {
 	for(int i=0;i<header->CompressedSize;i++)
-	    data[i]=(data[i] - i) ^ i;
+	    data[i]=(uint8_t)((data[i] - i) ^ i);
     }
     Compression_Type CompressionMethod= (Compression_Type)header->CompressionMethod;
     switch(CompressionMethod)
@@ -502,7 +504,7 @@ HPIEntry FindEntryInAllFiles(const char * Path,GameState * CurrentGameState)
     {
 	return {0};
     }
-    Result.Directory.NumberOfEntries=Entries.size();
+    Result.Directory.NumberOfEntries=(int)Entries.size();
     Result.Directory.Entries=PushArray(&CurrentGameState->TempArena,Result.Directory.NumberOfEntries,HPIEntry);
     for(int i=0;i<Entries.size();i++)
     {

@@ -105,7 +105,9 @@ extern "C"{
 	{
 	    for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
 	    {
-		char temp[Entry.Directory.Entries[i].File.FileSize];
+		//char temp[Entry.Directory.Entries[i].File.FileSize];
+		//STACK_ARRAY(temp,Entry.Directory.Entries[i].File.FileSize,char);
+		char * temp = PushArray(&CurrentGameState->TempArena, Entry.Directory.Entries[i].File.FileSize,char);
 		if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(uint8_t*)temp))
 		{
 		    if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
@@ -120,6 +122,7 @@ extern "C"{
 			}
 		    }
 		}
+		PopArray(&CurrentGameState->TempArena, temp,Entry.Directory.Entries[i].File.FileSize,char);
 	    }
 	}
 	UnloadCompositeEntry(&Entry,&CurrentGameState->TempArena);

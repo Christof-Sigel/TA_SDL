@@ -182,14 +182,14 @@ UFOSearchResult GetUfoFiles()
 
     do
     {
-	int length=strlen(ffd.cFileName)+1;
+	int length=(int)strlen(ffd.cFileName)+1;
 	char * FileName=(char*)malloc(length);
 	memcpy(FileName,ffd.cFileName,length);
 	FileNames.push_back(FileName);
     }while(FindNextFile(find,&ffd));
     FindClose(find);
 
-    Result.NumberOfFiles=FileNames.size();
+    Result.NumberOfFiles=(int)FileNames.size();
     Result.FileNames=(char **)malloc(sizeof(char *)*Result.NumberOfFiles);
     for(int i=0;i<Result.NumberOfFiles;i++)
     {
@@ -276,32 +276,17 @@ inline uint64_t GetCurrentFileTime()
 inline uint64_t GetFileModifiedTime(const char * FileName)
 {
 #ifdef __WINDOWS__
-    FILETIME FileTime;
-    HANDLE hFile = CreateFile(FileName, GENERIC_READ, FILE_SHARE_READ, NULL,
-        OPEN_EXISTING, 0, NULL);
 
-    if(hFile == INVALID_HANDLE_VALUE)
+    FILETIME FileTime={};
+    WIN32_FILE_ATTRIBUTE_DATA Data;
+    if(GetFileAttributesEx(FileName, GetFileExInfoStandard, &Data))
     {
-
-	DWORD errorMessageID = GetLastError();
-
-	LPSTR messageBuffer = nullptr;
-	size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				     NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
-
-
-	LogError("Failed to open file %s while checking file access time: %s\n",FileName,messageBuffer);
-	LocalFree(messageBuffer);
-
-        return 0;
+        FileTime = Data.ftLastWriteTime;
     }
-    if(!GetFileTime(hFile,NULL,NULL, &FileTime))
+    else
     {
 	LogError("Could not get file write time for %s",FileName);
-	return 0;
     }
-        
-    CloseHandle(hFile);    
 
     ULARGE_INTEGER FileTimeAsLargeInt;
     FileTimeAsLargeInt.LowPart = FileTime.dwLowDateTime;

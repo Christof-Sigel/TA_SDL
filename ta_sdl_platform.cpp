@@ -11,6 +11,7 @@
 #define QUOTE2(X) #X
 #define QUOTE(X) QUOTE2(X)
 #define GAME_LIBRARY_OBJECT QUOTE(DLL_NAME)
+#define TEMP_GAME_LIBRARY_OBJECT QUOTE(DLL_TEMP_NAME)
 
 void (*GameSetup)(Memory * GameMemory) = NULL;
 void (*CheckResources)(Memory * GameMemory) = NULL;
@@ -19,10 +20,21 @@ void (*GameTeardown)(Memory * GameMemory) = NULL;
 void * GameLibraryObject=NULL;
 int64_t GameLibraryObjectModifyTime=0;
 
+#ifdef __WINDOWS__
+#include <windows.h>
+#endif
+
 void LoadGameLibrary()
 {
+
     GameLibraryObjectModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
+#ifdef __WINDOWS__
+    CopyFile(GAME_LIBRARY_OBJECT, TEMP_GAME_LIBRARY_OBJECT, FALSE);
+    GameLibraryObject= SDL_LoadObject(TEMP_GAME_LIBRARY_OBJECT);
+#else
+    
     GameLibraryObject= SDL_LoadObject(GAME_LIBRARY_OBJECT);
+#endif
     if(!GameLibraryObject)
     {
 	LogError("Failed to load DLL: %s",SDL_GetError());
@@ -65,8 +77,18 @@ void UnloadGameLibrary()
 
 inline bool32 HasGameLibraryBeenUpdated()
 {
+#ifdef __WINDOWS__
+    WIN32_FILE_ATTRIBUTE_DATA Ignored;
+    if(GetFileAttributesEx("lock.tmp", GetFileExInfoStandard, &Ignored))
+	return 0;
+#endif
     int64_t CurrentModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
     return CurrentModifyTime > GameLibraryObjectModifyTime;
+}
+
+int wmain(int argc, char * argv[])
+{
+    return  main(argc, argv);
 }
 
 int main(int argc, char * argv[])
@@ -134,3 +156,14 @@ int main(int argc, char * argv[])
 
     return 0;
 }
+
+
+/*int _stdcall
+WinMain (struct HINSTANCE__ *hInstance,
+         struct HINSTANCE__ *hPrevInstance,
+         char               *lpszCmdLine,
+         int                 nCmdShow)
+{
+  return main (__argc, __argv);
+}
+*/
