@@ -156,11 +156,13 @@ struct GameState
     uint8_t * FontBitmap;
 
     struct ScreenText * NameAndDescText;
+    struct ScreenText * UnitDetailsText;
     
     struct FontDetails * Times32;
     struct FontDetails * Times24;
     struct FontDetails * Times16;
 
+    struct UnitScript * CurrentUnitScript;
 };
 
 const int TEXTURE_WIDTH=2048;
@@ -171,3 +173,5 @@ const int MAX_NUMBER_OF_TEXTURE=1024;
 const double TA_TO_GL_SCALE=1.0f/2500000.0f;
 const double PI = 3.14159265358979323846;
 const int FONT_BITMAP_SIZE=256;
+
+const int NUMBER_OF_UNIT_DETAILS=35;

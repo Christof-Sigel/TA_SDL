@@ -108,7 +108,6 @@ extern "C"{
 		char temp[Entry.Directory.Entries[i].File.FileSize];
 		if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(uint8_t*)temp))
 		{
-		    UnitDetails deets;
 		    if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
 		    {
 			if(CurrentGameState->Units.Size>=MAX_UNITS_LOADED)

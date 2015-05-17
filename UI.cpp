@@ -189,6 +189,7 @@ void RenderOnScreenText(ScreenText Text, ShaderProgram * FontShader, GLuint Font
 union UIElementPosition
 {
     GLfloat Contents[2];
+    
     struct{
 	GLfloat X, Y;
     };

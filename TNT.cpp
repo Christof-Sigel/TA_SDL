@@ -111,15 +111,14 @@ bool32 LoadTNTFromBuffer(uint8_t * Buffer, TAMap * Result,uint8_t * PaletteData,
     LogDebug("%dx%d",Header->Width,Header->Height);
     uint16_t * TileIndices = (uint16_t*)(Buffer + Header->MapDataOffset);//these map to 32x32 tiles NOT 16x16 half tiles
     int NumberOfHalfTiles = Header->Width*Header->Height;
-    int NumberOfTiles = NumberOfHalfTiles /4 ;//heights and features defined on 16x16 tiles, graphics tiles are 32x32
     FILE_TNTAttribute * Attributes=(FILE_TNTAttribute *)(Buffer + Header->MapAttributeOffset);//half tiles
     FILE_TNTTile * Tiles=(FILE_TNTTile *)(Buffer + Header->TileGraphicsOffset);
-    FILE_TNTFeature * Features=(FILE_TNTFeature*)(Buffer + Header->FeaturesOffset);
+    //TODO(Christof): Figure out how to deal with the features (upright billboard perhaps?) FILE_TNTFeature * Features=(FILE_TNTFeature*)(Buffer + Header->FeaturesOffset);
 
     int MinimapWidth, MinimapHeight;
     MinimapWidth = *(uint32_t*)(Buffer + Header->MiniMapOffset);
     MinimapHeight = *(uint32_t*)(Buffer + Header->MiniMapOffset+4);
-    uint8_t * MinimapData = (uint8_t *)(Buffer + Header->MiniMapOffset + 8);
+    //Not using Minimap Data at the moment - silence some compiler warnings uint8_t * MinimapData = (uint8_t *)(Buffer + Header->MiniMapOffset + 8);
 
     //TODO(Christof): TA Apparently uses 0xDD to denote transparency, need to deal with this here
 
