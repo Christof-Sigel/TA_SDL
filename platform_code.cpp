@@ -160,7 +160,11 @@ UFOSearchResult GetUfoFiles()
     UFOSearchResult Result={0,0};
 #ifdef __WINDOWS__
     std::vector<char *> FileNames;
-    SetCurrentDirectory("data");
+    if(!SetCurrentDirectory("data"))
+    {
+	LogError("Failed to change to data directory");
+	return Result;
+    }
     WIN32_FIND_DATA ffd;
     HANDLE find=FindFirstFile("*.ufo", &ffd);
     if(find==INVALID_HANDLE_VALUE)
