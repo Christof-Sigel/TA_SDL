@@ -164,6 +164,8 @@ struct GameState
     struct FontDetails * Times16;
 
     struct UnitScript * CurrentUnitScript;
+    uint64_t PerformanceCounterStart;
+    uint64_t PerformanceCounterFrequency;
 };
 
 const int TEXTURE_WIDTH=2048;

@@ -129,14 +129,14 @@ extern "C"{
 
 	LoadCurrentModel(CurrentGameState);
 
-	CurrentGameState->StartTime= GetTimeMillis();
+	CurrentGameState->StartTime= GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
     }
 
 
     void GameTeardown(Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-	int64_t EndTime=GetTimeMillis();
+	int64_t EndTime=GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
 	int64_t StartTime=CurrentGameState->StartTime;
 	int NumberOfFrames=CurrentGameState->NumberOfFrames;
 	LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));

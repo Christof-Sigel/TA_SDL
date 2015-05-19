@@ -54,7 +54,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	STACK_ARRAY(ScriptBuffer, ScriptEntry.File.FileSize, uint8_t);
 	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer))
 	{
-	    LoadUnitScriptFromBuffer(CurrentGameState->CurrentUnitScript, ScriptBuffer,ScriptEntry.File.FileSize,&CurrentGameState->GameArena);
+	    LoadUnitScriptFromBuffer(CurrentGameState->CurrentUnitScript, ScriptBuffer,&CurrentGameState->GameArena);
     
 	    if(CurrentGameState->temp_model->Vertices)
 		Unload3DO(CurrentGameState->temp_model);
@@ -101,19 +101,6 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		CurrentGameState->TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25f,0.75f,0.25f, 1,1,1, 5,(float)(1.0-fabs(i-2.0)/4), 2,&CurrentGameState->NameAndDescText[i*2]);
 		Y+=CurrentGameState->TestElement[i].Size.Height+5;
 	    }
-	
-	    UnitDetails * CurrentUnit = & CurrentGameState->Units.Details[CurrentGameState->UnitIndex];
-	    for(int i=0;i<NUMBER_OF_UNIT_DETAILS && i<CurrentUnit->DetailsSize;i++)
-	    {
-		int size = snprintf(NULL,0,"%d) %s : %s",i+1,CurrentUnit->Details[i].Name,CurrentUnit->Details[i].Value)+1;
-		//char temp[size];
-		STACK_ARRAY(temp,size,char);
-
-		snprintf(temp,size,"%d) %s : %s",i+1,CurrentUnit->Details[i].Name,CurrentUnit->Details[i].Value);
-
-		CurrentGameState->UnitDetailsText[i] = SetupOnScreenText(temp, (float)CurrentGameState->ScreenWidth-350, (float)(i*(CurrentGameState->Times24->Height+5)+20),  0,0.75f,0, CurrentGameState->Times24);
-	    }
-	
 	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
 	}
     }
@@ -264,7 +251,7 @@ extern "C"
     
 	CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
 	Matrix ModelMatrix;
-	ModelMatrix.SetTranslation(0.5,1.4,0.5);
+	ModelMatrix.SetTranslation(0.5,1.4,0.4);
 	RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation,ModelMatrix);
 
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
@@ -283,10 +270,6 @@ extern "C"
 	for(int i=0;i<5;i++)
 	    RenderUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
 
-
-	for(int i=0;i<NUMBER_OF_UNIT_DETAILS;i++)
-	    RenderOnScreenText(CurrentGameState->UnitDetailsText[i],CurrentGameState->FontShader,CurrentGameState->FontPositionLocation,CurrentGameState->FontColorLocation);
-    
 	CurrentGameState->NumberOfFrames++;
     }
 
