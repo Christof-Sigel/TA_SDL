@@ -1,5 +1,4 @@
 
-
 const int SCRIPT_NAME_STORAGE_SIZE=64;
 struct UnitScript
 {
@@ -84,6 +83,7 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, MemoryAre
 }
 
 const int UNIT_SCRIPT_MAX_STACK_SIZE = 128;
+const int UNIT_SCRIPT_MAX_LOCAL_VARS = 64;
 
 enum CobCommands
 {
@@ -131,12 +131,8 @@ enum CobCommands
 enum Block
 {
     BLOCK_NOT_BLOCKED,
-    BLOCK_MOVE_X,
-    BLOCK_MOVE_Y,
-    BLOCK_MOVE_Z,
-    BLOCK_TURN_X,
-    BLOCK_TURN_Y,
-    BLOCK_TURN_Z,
+    BLOCK_MOVE,
+    BLOCK_TURN,
     BLOCK_SLEEP
 };
 
@@ -147,10 +143,13 @@ struct ScriptState
     int ProgramCounter;
     Block BlockedOn;
     int BlockTime;//NOTE(Christof): this is in milliseconds
+    int BlockedOnPiece;
+    int BlockedOnAxis;
+    struct Object3dTransformationDetails * TransformationDetails;
 };
 
 bool32 RunScript(UnitScript * Script, int ScriptNumber, ScriptState * State)
 {
-
+    
     return 0;
 }

@@ -197,15 +197,66 @@ bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
     return 1;
 }
 
-struct Object3dTransformationDetails
+enum
 {
-    
+    TA_AXIS_X,
+    TA_AXIS_Y,
+    TA_AXIS_Z,
+    TA_AXIS_NUM
 };
 
+struct RotationDetails
+{
+    float Heading;
+    float Speed;
+};
+
+struct MovementDetails
+{
+    float Destination;
+    float Speed;
+};
+
+struct SpinDetails
+{
+    float Speed;//NOTE(Christof): Docs on this are unclear, from docs it seems like this is the initial not target speed, I recall that in game stuff spins up to a target speed though (e.g. metal extractor, radar ) - this may need some investigation.
+    float Acceleration;//NOTE(Christof): Always positive, i.e. |a|
+};
+
+struct Object3dTransformationDetails
+{
+    RotationDetails RotationTarget[TA_AXIS_NUM];
+    MovementDetails MovementTarget[TA_AXIS_NUM];
+    float Rotation[TA_AXIS_NUM];
+    float Movement[TA_AXIS_NUM];
+    
+    SpinDetails Spin[TA_AXIS_NUM];
+    Object3dTransformationDetails * Children;
+};
+
+void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails * TransformationDetails,float TimeStep)
+{
+    if(!Object || ! TransformationDetails)
+	return;
+    for(int i=0;i<TA_AXIS_NUM;i++)
+    {
+	if(TransformationDetails->Rotation[i] != TransformationDetails->RotationTarget[i].Heading)
+	{
+	    float RotateAmount = TransformationDetails->RotationTarget[i].Speed*TimeStep;
+	    
+	}
+    }
+    for(int i=0;i<Object->NumberOfChildren;i++)
+    {
+	UpdateTransformationDetails(&Object->Children[i],&TransformationDetails->Children[i],TimeStep);
+    }
+}
 
 void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, Matrix ParentMatrix=Matrix())
 {
     //TODO(Christof): Actually make use of TransformationDetails
+    //TODO(Christof): Pull this out, update seperately, since it doesn't really make sense to pass the timestep to a render function, this will do for now as we are only test rendering anyway
+    UpdateTransformationDetails(Object,TransformationDetails,1.0f/60.0f);
     Matrix CurrentMatrix;
     CurrentMatrix.SetTranslation(Object->Position.X,Object->Position.Y,Object->Position.Z);
     CurrentMatrix = CurrentMatrix * ParentMatrix;
