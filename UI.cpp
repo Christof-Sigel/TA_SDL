@@ -177,6 +177,10 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Gree
 
 void RenderOnScreenText(ScreenText Text, ShaderProgram * FontShader, GLuint FontPositionLocation, GLuint FontColorLocation)
 {
+    if(!FontShader)
+	return;
+    if(!Text.Font)
+	return;
     glUseProgram(FontShader->ProgramID);
     glUniform2fv(FontPositionLocation,1,Text.Position.Contents);
     glUniform3fv(FontColorLocation,1,Text.Color.Contents);
