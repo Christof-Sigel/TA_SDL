@@ -2,13 +2,14 @@
 const int SCRIPT_NAME_STORAGE_SIZE=64;
 struct UnitScript
 {
-    int NumberOfScripts;
+    int NumberOfFunctions;
     int NumberOfPieces;
-    char ** ScriptNames;
+    char ** FunctionNames;
     char ** PieceNames;
     int ScriptDataSize;
-    uint8_t * ScriptData;
-    uint8_t ** Scripts;
+    int32_t * ScriptData;
+    int32_t * FunctionOffsets;
+    int32_t NumberOfStatics;
 };
 
 
@@ -35,22 +36,22 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, MemoryAre
 {
     FILE_CobHeader * Header = (FILE_CobHeader *)Buffer;
     Script->NumberOfPieces = Header->NumberOfPieces;
-    Script->NumberOfScripts = Header->NumberOfScripts;
+    Script->NumberOfFunctions = Header->NumberOfScripts;
 
-    Script->ScriptNames = PushArray(GameArena, Script->NumberOfScripts, char*);
-    Script->ScriptNames[0] = PushArray(GameArena, Script->NumberOfScripts * SCRIPT_NAME_STORAGE_SIZE, char);
+    Script->FunctionNames = PushArray(GameArena, Script->NumberOfFunctions, char*);
+    Script->FunctionNames[0] = PushArray(GameArena, Script->NumberOfFunctions * SCRIPT_NAME_STORAGE_SIZE, char);
 
-    for(int i=1;i<Script->NumberOfScripts;i++)
+    for(int i=1;i<Script->NumberOfFunctions;i++)
     {
-	Script->ScriptNames[i] = Script->ScriptNames[0] + SCRIPT_NAME_STORAGE_SIZE*i;
+	Script->FunctionNames[i] = Script->FunctionNames[0] + SCRIPT_NAME_STORAGE_SIZE*i;
     }
     int32_t * NameOffsetArray = (int32_t *)(Buffer + Header->OffsetToScriptNameOffsetArray);
-    for(int i=0;i<Script->NumberOfScripts;i++)
+    for(int i=0;i<Script->NumberOfFunctions;i++)
     {
 	int Length = (int)strlen((char*)Buffer + NameOffsetArray[i]);
-	Length= Length<SCRIPT_NAME_STORAGE_SIZE?Length:SCRIPT_NAME_STORAGE_SIZE-1;
-	memcpy(Script->ScriptNames[i],Buffer + NameOffsetArray[i], Length);
-	Script->ScriptNames[i][Length]=0;
+	Length = Length<SCRIPT_NAME_STORAGE_SIZE?Length:SCRIPT_NAME_STORAGE_SIZE-1;
+	memcpy(Script->FunctionNames[i],Buffer + NameOffsetArray[i], Length);
+	Script->FunctionNames[i][Length]=0;
     }
     
     Script->PieceNames = PushArray(GameArena, Script->NumberOfPieces, char*);
@@ -70,12 +71,12 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, MemoryAre
 
 
     Script->ScriptDataSize = Header->CodeSize * 4;
-    Script->ScriptData = PushArray(GameArena, Script->ScriptDataSize, uint8_t);
-    Script->Scripts = PushArray(GameArena, Script->NumberOfScripts, uint8_t *);
+    Script->ScriptData = PushArray(GameArena, Script->ScriptDataSize, int32_t);
+    Script->FunctionOffsets = PushArray(GameArena, Script->NumberOfFunctions, int32_t);
     int32_t * ScriptOffsetArray = (int32_t *)(Buffer + Header->OffsetToScriptCodeIndexArray);
-    for(int i=0;i<Script->NumberOfScripts;i++)
+    for(int i=0;i<Script->NumberOfFunctions;i++)
     {
-	Script->Scripts[i] = Script->ScriptData+ScriptOffsetArray[i];
+	Script->FunctionOffsets[i] = ScriptOffsetArray[i];
     }
     memcpy(Script->ScriptData, Buffer+Header->OffsetToScriptCode, Script->ScriptDataSize);
     
@@ -87,45 +88,86 @@ const int UNIT_SCRIPT_MAX_LOCAL_VARS = 64;
 
 enum CobCommands
 {
-    CMD_RAND = 0x10041000,//00 10 04 10
-    CMD_LESSTHAN = 0x10051000, //00 10 05 10
-    CMD_PUSHCONST = 0x10021001,//01 10 02 10	Put Constant dword onto stack
-    CMD_PUSHVAR = 0x10021002,//02 10 02 10	Put local var onto stack
-    CMD_CREATELCLVAR = 0x10022000,//00 20 02 10 - create space for a local variable
-    CMD_SETLCLVAR = 0x10023002, //02 30 02 10	Set local var to value
-    CMD_SUB = 0x10032000, //00 20 03 10 - subtract
-    CMD_LESSEQUAL= 0x10052000, //00 20 05 10	VAL1 <= VAL2
-    CMD_MULT = 0x10033000, //00 30 03 10	Multiply
-    CMD_JMP = 0x10064000, //00 40 06 10	Jump
-    CMD_EQUAL = 0x10055000, //00 50 05 10	binary equal compare
-    CMD_RET = 0x10065000, //00 50 06 10	Return from function
-    CMD_NEQ = 0x10056000, //00 60 05 10	!=
-    CMD_IF = 0x10066000, //00 60 06 10	If
-    CMD_NOT = 0x1005a000, //00 A0 05 10	NOT
-    CMD_OR = 0x10036010, //10 60 03 10	Bitwise OR
-    CMD_GET_UNITVAL = 0x10042000, //Get the unit value (specified by the number on the stack, i have nfi what those nums mean),
-    CMD_SET_UNITVAL = 0x10082000,// as get, except it sets
-    CMD_CALL_SCRIPT = 0x10063000 ,//00 30 06 10	Call-script
-    CMD_OBJ_HIDE =0x10006000 ,//00 60 00 10	Hide Object
-    CMD_OBJ_SHOW = 0x10005000 ,//00 50 00 10 	Show Object
-    CMD_DONT_CACHE =0x10008000 ,//00 80 00 10	Don't-cache - must remember to add in displists and this means DONT use one, as the piece will need to be animated in some way (tex, movement etc.)
-    CMD_DONT_SHADE = 0x1000e000,//00 E0 00 10	Don't-shade - currently does nothing, because im nopt entirely sure what it means
-    CMD_START_SCRIPT = 0x10061000,//00 10 06 10	Start-script
-    CMD_SLEEP = 0x10013000 ,//00 30 01 10	Sleep
-    CMD_MOVE3D = 0x10001000 ,//00 10 00 10	Move object
-    CMD_WAIT_TURN = 0x10011000 ,//00 10 01 10	Wait-for-turn
-    CMD_TURN3D = 0x10002000 ,//00 20 00 10	Turn Object
-    CMD_WAIT_MOVE = 0x10012000 ,//00 20 01 10	Wait-for-move
-    CMD_SET_STATIC_VAR = 0x10023004, //04 30 02 10	Set a static-var equal to a value
-    CMD_PUSH_STATIC_VAR = 0x10021004, //04 10 02 10	Put Static Var on Stack
-    CMD_MOVE_NOW = 0x1000B000,
-    CMD_TURN_NOW = 0x1000C000,
-    CMD_CALL_SCRIPT2 = 0x10062000,//this is from TASpring
-    CMD_SPIN_OBJ = 0x10003000 ,//00 30 00 10	Spin Object
-    CMD_STOP_SPIN = 0x10004000,//10004000  stop_spin
-    CMD_SIGNAL = 0x10067000 ,//10067000 signal             0
-    CMD_SET_SIGNAL_MASK = 0x10068000 //10068000 set_signal_mask    0
+    //Piece Operations:
+    COB_MOVE      = 0x10001000,
+    COB_TURN      = 0x10002000,
+    COB_SPIN      = 0x10003000,
+    COB_SPIN_STOP = 0x10004000,
+    COB_SHOW      = 0x10005000,
+    COB_HIDE = 0x10006000,
+    COB_CACHE = 0x10007000,
+    COB_DONT_CACHE = 0x10008000,
+    COB_UNKNOWN1 = 0x10009000,
+    COB_UNKNOWN2 = 0x1000A000,
+    COB_MOVE_NOW = 0x1000B000,
+    COB_TURN_NOW = 0x1000C000,
+    COB_SHADE = 0x1000D000,
+    COB_DONT_SHADE = 0x1000E000,
+    COB_EMIT_SPECIAL_EFFECTS = 0x1000F000,
 
+    //Wait Instructions:
+    COB_WAIT_FOR_TURN = 0x10011000,
+    COB_WAIT_FOR_MOVE = 0x10012000,
+    COB_SLEEP = 0x10013000,
+
+    //Memory and Stack Instructions:
+    COB_UNKNOW3 = 0x10021000,
+    COB_CREATE_LOCAL_VARIABLE = 0x10022000,
+    COB_UNKNOWN3 = 0x10023000,
+    COB_STACK_FLUSH = 10024000,
+    COB_PUSH_CONSTANT = 0x10021001,
+    COB_PUSH_LOCAL_VARIABLE = 0x10021002,
+    COB_PUSH_STATIC_VARIABLE = 0x10021004,
+    COB_POP_LOCAL_VARIABLE = 0x10023002,
+    COB_POP_STATIC_VARIABLE = 0x10023004,
+
+    //Bitwise and Arithmetic Operations
+    COB_ADD = 0x10031000,
+    COB_SUBTRACT = 0x10032000,
+    COB_MULTIPLY = 0x10033000,
+    COB_DIVIDE = 0x10034000,
+    COB_BITWISE_AND = 0x10035000,
+    COB_BITWISE_OR = 0x10036000,
+    COB_BITWISE_XOR = 0x10037000,
+    COB_BITWISE_NOT = 0x10038000,
+
+    //Value Getting Functions
+    COB_RANDOM = 0x10041000,
+    COB_GET_UNIT_VALUE = 0x10042000,
+    COB_GET_VALUE = 0x10043000,//NOTE(Christof): it is unclear what the difference between the two get functions are at this stage
+    COB_UNKNOWN5 = 0x10044000,//NOTE(Christof): these two unknowns apparently just push 0 onto the stack (seems unlikely there would be two opcodes if they aren't in some way distinct)
+    COB_UNKNOWN6 = 0x10045000,
+
+    //Logical Comparison Operations
+    COB_LESS_THAN = 0x10051000,
+    COB_LESS_THAN_OR_EQUAL = 0x10052000,
+    COB_GREATER_THAN = 0x10053000,
+    COB_GREATER_THAN_OR_EQUAL = 0x10054000,
+    COB_EQUAL = 0x10055000,
+    COB_NOT_EQUAL = 0x10056000,
+    COB_AND = 0x10057000,
+    COB_OR = 0x10058000,
+    COB_XOR = 0x10059000,
+    COB_NOT = 0x1005A000,
+
+    //Flow Control:
+    COB_START_SCRIPT = 0x10061000,
+    COB_CALL_SCRIPT = 0x10062000,
+    COB_UNKNOWN7 = 0x10063000,
+    COB_JUMP = 0x10064000,
+    COB_RETURN = 0x10065000,
+    COB_JUMP_IF_FALSE = 0x10066000,
+    COB_SIGNAL = 0x10067000,
+    COB_SET_SIGNAL_MASK = 0x10068000,
+
+    //Explode:
+    COB_EXPLODE = 0x10071000,
+
+    //Set Unit Values:
+    COB_SET_UNIT_VALUE = 0x10082000,
+    COB_ATTACH_UNIT = 0x10083000,
+    COB_DROP_UNIT = 0x10084000
+    
 };
 
 enum Block
@@ -138,8 +180,13 @@ enum Block
 
 struct ScriptState
 {
+    //TODO(Christof): determine if stack can contain floats? some docs seem to indicate they should?
     int StackSize;
     int32_t Stack[UNIT_SCRIPT_MAX_STACK_SIZE];
+    int NumberOfLocalVariables;
+    int32_t LocalVariables[UNIT_SCRIPT_MAX_STACK_SIZE];//Parameters at beginning
+    int NumberOfStaticVariables;
+    int32_t * StaticVariables;
     int ProgramCounter;
     Block BlockedOn;
     int BlockTime;//NOTE(Christof): this is in milliseconds
@@ -150,6 +197,7 @@ struct ScriptState
 
 bool32 RunScript(UnitScript * Script, int ScriptNumber, ScriptState * State)
 {
-    
+
+
     return 0;
 }

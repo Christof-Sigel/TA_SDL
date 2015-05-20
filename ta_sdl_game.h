@@ -139,6 +139,7 @@ struct GameState
     struct UIElement * TestElement;
     struct Object3d * temp_model;
     struct TAMap * TestMap;
+    struct Object3dTransformationDetails * UnitTransformationDetails;
     int UnitIndex;
 
     TempUnitList Units;
@@ -164,6 +165,7 @@ struct GameState
     struct FontDetails * Times16;
 
     struct UnitScript * CurrentUnitScript;
+    struct ScriptState * UnitScriptState;
     uint64_t PerformanceCounterStart;
     uint64_t PerformanceCounterFrequency;
 };

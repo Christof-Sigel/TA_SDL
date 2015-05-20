@@ -55,13 +55,16 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer))
 	{
 	    LoadUnitScriptFromBuffer(CurrentGameState->CurrentUnitScript, ScriptBuffer,&CurrentGameState->GameArena);
-	    for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfScripts;i++)
+	    for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfFunctions;i++)
 	    {
-		CurrentGameState->UnitDetailsText[i]=SetupOnScreenText(CurrentGameState->CurrentUnitScript->ScriptNames[i],CurrentGameState->ScreenWidth-400, i*CurrentGameState->Times24->Height*2+40, 1,1,1, CurrentGameState->Times24);
+		CurrentGameState->UnitDetailsText[i]=SetupOnScreenText(CurrentGameState->CurrentUnitScript->FunctionNames[i],CurrentGameState->ScreenWidth-400, i*CurrentGameState->Times24->Height*2+40, 1,1,1, CurrentGameState->Times24);
 	    }
 	    if(CurrentGameState->temp_model->Vertices)
 		Unload3DO(CurrentGameState->temp_model);
 	    Load3DOFromBuffer(temp,CurrentGameState->temp_model,CurrentGameState->NextTexture,CurrentGameState->Textures,&CurrentGameState->GameArena);
+	    InitTransformationDetails(CurrentGameState->temp_model, CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
+	    *CurrentGameState->UnitScriptState={};
+	    CurrentGameState->UnitScriptState->TransformationDetails = CurrentGameState->UnitTransformationDetails;
 	    //TODO(Christof): free memory correctly
 	    float X=0,Y=0;
 	    for(int i=0;i<5;i++)
@@ -209,6 +212,8 @@ void SetupGameState( GameState * CurrentGameState)
     
     CurrentGameState->UnitDetailsText = PushArray(GameArena,NUMBER_OF_UNIT_DETAILS,ScreenText);
     CurrentGameState->CurrentUnitScript = PushStruct(GameArena, UnitScript);
+    CurrentGameState->UnitTransformationDetails = PushStruct(GameArena, Object3dTransformationDetails);
+    CurrentGameState->UnitScriptState = PushStruct(GameArena, ScriptState);
         //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
@@ -257,6 +262,8 @@ extern "C"
 	Matrix ModelMatrix;
 	ModelMatrix.SetTranslation(0.5,1.4,0.4);
 
+	RunScript(CurrentGameState->CurrentUnitScript, 1, CurrentGameState->UnitScriptState);
+	UpdateTransformationDetails(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
 	RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation,ModelMatrix);
 
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
@@ -274,7 +281,7 @@ extern "C"
 
 	for(int i=0;i<5;i++)
 	    RenderUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
-	for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfScripts;i++)
+	for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfFunctions;i++)
 	    RenderOnScreenText(CurrentGameState->UnitDetailsText[i], CurrentGameState->FontShader, CurrentGameState->FontPositionLocation, CurrentGameState->FontColorLocation);
 
 	CurrentGameState->NumberOfFrames++;

@@ -227,12 +227,22 @@ struct Object3dTransformationDetails
 {
     RotationDetails RotationTarget[TA_AXIS_NUM];
     MovementDetails MovementTarget[TA_AXIS_NUM];
+    SpinDetails SpinTarget[TA_AXIS_NUM];
+    
     float Rotation[TA_AXIS_NUM];
     float Movement[TA_AXIS_NUM];
+    float Spin[TA_AXIS_NUM];
     
-    SpinDetails Spin[TA_AXIS_NUM];
     Object3dTransformationDetails * Children;
 };
+
+void InitTransformationDetails(Object3d * Object, Object3dTransformationDetails *  TransformationDetails, MemoryArena * GameArena)
+{
+    memset(TransformationDetails, 0, sizeof(Object3dTransformationDetails));
+    TransformationDetails->Children = PushArray(GameArena, Object->NumberOfChildren,Object3dTransformationDetails);
+    for(int i=0;i<Object->NumberOfChildren;i++)
+	InitTransformationDetails(& Object->Children[i], &TransformationDetails->Children[i], GameArena);
+}
 
 void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails * TransformationDetails,float TimeStep)
 {
@@ -240,10 +250,70 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
 	return;
     for(int i=0;i<TA_AXIS_NUM;i++)
     {
-	if(TransformationDetails->Rotation[i] != TransformationDetails->RotationTarget[i].Heading)
+	if(TransformationDetails->RotationTarget[i].Speed != 0 && TransformationDetails->Rotation[i] != TransformationDetails->RotationTarget[i].Heading)
 	{
-	    float RotateAmount = TransformationDetails->RotationTarget[i].Speed*TimeStep;
-	    
+	    float Current = TransformationDetails->Rotation[i];
+	    float Target = TransformationDetails->RotationTarget[i].Heading;
+	    float Speed = TransformationDetails->RotationTarget[i].Speed;
+	    float MaxChange = Speed * TimeStep;
+	    if(Speed > 360 || Speed < -360)
+	    {
+		LogError("Rotation Calculations done assuming rotation speed does not exceed a whole rotation per frame/time step: %f",Speed);
+	    }
+	    if(Current >Target && Speed >0 )
+		Target += 360.0;//TODO(Christof): Check that I am actually doing rotations in degrees
+
+	    if(Current < Target && Speed < 0 )
+		Target -= 360.0;//TODO(Christof): Check that I am actually doing rotations in degrees
+
+	    float Change = Target - Current;
+	    float NewRotation =0;
+	    if((Speed <0  && Change <MaxChange) || (Speed > 0 && Change > MaxChange))
+	    {
+		NewRotation = Current + MaxChange;
+	    }
+	    else
+	    {
+		NewRotation = Target;
+	    }
+	    if(NewRotation <0)
+		NewRotation+=360;
+	    if(NewRotation >=360)
+		NewRotation-=360;
+	    TransformationDetails->Rotation[i]=NewRotation;
+	}
+	if(TransformationDetails->MovementTarget[i].Speed != 0 &&TransformationDetails->Movement[i] != TransformationDetails->MovementTarget[i].Destination)
+	{
+	    float Speed = TransformationDetails->MovementTarget[i].Speed;
+	    float MaxChange = Speed*TimeStep;
+	    float Target = TransformationDetails->MovementTarget[i].Destination;
+	    float Current = TransformationDetails->Movement[i];
+	    float Change = Target - Current;
+	    if((Speed < 0 && Change < MaxChange) || (Speed > 0 && Change > MaxChange))
+	    {
+		TransformationDetails->Movement[i] = Current + MaxChange;
+	    }
+	    else
+	    {
+		TransformationDetails->Movement[i] = Target;
+	    }
+	}
+	if(TransformationDetails->SpinTarget[i].Acceleration != 0 && TransformationDetails->Spin[i] != TransformationDetails->SpinTarget[i].Speed)
+	{
+	    //NOTE(Christof): Docs indicate acceleration is magnitude only
+	    if(TransformationDetails->SpinTarget[i].Speed > 0)
+	    {
+		TransformationDetails->Spin[i] += TransformationDetails->SpinTarget[i].Acceleration;
+		if(TransformationDetails->Spin[i] > TransformationDetails->SpinTarget[i].Speed)
+		    TransformationDetails->Spin[i] = TransformationDetails->SpinTarget[i].Speed;
+	    }
+	    else
+	    {
+		TransformationDetails->Spin[i] -= TransformationDetails->SpinTarget[i].Acceleration;
+		if(TransformationDetails->Spin[i] < TransformationDetails->SpinTarget[i].Speed)
+		    TransformationDetails->Spin[i] = TransformationDetails->SpinTarget[i].Speed;
+	    }
+	    TransformationDetails->Rotation[i] += TransformationDetails->Spin[i];
 	}
     }
     for(int i=0;i<Object->NumberOfChildren;i++)
@@ -256,7 +326,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 {
     //TODO(Christof): Actually make use of TransformationDetails
     //TODO(Christof): Pull this out, update seperately, since it doesn't really make sense to pass the timestep to a render function, this will do for now as we are only test rendering anyway
-    UpdateTransformationDetails(Object,TransformationDetails,1.0f/60.0f);
+
     Matrix CurrentMatrix;
     CurrentMatrix.SetTranslation(Object->Position.X,Object->Position.Y,Object->Position.Z);
     CurrentMatrix = CurrentMatrix * ParentMatrix;
