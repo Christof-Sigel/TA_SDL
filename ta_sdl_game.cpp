@@ -103,8 +103,6 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		}
 		CurrentGameState->TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25f,0.75f,0.25f, 1,1,1, 5,(float)(1.0-fabs(i-2.0)/4), 2,&CurrentGameState->NameAndDescText[i*2]);
 		Y+=CurrentGameState->TestElement[i].Size.Height+5;
-
-	
 	    }
 	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
 	}
@@ -255,8 +253,10 @@ extern "C"
 	//CurrentGameState->ViewMatrix->Move(0.01,-0.01,-0.01);
     
 	CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
+	
 	Matrix ModelMatrix;
 	ModelMatrix.SetTranslation(0.5,1.4,0.4);
+
 	RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation,ModelMatrix);
 
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
@@ -276,6 +276,7 @@ extern "C"
 	    RenderUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
 	for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfScripts;i++)
 	    RenderOnScreenText(CurrentGameState->UnitDetailsText[i], CurrentGameState->FontShader, CurrentGameState->FontPositionLocation, CurrentGameState->FontColorLocation);
+
 	CurrentGameState->NumberOfFrames++;
     }
 

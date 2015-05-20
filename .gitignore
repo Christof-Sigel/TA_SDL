@@ -8,3 +8,4 @@ ta_sdl
 data
 ta_sdl_*.exe
 build
+ta_sdl_game.so

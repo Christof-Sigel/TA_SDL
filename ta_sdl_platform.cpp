@@ -86,10 +86,6 @@ inline bool32 HasGameLibraryBeenUpdated()
     return CurrentModifyTime > GameLibraryObjectModifyTime;
 }
 
-int wmain(int argc, char * argv[])
-{
-    return  main(argc, argv);
-}
 
 int main(int argc, char * argv[])
 {
@@ -157,13 +153,7 @@ int main(int argc, char * argv[])
     return 0;
 }
 
-
-/*int _stdcall
-WinMain (struct HINSTANCE__ *hInstance,
-         struct HINSTANCE__ *hPrevInstance,
-         char               *lpszCmdLine,
-         int                 nCmdShow)
+int wmain(int argc, char * argv[])
 {
-  return main (__argc, __argv);
+    return  main(argc, argv);
 }
-*/

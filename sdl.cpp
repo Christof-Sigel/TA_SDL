@@ -39,7 +39,9 @@ bool32 SetupSDLWindow(GameState * CurrentGameState)
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24); 
 
+
     MainSDLWindow = SDL_CreateWindow("TA_SDL: SOMETHING HERE!!!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,CurrentGameState->ScreenWidth, CurrentGameState->ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
+
     if (!MainSDLWindow)
     {
 	LogError("SDL_CreateWindow Error: %s", SDL_GetError());
