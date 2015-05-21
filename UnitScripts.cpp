@@ -176,7 +176,8 @@ enum Block
     BLOCK_MOVE,
     BLOCK_TURN,
     BLOCK_SLEEP,
-    BLOCK_DONE
+    BLOCK_DONE,
+    BLOCK_SCRIPT
 };
 
 struct ScriptState
@@ -245,6 +246,9 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 {
     switch(State->BlockedOn)
     {
+    case BLOCK_SCRIPT:
+	//NOTE(christof): the called script will wake us on return (and kill by signal I guess?)
+	break;
     case BLOCK_DONE:
 	return;
     case BLOCK_SLEEP:
