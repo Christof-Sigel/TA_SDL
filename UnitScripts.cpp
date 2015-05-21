@@ -175,7 +175,8 @@ enum Block
     BLOCK_NOT_BLOCKED,
     BLOCK_MOVE,
     BLOCK_TURN,
-    BLOCK_SLEEP
+    BLOCK_SLEEP,
+    BLOCK_DONE
 };
 
 struct ScriptState
@@ -184,7 +185,7 @@ struct ScriptState
     int StackSize;
     int32_t Stack[UNIT_SCRIPT_MAX_STACK_SIZE];
     int NumberOfLocalVariables;
-    int32_t LocalVariables[UNIT_SCRIPT_MAX_STACK_SIZE];//Parameters at beginning
+    int32_t LocalVariables[UNIT_SCRIPT_MAX_STACK_SIZE];//NOTE(Christof): function parameters go at the beginning
     int NumberOfStaticVariables;
     int32_t * StaticVariables;
     int ProgramCounter;
@@ -192,12 +193,278 @@ struct ScriptState
     int BlockTime;//NOTE(Christof): this is in milliseconds
     int BlockedOnPiece;
     int BlockedOnAxis;
+    uint32_t SignalMask;
+    ScriptState * ReturnTo;
+    int ScriptNumber;
     struct Object3dTransformationDetails * TransformationDetails;
 };
 
-bool32 RunScript(UnitScript * Script, int ScriptNumber, ScriptState * State)
+inline void PushStack(ScriptState * State, int32_t Value)
 {
+    if(State->StackSize >= UNIT_SCRIPT_MAX_STACK_SIZE)
+    {
+	LogError("%d items on the stack",State->StackSize);
+	return;
+    }
+    State->Stack[State->StackSize++] = Value;
+}
 
+inline int32_t PopStack(ScriptState * State)
+{
+    if(State->StackSize <= 0)
+    {
+	LogError("No more items on the stack");
+	return -1;
+    }
+    return State->Stack[--State->StackSize];
+}
+
+int32_t MILLISECONDS_PER_FRAME = 1000/60;
+
+Object3dTransformationDetails * FindTransformationForPiece(Object3d * Object, Object3dTransformationDetails * TransformationDetails, char * PieceName)
+{
+    if(CaseInsensitiveMatch(Object->Name,PieceName))
+	return TransformationDetails;
+
+    for(int i=0;i<Object->NumberOfChildren;i++)
+    {
+	Object3dTransformationDetails * res = FindTransformationForPiece(&Object->Children[i], &TransformationDetails->Children[i], PieceName);
+	if(res)
+	    return res;
+    }
 
     return 0;
+}
+
+inline int32_t PostData(UnitScript * Script,ScriptState * State)
+{
+    return Script->ScriptData[State->ProgramCounter++];
+}
+
+void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
+{
+    switch(State->BlockedOn)
+    {
+    case BLOCK_DONE:
+	return;
+    case BLOCK_SLEEP:
+	State->BlockTime -= MILLISECONDS_PER_FRAME;
+	if(State->BlockTime < 0)
+	    State->BlockedOn = BLOCK_NOT_BLOCKED;
+	else
+	    return;
+	break;
+    case BLOCK_MOVE:
+    {
+	char * PieceName = Script->PieceNames[State->BlockedOnPiece];
+	Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	if(!PieceTransform)
+	{
+	    LogError("Could not find piece %s while waiting for move",PieceName);
+	    return;
+	}
+	else
+	{
+	    if(PieceTransform->MovementTarget[State->BlockedOnAxis].Speed == 0)
+	    {
+		State->BlockedOn=BLOCK_NOT_BLOCKED;
+	    }
+	    else
+	    {
+		return;
+	    }
+	}
+    }
+    break;
+    case BLOCK_TURN:
+    {
+	char * PieceName = Script->PieceNames[State->BlockedOnPiece];
+	Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	if(!PieceTransform)
+	{
+	    LogError("Could not find piece %s while waiting for move",PieceName);
+	    return;
+	}
+	else
+	{
+	    if(PieceTransform->RotationTarget[State->BlockedOnAxis].Speed == 0)
+	    {
+		State->BlockedOn=BLOCK_NOT_BLOCKED;
+	    }
+	    else
+	    {
+		return;
+	    }
+	}
+    }
+    case BLOCK_NOT_BLOCKED:
+	break;
+    }
+    if(State->ProgramCounter == 0)
+    {
+	State->ProgramCounter = Script->FunctionOffsets[State->ScriptNumber];
+    }
+
+    //NOTE(Christof): in cob instructions doc, top of the stack is at the BOTTOM of the list
+    while(1)
+    {
+	//TODO(Christof): Implement functions
+	switch(Script->ScriptData[State->ProgramCounter++])
+	{
+	case COB_MOVE:
+	{
+	    int32_t Target = PopStack(State);
+	    int32_t Speed = PopStack(State);
+	    int32_t PieceNumber = PostData(Script,State);
+	    int32_t Axis = PostData(Script,State);
+	}
+	break;
+	case COB_TURN:
+	{
+	    int32_t Target = PopStack(State);
+	    int32_t Speed = PopStack(State);
+	    int32_t PieceNumber = PostData(Script,State);
+	    int32_t Axis = PostData(Script,State);
+	}
+	break;
+	case COB_SPIN:
+	{
+	    int32_t Speed = PopStack(State);
+	    int32_t Acceleration = PopStack(State);
+	    int32_t PieceNumber = PostData(Script,State);
+	    int32_t Axis = PostData(Script,State);
+	    //NOTE(Christof): if Acceleration is 0 Spin change is immediate
+	}
+	break;
+	case COB_SPIN_STOP:
+	{
+	    int32_t Speed = PopStack(State);
+	    int32_t Acceleration = PopStack(State);
+	    int32_t PieceNumber = PostData(Script,State);
+	    int32_t Axis = PostData(Script,State);
+	    //NOTE(Christof): if Acceleration is 0 Spin change is immediate
+	}
+	break;
+	case COB_SHOW:
+	{
+	    int32_t Piece = PostData(Script,State);
+	}
+	break;
+	case COB_HIDE:
+	{
+	    int32_t Piece = PostData(Script,State);
+	}
+	break;
+	case COB_CACHE:
+	{
+	    int32_t Piece = PostData(Script,State);
+	}
+	break;
+	case COB_DONT_CACHE:
+	{
+	    int32_t Piece = PostData(Script,State);
+	}
+	break;
+	case COB_MOVE_NOW:
+	{
+	    int32_t Target = PopStack(State);
+	    int32_t PieceNumber = PostData(Script,State);
+	    int32_t Axis = PostData(Script,State);
+	}
+	break;
+	case COB_TURN_NOW:
+	{
+	    int32_t Target = PopStack(State);
+	    int32_t PieceNumber = PostData(Script,State);
+	    int32_t Axis = PostData(Script,State);
+	}
+	break;
+	case COB_SHADE:
+	{
+	    int32_t Piece = PostData(Script,State);
+	}
+	break;
+	case COB_DONT_SHADE:
+	{
+	    int32_t Piece = PostData(Script,State);
+	}
+	break;
+	case COB_EMIT_SPECIAL_EFFECTS:
+	{
+	    int32_t EffectType = PopStack(State);
+	    int32_t Piece = PostData(Script,State);
+	}
+	break;
+	case COB_WAIT_FOR_TURN:
+	{
+	    int32_t Piece = PostData(Script,State);
+	    int32_t Axis = PostData(Script,State);
+	}
+	break;
+	case COB_WAIT_FOR_MOVE:
+	{
+	    int32_t Piece = PostData(Script,State);
+	    int32_t Axis = PostData(Script,State);
+	}
+	break;
+	case COB_SLEEP:
+	{
+	    int32_t Millis = PopStack(State);
+	}
+	break;
+	case COB_CREATE_LOCAL_VARIABLE:
+	    //NOTE(Christof): this should probably be unecessary, but best to be sure
+	    State->LocalVariables[State->NumberOfLocalVariables++]=0;
+	break;
+	case COB_STACK_FLUSH:
+	    LogDebug("Flushing stack in %s",Script->FunctionNames[State->ScriptNumber]);
+	    State->StackSize=0;
+	    break;
+	case COB_PUSH_CONSTANT:
+	    PushStack(State, PostData(Script,State));
+	    break;
+	case COB_PUSH_LOCAL_VARIABLE:
+	    PushStack(State, State->LocalVariables[PostData(Script,State)]);
+	    break;
+	case COB_PUSH_STATIC_VARIABLE:
+	    PushStack(State, State->StaticVariables[PostData(Script,State)]);
+	    break;
+	case COB_POP_LOCAL_VARIABLE:
+	    State->LocalVariables[PostData(Script,State)] = PopStack(State);
+	    break;
+	case COB_POP_STATIC_VARIABLE:
+	    State->StaticVariables[PostData(Script,State)] = PopStack(State);
+	    break;
+	case COB_ADD:
+	    PushStack(State, PopStack(State)+PopStack(State));
+	    break;
+	case COB_SUBTRACT:
+	    PushStack(State, PopStack(State)-PopStack(State));
+	    break;
+	case COB_MULTIPLY:
+	    PushStack(State, PopStack(State) * PopStack(State));
+	    break;
+	case COB_DIVIDE:
+	    PushStack(State, PopStack(State) / PopStack(State));
+	    break;
+	case COB_BITWISE_AND:
+	    PushStack(State, PopStack(State) & PopStack(State));
+	    break;
+	case COB_BITWISE_OR:
+	    PushStack(State, PopStack(State) | PopStack(State));
+	    break;
+	case COB_BITWISE_XOR:
+	    PushStack(State, PopStack(State) ^ PopStack(State));
+	    break;
+	case COB_BITWISE_NOT:
+	    PushStack(State, ~PopStack(State));
+	    break;
+	    
+	}
+	
+    }
+    
+    
 }

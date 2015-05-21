@@ -65,6 +65,8 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    InitTransformationDetails(CurrentGameState->temp_model, CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
 	    *CurrentGameState->UnitScriptState={};
 	    CurrentGameState->UnitScriptState->TransformationDetails = CurrentGameState->UnitTransformationDetails;
+	    CurrentGameState->UnitScriptState->StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript->NumberOfStatics, int32_t);
+	    CurrentGameState->UnitScriptState->NumberOfStaticVariables = CurrentGameState->CurrentUnitScript->NumberOfStatics;
 	    //TODO(Christof): free memory correctly
 	    float X=0,Y=0;
 	    for(int i=0;i<5;i++)
@@ -262,7 +264,9 @@ extern "C"
 	Matrix ModelMatrix;
 	ModelMatrix.SetTranslation(0.5,1.4,0.4);
 
-	RunScript(CurrentGameState->CurrentUnitScript, 1, CurrentGameState->UnitScriptState);
+	CurrentGameState->UnitScriptState->ScriptNumber=1;
+	
+	RunScript(CurrentGameState->CurrentUnitScript, CurrentGameState->UnitScriptState, CurrentGameState->temp_model);
 	UpdateTransformationDetails(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
 	RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation,ModelMatrix);
 

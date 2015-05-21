@@ -232,7 +232,8 @@ struct Object3dTransformationDetails
     float Rotation[TA_AXIS_NUM];
     float Movement[TA_AXIS_NUM];
     float Spin[TA_AXIS_NUM];
-    
+
+    bool32 Hide;
     Object3dTransformationDetails * Children;
 };
 
@@ -250,7 +251,7 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
 	return;
     for(int i=0;i<TA_AXIS_NUM;i++)
     {
-	if(TransformationDetails->RotationTarget[i].Speed != 0 && TransformationDetails->Rotation[i] != TransformationDetails->RotationTarget[i].Heading)
+	if(TransformationDetails->RotationTarget[i].Speed != 0)
 	{
 	    float Current = TransformationDetails->Rotation[i];
 	    float Target = TransformationDetails->RotationTarget[i].Heading;
@@ -275,6 +276,7 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
 	    else
 	    {
 		NewRotation = Target;
+		TransformationDetails->RotationTarget[i].Speed = 0;
 	    }
 	    if(NewRotation <0)
 		NewRotation+=360;
@@ -282,7 +284,7 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
 		NewRotation-=360;
 	    TransformationDetails->Rotation[i]=NewRotation;
 	}
-	if(TransformationDetails->MovementTarget[i].Speed != 0 &&TransformationDetails->Movement[i] != TransformationDetails->MovementTarget[i].Destination)
+	if(TransformationDetails->MovementTarget[i].Speed != 0)
 	{
 	    float Speed = TransformationDetails->MovementTarget[i].Speed;
 	    float MaxChange = Speed*TimeStep;
@@ -296,25 +298,54 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
 	    else
 	    {
 		TransformationDetails->Movement[i] = Target;
+		TransformationDetails->MovementTarget[i].Speed = 0;
 	    }
 	}
-	if(TransformationDetails->SpinTarget[i].Acceleration != 0 && TransformationDetails->Spin[i] != TransformationDetails->SpinTarget[i].Speed)
+	if(TransformationDetails->SpinTarget[i].Acceleration != 0)
 	{
 	    //NOTE(Christof): Docs indicate acceleration is magnitude only
 	    if(TransformationDetails->SpinTarget[i].Speed > 0)
 	    {
 		TransformationDetails->Spin[i] += TransformationDetails->SpinTarget[i].Acceleration;
 		if(TransformationDetails->Spin[i] > TransformationDetails->SpinTarget[i].Speed)
+		{
 		    TransformationDetails->Spin[i] = TransformationDetails->SpinTarget[i].Speed;
+		    TransformationDetails->SpinTarget[i].Acceleration = 0;
+		}
 	    }
-	    else
+	    else if(TransformationDetails->SpinTarget[i].Speed < 0)
 	    {
 		TransformationDetails->Spin[i] -= TransformationDetails->SpinTarget[i].Acceleration;
 		if(TransformationDetails->Spin[i] < TransformationDetails->SpinTarget[i].Speed)
+		{
 		    TransformationDetails->Spin[i] = TransformationDetails->SpinTarget[i].Speed;
+		    TransformationDetails->SpinTarget[i].Acceleration = 0;
+		}
 	    }
-	    TransformationDetails->Rotation[i] += TransformationDetails->Spin[i];
+	    else
+	    {
+		//NOTE(Christof): Spin-Stop
+		if(TransformationDetails->Spin[i] > 0)
+		{
+		    TransformationDetails->Spin[i] -= TransformationDetails->SpinTarget[i].Acceleration;
+		    if(TransformationDetails->Spin[i] > TransformationDetails->SpinTarget[i].Speed)
+		    {
+			TransformationDetails->Spin[i] = TransformationDetails->SpinTarget[i].Speed;
+			TransformationDetails->SpinTarget[i].Acceleration = 0;
+		    }
+		}
+		else if(TransformationDetails->Spin[i] < 0)
+		{
+		    TransformationDetails->Spin[i] += TransformationDetails->SpinTarget[i].Acceleration;
+		    if(TransformationDetails->Spin[i] < TransformationDetails->SpinTarget[i].Speed)
+		    {
+			TransformationDetails->Spin[i] = TransformationDetails->SpinTarget[i].Speed;
+			TransformationDetails->SpinTarget[i].Acceleration = 0;
+		    }
+		}
+	    }
 	}
+	TransformationDetails->Rotation[i] += TransformationDetails->Spin[i];
     }
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
