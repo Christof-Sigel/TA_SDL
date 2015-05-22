@@ -356,15 +356,21 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
 void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, Matrix ParentMatrix=Matrix())
 {
     //TODO(Christof): Actually make use of TransformationDetails
-    //TODO(Christof): Pull this out, update seperately, since it doesn't really make sense to pass the timestep to a render function, this will do for now as we are only test rendering anyway
 
     Matrix CurrentMatrix;
     CurrentMatrix.SetTranslation(Object->Position.X,Object->Position.Y,Object->Position.Z);
     CurrentMatrix = CurrentMatrix * ParentMatrix;
+    CurrentMatrix.Rotate(1,0,0, TransformationDetails->Rotation[0]);
+    CurrentMatrix.Rotate(0,1,0, TransformationDetails->Rotation[1]);
+    CurrentMatrix.Rotate(0,0,1, TransformationDetails->Rotation[2]);
+
+    
+    CurrentMatrix.Move(TransformationDetails->Movement[0],TransformationDetails->Movement[1],TransformationDetails->Movement[2]);
+
 
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	RenderObject3d(&Object->Children[i],TransformationDetails,ModelMatrixLocation,CurrentMatrix);
+	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,CurrentMatrix);
     }
     CurrentMatrix.Upload(ModelMatrixLocation);
     glBindVertexArray(Object->VertexBuffer);

@@ -67,6 +67,10 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    CurrentGameState->UnitScriptState->TransformationDetails = CurrentGameState->UnitTransformationDetails;
 	    CurrentGameState->UnitScriptState->StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript->NumberOfStatics, int32_t);
 	    CurrentGameState->UnitScriptState->NumberOfStaticVariables = CurrentGameState->CurrentUnitScript->NumberOfStatics;
+
+	    CurrentGameState->UnitScriptState->ScriptNumber=GetScriptNumberForFunction(CurrentGameState->CurrentUnitScript,"Activate");
+	
+
 	    //TODO(Christof): free memory correctly
 	    float X=0,Y=0;
 	    for(int i=0;i<5;i++)
@@ -264,11 +268,9 @@ extern "C"
 	Matrix ModelMatrix;
 	ModelMatrix.SetTranslation(0.5,1.4,0.4);
 
-	CurrentGameState->UnitScriptState->ScriptNumber=1;
-	
 	RunScript(CurrentGameState->CurrentUnitScript, CurrentGameState->UnitScriptState, CurrentGameState->temp_model);
 	UpdateTransformationDetails(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
-	RenderObject3d(CurrentGameState->temp_model,0,CurrentGameState->ModelMatrixLocation,ModelMatrix);
+	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,ModelMatrix);
 
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
 	CurrentGameState->ProjectionMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));

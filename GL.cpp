@@ -112,7 +112,8 @@ struct Matrix
 	temp.Contents[9]=vector[2]*vector[1]*(1-cosine)+vector[0]*sine;
 	temp.Contents[10]=cosine+vector[2]*vector[2]*(1-cosine);
 
-	*this = temp**this;	
+	//*this = temp**this;
+	*this *= temp;
     }
     
     void Move(float dx,float dy, float dz)
