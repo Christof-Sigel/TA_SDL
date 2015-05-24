@@ -257,32 +257,31 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
 	    float Target = TransformationDetails->RotationTarget[i].Heading;
 	    float Speed = TransformationDetails->RotationTarget[i].Speed;
 	    float MaxChange = Speed * TimeStep;
-	    if(Speed > 360 || Speed < -360)
+	    float Difference = Target - Current;
+	    if(Difference >0)
 	    {
-		LogError("Rotation Calculations done assuming rotation speed does not exceed a whole rotation per frame/time step: %f",Speed);
+		if(Difference <=MaxChange)
+		{
+		    TransformationDetails->Rotation[i] = TransformationDetails->RotationTarget[i].Heading;
+		    TransformationDetails->RotationTarget[i].Speed=0;
+		}
+		else
+		    TransformationDetails->Rotation[i] += MaxChange;
 	    }
-	    if(Current >Target && Speed >0 )
-		Target += 360.0;//TODO(Christof): Check that I am actually doing rotations in degrees
-
-	    if(Current < Target && Speed < 0 )
-		Target -= 360.0;//TODO(Christof): Check that I am actually doing rotations in degrees
-
-	    float Change = Target - Current;
-	    float NewRotation =0;
-	    if((Speed <0  && Change <MaxChange) || (Speed > 0 && Change > MaxChange))
+	    else if(Difference <0)
 	    {
-		NewRotation = Current + MaxChange;
+		if(Difference >= MaxChange)
+		{
+		    TransformationDetails->Rotation[i] = TransformationDetails->RotationTarget[i].Heading;
+		    TransformationDetails->RotationTarget[i].Speed=0;
+		}
+		else
+		    TransformationDetails->Rotation[i] -= MaxChange;
 	    }
 	    else
 	    {
-		NewRotation = Target;
-		TransformationDetails->RotationTarget[i].Speed = 0;
+		TransformationDetails->RotationTarget[i].Speed=0;
 	    }
-	    if(NewRotation <0)
-		NewRotation+=360;
-	    if(NewRotation >=360)
-		NewRotation-=360;
-	    TransformationDetails->Rotation[i]=NewRotation;
 	}
 	if(TransformationDetails->MovementTarget[i].Speed != 0)
 	{
@@ -290,15 +289,30 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
 	    float MaxChange = Speed*TimeStep;
 	    float Target = TransformationDetails->MovementTarget[i].Destination;
 	    float Current = TransformationDetails->Movement[i];
-	    float Change = Target - Current;
-	    if((Speed < 0 && Change < MaxChange) || (Speed > 0 && Change > MaxChange))
+	    float Difference = Target - Current;
+	    if(Difference >0)
 	    {
-		TransformationDetails->Movement[i] = Current + MaxChange;
+		if(Difference <=MaxChange)
+		{
+		    TransformationDetails->Movement[i] = TransformationDetails->MovementTarget[i].Destination;
+		    TransformationDetails->MovementTarget[i].Speed=0;
+		}
+		else
+		    TransformationDetails->Movement[i] += MaxChange;
+	    }
+	    else if(Difference <0)
+	    {
+		if(Difference >= MaxChange)
+		{
+		    TransformationDetails->Movement[i] = TransformationDetails->MovementTarget[i].Destination;
+		    TransformationDetails->MovementTarget[i].Speed=0;
+		}
+		else
+		    TransformationDetails->Movement[i] -= MaxChange;
 	    }
 	    else
 	    {
-		TransformationDetails->Movement[i] = Target;
-		TransformationDetails->MovementTarget[i].Speed = 0;
+		TransformationDetails->MovementTarget[i].Speed=0;
 	    }
 	}
 	if(TransformationDetails->SpinTarget[i].Acceleration != 0)
@@ -358,12 +372,13 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     //TODO(Christof): Actually make use of TransformationDetails
 
     Matrix CurrentMatrix;
-    CurrentMatrix.SetTranslation(Object->Position.X,Object->Position.Y,Object->Position.Z);
-    CurrentMatrix = CurrentMatrix * ParentMatrix;
     CurrentMatrix.Rotate(1,0,0, TransformationDetails->Rotation[0]);
     CurrentMatrix.Rotate(0,1,0, TransformationDetails->Rotation[1]);
     CurrentMatrix.Rotate(0,0,1, TransformationDetails->Rotation[2]);
 
+    CurrentMatrix.Move(Object->Position.X,Object->Position.Y,Object->Position.Z);
+    CurrentMatrix = ParentMatrix * CurrentMatrix ;
+    
     
     CurrentMatrix.Move(TransformationDetails->Movement[0],TransformationDetails->Movement[1],TransformationDetails->Movement[2]);
 
@@ -372,13 +387,16 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     {
 	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,CurrentMatrix);
     }
-    CurrentMatrix.Upload(ModelMatrixLocation);
-    glBindVertexArray(Object->VertexBuffer);
-    glDrawArrays(GL_TRIANGLES, 0, Object->NumTriangles*3);
-    GLenum ErrorValue = glGetError();
-    if(ErrorValue!=GL_NO_ERROR)
+    if(!TransformationDetails->Hide)
     {
-	LogError("failed to render : %s",gluErrorString(ErrorValue));
+	CurrentMatrix.Upload(ModelMatrixLocation);
+	glBindVertexArray(Object->VertexBuffer);
+	glDrawArrays(GL_TRIANGLES, 0, Object->NumTriangles*3);
+	GLenum ErrorValue = glGetError();
+	if(ErrorValue!=GL_NO_ERROR)
+	{
+	    LogError("failed to render : %s",gluErrorString(ErrorValue));
+	}
     }
 }
 

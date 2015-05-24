@@ -55,6 +55,8 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer))
 	{
 	    LoadUnitScriptFromBuffer(CurrentGameState->CurrentUnitScript, ScriptBuffer,&CurrentGameState->GameArena);
+	    memset(CurrentGameState->CurrentScriptPool,0,sizeof(ScriptStatePool));
+	    
 	    for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfFunctions;i++)
 	    {
 		CurrentGameState->UnitDetailsText[i]=SetupOnScreenText(CurrentGameState->CurrentUnitScript->FunctionNames[i],CurrentGameState->ScreenWidth-400, i*CurrentGameState->Times24->Height*2+40, 1,1,1, CurrentGameState->Times24);
@@ -63,12 +65,19 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		Unload3DO(CurrentGameState->temp_model);
 	    Load3DOFromBuffer(temp,CurrentGameState->temp_model,CurrentGameState->NextTexture,CurrentGameState->Textures,&CurrentGameState->GameArena);
 	    InitTransformationDetails(CurrentGameState->temp_model, CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
-	    *CurrentGameState->UnitScriptState={};
-	    CurrentGameState->UnitScriptState->TransformationDetails = CurrentGameState->UnitTransformationDetails;
-	    CurrentGameState->UnitScriptState->StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript->NumberOfStatics, int32_t);
-	    CurrentGameState->UnitScriptState->NumberOfStaticVariables = CurrentGameState->CurrentUnitScript->NumberOfStatics;
+	    int ScriptNum = GetScriptNumberForFunction(CurrentGameState->CurrentUnitScript,"Go");
+	    if(ScriptNum !=-1)
+	    {
+		CurrentGameState->CurrentScriptPool->NumberOfScripts = 1;
+		CurrentGameState->CurrentScriptPool->Scripts[0].ScriptNumber = ScriptNum;
+		CurrentGameState->CurrentScriptPool->Scripts[0].TransformationDetails = CurrentGameState->UnitTransformationDetails;
+		CurrentGameState->CurrentScriptPool->Scripts[0].StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript->NumberOfStatics, int32_t);
+		CurrentGameState->CurrentScriptPool->Scripts[0].NumberOfStaticVariables = CurrentGameState->CurrentUnitScript->NumberOfStatics;
+	    }
 
-	    CurrentGameState->UnitScriptState->ScriptNumber=GetScriptNumberForFunction(CurrentGameState->CurrentUnitScript,"Activate");
+
+	    
+
 	
 
 	    //TODO(Christof): free memory correctly
@@ -118,8 +127,26 @@ void LoadCurrentModel(GameState * CurrentGameState)
     }
 }
 
+
+Matrix FPSViewMatrix(float * eye, float pitch, float yaw);
 void HandleInput(InputState * Input, GameState * CurrentGameState)
 {
+    Matrix ViewRotation = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
+//    ViewRotation.Rotate(1,0,0, CurrentGameState->CameraXRotation);
+    //  ViewRotation.Rotate(0,1,0, CurrentGameState->CameraYRotation);
+    const float CameraTranslation = 1.0;
+    float DX[3] = { ViewRotation.Contents[0*4+0] * CameraTranslation + ViewRotation.Contents[3*4+0],
+		    ViewRotation.Contents[0*4+1] * CameraTranslation + ViewRotation.Contents[3*4+1],
+		    ViewRotation.Contents[0*4+2] * CameraTranslation + ViewRotation.Contents[3*4+2]};
+
+    float DY[3] = { ViewRotation.Contents[1*4+0] * CameraTranslation + ViewRotation.Contents[3*4+0],
+		    ViewRotation.Contents[1*4+1] * CameraTranslation + ViewRotation.Contents[3*4+1],
+		    ViewRotation.Contents[1*4+2] * CameraTranslation + ViewRotation.Contents[3*4+2]};
+
+    float DZ[3] = { ViewRotation.Contents[2*4+0] * CameraTranslation + ViewRotation.Contents[3*4+0],
+		    ViewRotation.Contents[2*4+1] * CameraTranslation + ViewRotation.Contents[3*4+1],
+		    ViewRotation.Contents[2*4+2] * CameraTranslation + ViewRotation.Contents[3*4+2]};
+    
     if(Input->KeyIsDown[SDLK_ESCAPE])
     {
 	CurrentGameState->Quit=true;
@@ -137,43 +164,49 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
     //HACK: FIX THIS SHIT
     if(Input->KeyIsDown[SDLK_UP&255])
     {
-	CurrentGameState->ViewMatrix->Rotate(1,0,0,-0.01f);
+	CurrentGameState->CameraXRotation+=0.01f;
     }
     if(Input->KeyIsDown[SDLK_DOWN&255])
     {
-	CurrentGameState->ViewMatrix->Rotate(1,0,0,0.01f);
+	CurrentGameState->CameraXRotation -= 0.01f;
     }
     if(Input->KeyIsDown[SDLK_LEFT&255])
     {
-	CurrentGameState->ViewMatrix->Rotate(0,1,0,-0.01f);
+	CurrentGameState->CameraYRotation +=0.01f;
     }
     if(Input->KeyIsDown[SDLK_RIGHT&255])
     {
-	CurrentGameState->ViewMatrix->Rotate(0,1,0,0.01f);
+	CurrentGameState->CameraYRotation -=0.01f;
     }
     if(Input->KeyIsDown[SDLK_w])
     {
-	CurrentGameState->ViewMatrix->Move(0,0,0.1);
+	for(int i=0;i<3;i++)
+	    CurrentGameState->CameraTranslation[i]-=DZ[i];
     }
     if(Input->KeyIsDown[SDLK_s])
     {
-	CurrentGameState->ViewMatrix->Move(0,0,-0.1);
+	for(int i=0;i<3;i++)
+	    CurrentGameState->CameraTranslation[i]+=DZ[i];
     }
     if(Input->KeyIsDown[SDLK_a])
     {
-	CurrentGameState->ViewMatrix->Move(0.1,0,0);
+	for(int i=0;i<3;i++)
+	    CurrentGameState->CameraTranslation[i]-=DX[i];
     }
     if(Input->KeyIsDown[SDLK_d])
     {
-	CurrentGameState->ViewMatrix->Move(-0.1,0,0);
+	for(int i=0;i<3;i++)
+	    CurrentGameState->CameraTranslation[i]+=DX[i];
     }
     if(Input->KeyIsDown[SDLK_q])
     {
-	CurrentGameState->ViewMatrix->Move(0,-0.1,0);
+	for(int i=0;i<3;i++)
+	    CurrentGameState->CameraTranslation[i]+=DY[i];
     }
     if(Input->KeyIsDown[SDLK_e])
     {
-	CurrentGameState->ViewMatrix->Move(0,0.1,0);
+	for(int i=0;i<3;i++)
+	    CurrentGameState->CameraTranslation[i]-=DY[i];
     }
 
 }
@@ -200,8 +233,13 @@ void SetupGameState( GameState * CurrentGameState)
 
 
     
-    CurrentGameState->ViewMatrix->SetTranslation(1,-2.5,2);
-    CurrentGameState->ViewMatrix->Rotate(0,1,0, (float)PI*0.75f);
+//    CurrentGameState->ViewMatrix->SetTranslation(1,-2.5,2);
+    //  CurrentGameState->ViewMatrix->Rotate(0,1,0, (float)PI*0.75f);
+    	CurrentGameState->CameraYRotation = 1.25*PI;
+	//CurrentGameState->CameraXRotation += 0.1f;
+	CurrentGameState->CameraTranslation[1] =3.0f;
+	CurrentGameState->CameraTranslation[0] =-2.0f;
+	CurrentGameState->CameraTranslation[2] =-2.0f;
 
 
     CurrentGameState->Textures = PushArray(GameArena,MAX_NUMBER_OF_TEXTURE,Texture);
@@ -219,7 +257,7 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->UnitDetailsText = PushArray(GameArena,NUMBER_OF_UNIT_DETAILS,ScreenText);
     CurrentGameState->CurrentUnitScript = PushStruct(GameArena, UnitScript);
     CurrentGameState->UnitTransformationDetails = PushStruct(GameArena, Object3dTransformationDetails);
-    CurrentGameState->UnitScriptState = PushStruct(GameArena, ScriptState);
+    CurrentGameState->CurrentScriptPool = PushStruct(GameArena, ScriptStatePool);
         //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
@@ -238,6 +276,41 @@ void InitialiseGame(Memory * GameMemory)
     InitializeArena(&CurrentGameState->GameArena,GameMemory->PermanentStoreSize-sizeof(GameState),GameMemory->PermanentStore+sizeof(GameState));
     InitializeArena(&CurrentGameState->TempArena,GameMemory->TransientStoreSize-sizeof(GameState),GameMemory->TransientStore);
     SetupGameState(CurrentGameState);
+}
+
+float dot3(float * v1, float * v2)
+{
+    return v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2];
+}
+
+Matrix FPSViewMatrix(float * eye, float pitch, float yaw)
+{
+    float cosPitch = cos(pitch);
+    float sinPitch = sin(pitch);
+    float cosYaw = cos(yaw);
+    float sinYaw = sin(yaw);
+ 
+    float xaxis[3] = { cosYaw, 0, -sinYaw };
+    float yaxis[3] = { sinYaw * sinPitch, cosPitch, cosYaw * sinPitch };
+    float zaxis[3] = { sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw };
+ 
+    // Create a 4x4 view matrix from the right, up, forward and eye position vectors
+    Matrix viewMatrix;
+    float MatDeets[]={
+             xaxis[0],            yaxis[0],            zaxis[0],      0 ,
+               xaxis[1],            yaxis[1],            zaxis[1],      0 ,
+               xaxis[2],            yaxis[2],            zaxis[2],      0 ,
+         -dot3( xaxis, eye ), -dot3( yaxis, eye ), -dot3( zaxis, eye ), 1 
+    };
+
+    for(int i=0;i<4;i++)
+    {
+	for(int j=0;j<4;j++)
+	    viewMatrix.Contents[i*4+j]=MatDeets[j*4+i];
+    }
+
+     
+    return viewMatrix;
 }
 
 extern "C"
@@ -262,16 +335,20 @@ extern "C"
 
 	//CurrentGameState->ViewMatrix->Rotate(0,1,0, PI/300);
 	//CurrentGameState->ViewMatrix->Move(0.01,-0.01,-0.01);
-    
+	*CurrentGameState->ViewMatrix = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
 	CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
 	
 	Matrix ModelMatrix;
 	ModelMatrix.SetTranslation(0.5,1.4,0.4);
 
-	RunScript(CurrentGameState->CurrentUnitScript, CurrentGameState->UnitScriptState, CurrentGameState->temp_model);
+	for(int i=0;i<CurrentGameState->CurrentScriptPool->NumberOfScripts;i++)
+	{
+	    RunScript(CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool->Scripts[i], CurrentGameState->temp_model, CurrentGameState->CurrentScriptPool);
+	}
 	UpdateTransformationDetails(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
 	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,ModelMatrix);
 
+	
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
 	CurrentGameState->ProjectionMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));
 	CurrentGameState->ViewMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"View"));

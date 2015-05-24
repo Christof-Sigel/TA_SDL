@@ -165,9 +165,14 @@ struct GameState
     struct FontDetails * Times16;
 
     struct UnitScript * CurrentUnitScript;
-    struct ScriptState * UnitScriptState;
     uint64_t PerformanceCounterStart;
     uint64_t PerformanceCounterFrequency;
+
+    float CameraXRotation;
+    float CameraYRotation;
+
+    float CameraTranslation[3];
+    struct ScriptStatePool * CurrentScriptPool;
 };
 
 const int TEXTURE_WIDTH=2048;
@@ -175,8 +180,13 @@ const int TEXTURE_HEIGHT=2048;
 const int MAX_NUMBER_OF_TEXTURE=1024;
 
 
-const float TA_TO_GL_SCALE=1.0f/2500000.0f;
+const float TA_TO_GL_SCALE=1.0f/168340.0f;
 const double PI = 3.14159265358979323846;
 const int FONT_BITMAP_SIZE=256;
 
 const int NUMBER_OF_UNIT_DETAILS=35;
+
+const float COB_LINEAR_CONSTANT = 168340;
+const float COB_LINEAR_FRAME_CONSTANT = COB_LINEAR_CONSTANT *2 ;
+const float COB_ANGULAR_CONSTANT = 182.044444f*180.0/PI;
+const float COB_ANGULAR_FRAME_CONSTANT = COB_ANGULAR_CONSTANT *2 ;

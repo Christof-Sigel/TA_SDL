@@ -153,7 +153,7 @@ enum CobCommands
     //Flow Control:
     COB_START_SCRIPT = 0x10061000,
     COB_CALL_SCRIPT = 0x10062000,
-    COB_UNKNOWN7 = 0x10063000,
+    COB_CALL_SCRIPT2 = 0x10063000,
     COB_JUMP = 0x10064000,
     COB_RETURN = 0x10065000,
     COB_JUMP_IF_FALSE = 0x10066000,
@@ -197,6 +197,7 @@ struct ScriptState
     uint32_t SignalMask;
     ScriptState * ReturnTo;
     int ScriptNumber;
+    int NumberOfParameters;
     struct Object3dTransformationDetails * TransformationDetails;
 };
 
@@ -252,12 +253,19 @@ int GetScriptNumberForFunction(UnitScript * Script, const char * FunctionName)
     }
     return -1;
 }
-const float COB_LINEAR_CONSTANT = 168340*60;
-const float COB_ANGULAR_CONSTANT = 182.044444f*180.0*60/PI;
 
-void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
+const int SCRIPT_POOL_SIZE = 64;
+struct ScriptStatePool
+{
+    ScriptState Scripts[SCRIPT_POOL_SIZE];
+    int NumberOfScripts;
+};
+
+void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool)
 {
     if(State->ScriptNumber <0)
+	return;
+    if(State->ProgramCounter > Script->ScriptDataSize)
 	return;
     //TODO(Christof): Limit time in a script
     switch(State->BlockedOn)
@@ -325,7 +333,6 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
     if(State->ProgramCounter == 0)
     {
 	State->ProgramCounter = Script->FunctionOffsets[State->ScriptNumber];
-	LogDebug("Set Program counter to %d",State->ProgramCounter);
     }
 
     //NOTE(Christof): in cob instructions doc, top of the stack is at the BOTTOM of the list
@@ -341,10 +348,19 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
 	    char * PieceName = Script->PieceNames[PieceNumber];
+
+	    switch(Axis)
+	    {
+	    case TA_AXIS_X:
+	    case TA_AXIS_Z:
+		Target = - Target;
+	    }
+
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
 	    PieceTransform->MovementTarget[Axis].Destination = Target/COB_LINEAR_CONSTANT;
-	    PieceTransform->MovementTarget[Axis].Speed = Speed/COB_LINEAR_CONSTANT;
+	    PieceTransform->MovementTarget[Axis].Speed = Speed/COB_LINEAR_FRAME_CONSTANT;
+	    LogDebug("Moving %s to %.4f at %.4f on Axis %d", PieceName, PieceTransform->MovementTarget[Axis].Destination, PieceTransform->MovementTarget[Axis].Speed,Axis);
 	}
 	break;
 	case COB_TURN:
@@ -354,11 +370,20 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
 
+	    switch(Axis)
+	    {
+	    case TA_AXIS_X:
+	    case TA_AXIS_Z:
+		Target = - Target;
+	    }
+
+
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
 	    PieceTransform->RotationTarget[Axis].Heading = Target/COB_ANGULAR_CONSTANT;
-	    PieceTransform->RotationTarget[Axis].Speed = Speed/COB_ANGULAR_CONSTANT;
+	    PieceTransform->RotationTarget[Axis].Speed = Speed/COB_ANGULAR_FRAME_CONSTANT;
+	    LogDebug("Turning %s to %.4f at %.4f on Axis %d", PieceName, PieceTransform->RotationTarget[Axis].Heading, PieceTransform->RotationTarget[Axis].Speed,Axis);
 	}
 	break;
 	case COB_SPIN:
@@ -368,18 +393,19 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
 	    //NOTE(Christof): if Acceleration is 0 Spin change is immediate
+	    
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
 	    if(Acceleration == 0)
 	    {
-		PieceTransform->Spin[Axis]=Speed/COB_ANGULAR_CONSTANT;
+		PieceTransform->Spin[Axis]=Speed/COB_ANGULAR_FRAME_CONSTANT/6;
 	    }
 	    else
 	    {
-		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_CONSTANT;
-		PieceTransform->SpinTarget[Axis].Speed = Speed/COB_ANGULAR_CONSTANT;
+		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT;
+		PieceTransform->SpinTarget[Axis].Speed = Speed/COB_ANGULAR_FRAME_CONSTANT/4;
 	    }
 	}
 	break;
@@ -389,6 +415,13 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	    int32_t Acceleration = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
+	    switch(Axis)
+	    {
+	    case TA_AXIS_X:
+	    case TA_AXIS_Z:
+		Speed = - Speed;
+	    }
+
 	    if(Speed !=0)
 	    {
 		LogWarning("Spin stop called with non zero speed %d?",Speed);
@@ -404,7 +437,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	    }
 	    else
 	    {
-		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_CONSTANT;
+		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT;
 		PieceTransform->SpinTarget[Axis].Speed = 0;
 	    }
 
@@ -413,21 +446,31 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	case COB_SHOW:
 	{
 	    int32_t Piece = PostData(Script,State);
+	    char * PieceName = Script->PieceNames[Piece];
+	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	    PieceTransform->Hide=0;
 	}
 	break;
 	case COB_HIDE:
 	{
 	    int32_t Piece = PostData(Script,State);
+	    char * PieceName = Script->PieceNames[Piece];
+	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	    PieceTransform->Hide=1;
 	}
 	break;
 	case COB_CACHE:
 	{
 	    int32_t Piece = PostData(Script,State);
+	    LogWarning("Ignoring Cache directive for %s",Script->PieceNames[Piece]);
 	}
 	break;
 	case COB_DONT_CACHE:
 	{
 	    int32_t Piece = PostData(Script,State);
+	    LogWarning("Ignoring Dont' Cache directive for %s",Script->PieceNames[Piece]);
 	}
 	break;
 	case COB_MOVE_NOW:
@@ -435,6 +478,18 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	    int32_t Target = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
+
+	    switch(Axis)
+	    {
+	    case TA_AXIS_X:
+	    case TA_AXIS_Z:
+		Target = - Target;
+	    }
+	    
+	    char * PieceName = Script->PieceNames[PieceNumber];
+	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	    PieceTransform->Movement[Axis] = Target/COB_LINEAR_CONSTANT;
 	}
 	break;
 	case COB_TURN_NOW:
@@ -442,45 +497,60 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	    int32_t Target = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
+	    switch(Axis)
+	    {
+	    case TA_AXIS_X:
+	    case TA_AXIS_Z:
+		Target = - Target;
+	    }
+
+	    char * PieceName = Script->PieceNames[PieceNumber];
+	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	    PieceTransform->Rotation[Axis] = Target/COB_ANGULAR_CONSTANT;
 	}
 	break;
 	case COB_SHADE:
 	{
 	    int32_t Piece = PostData(Script,State);
+	    LogWarning("Ignoring Shade directive for %s",Script->PieceNames[Piece]);
 	}
 	break;
 	case COB_DONT_SHADE:
 	{
 	    int32_t Piece = PostData(Script,State);
+	    LogWarning("Ignoring Don't Shade directive for %s",Script->PieceNames[Piece]);
 	}
 	break;
 	case COB_EMIT_SPECIAL_EFFECTS:
 	{
 	    int32_t EffectType = PopStack(State);
 	    int32_t Piece = PostData(Script,State);
+	    LogWarning("Ignoring Special effect %d for %s",EffectType,Script->PieceNames[Piece]);
 	}
 	break;
 	case COB_WAIT_FOR_TURN:
-	{
-	    int32_t Piece = PostData(Script,State);
-	    int32_t Axis = PostData(Script,State);
-	    
-	}
+	    State->BlockedOn = BLOCK_TURN;
+	    State->BlockedOnPiece = PostData(Script,State);
+	    State->BlockedOnAxis = PostData(Script,State);
+	    return;
 	break;
 	case COB_WAIT_FOR_MOVE:
-	{
-	    int32_t Piece = PostData(Script,State);
-	    int32_t Axis = PostData(Script,State);
-	}
+	    State->BlockedOn = BLOCK_MOVE;
+	    State->BlockedOnPiece = PostData(Script,State);
+	    State->BlockedOnAxis = PostData(Script,State);
+	    return;
 	break;
 	case COB_SLEEP:
-	{
-	    int32_t Millis = PopStack(State);
-	}
-	break;
+	    State->BlockedOn = BLOCK_SLEEP;
+	    State->BlockTime = PopStack(State);
+	    return;
 	case COB_CREATE_LOCAL_VARIABLE:
 	    //NOTE(Christof): the set should probably be unecessary, but best to be sure
-	    State->LocalVariables[State->NumberOfLocalVariables++]=0;
+	    if(State->NumberOfParameters)
+		State->NumberOfParameters--;
+	    else
+		State->LocalVariables[State->NumberOfLocalVariables++]=0;
 	break;
 	case COB_STACK_FLUSH:
 	    LogDebug("Flushing stack in %s",Script->FunctionNames[State->ScriptNumber]);
@@ -489,6 +559,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	case COB_PUSH_CONSTANT:
 	    PushStack(State, PostData(Script,State));
 	    break;
+	    //TODO(Christof): bounds checks on local/static vars
 	case COB_PUSH_LOCAL_VARIABLE:
 	    PushStack(State, State->LocalVariables[PostData(Script,State)]);
 	    break;
@@ -529,7 +600,9 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	{
 	    int32_t LowerBound = PopStack(State);
 	    int32_t UpperBound = PopStack(State);
-	    int32_t Result = UpperBound;
+	    int32_t Result = (UpperBound - LowerBound)/2;
+//	    LogWarning("Putting bogus random value on the stack");
+	    Result = (rand()%(UpperBound-LowerBound))+LowerBound;
 	    PushStack(State, Result);
 	}
 	break;
@@ -537,6 +610,24 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	{
 	    int32_t GetValue = PopStack(State);
 	    int32_t Value = 1;
+	    switch(GetValue)
+	    {
+	    case 17:
+		//17 is buildpercent - this will make all the wait for completiong stuff work I hope - 0 is fully built?
+		Value=0;
+		break;
+	    case 18:
+		Value=0;
+		break;
+	    case 4:
+		//health - seems to be in %
+		Value=0;
+		break;
+	    default:
+		LogWarning("Putting bogus unit value %d on the stack",GetValue);
+		break;
+	    }
+	    
 	    PushStack(State, Value);
 	}
 	break;
@@ -544,6 +635,13 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	{
 	    int32_t GetValue = PopStack(State);
 	    int32_t Value = 1;
+	    switch(GetValue)
+	    {
+	    case 0:
+		Value=1;
+		break;
+	    }
+	    LogWarning("Putting bogus value %d on the stack",GetValue);
 	    PushStack(State, Value);   
 	}
 	break;
@@ -599,32 +697,56 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	{
 	    int32_t FunctionNumber = PostData(Script,State);
 	    int32_t NumberOfArguments = PostData(Script,State);
-	    //TODO(Christof): Figure out how to do running more than a single script at a time (including CALLING functions)
-	    for(int i=0;i<NumberOfArguments;i++)
+	    int ScriptIndex = Pool->NumberOfScripts++;
+	    ScriptState * NewState = &Pool->Scripts[ScriptIndex];
+	    for(int i=NumberOfArguments-1;i>=0;i--)
 	    {
-		int Argumenti = PopStack(State);
-		//Some of the docs suggest the stack should maybe be empty after this?
+		NewState->LocalVariables[i]= PopStack(State);
 	    }
+	    NewState->NumberOfLocalVariables = NumberOfArguments;
+	    NewState->StaticVariables = State->StaticVariables;
+	    NewState->NumberOfStaticVariables = State->NumberOfStaticVariables;
+	    NewState->ScriptNumber = FunctionNumber;
+	    NewState->SignalMask = State->SignalMask;
+	    NewState->TransformationDetails = State->TransformationDetails;
+	    NewState->NumberOfParameters = NumberOfArguments;
+	    if(FunctionNumber >= Script->NumberOfFunctions)
+		LogDebug("%d over %d", FunctionNumber, Script->NumberOfFunctions);
+	    else
+		LogDebug("Started new script %s",Script->FunctionNames[FunctionNumber]);
 	}
 	break;
+	case COB_CALL_SCRIPT2:
+	    LogDebug("Call Script NUMBER 2!!!!");
 	case COB_CALL_SCRIPT:
 	{
 	    int32_t FunctionNumber = PostData(Script,State);
 	    int32_t NumberOfArguments = PostData(Script,State);
-	    //TODO(Christof): Figure out how to do running more than a single script at a time (including CALLING functions)
-	    for(int i=0;i<NumberOfArguments;i++)
+	    int ScriptIndex = Pool->NumberOfScripts++;
+	    ScriptState * NewState = &Pool->Scripts[ScriptIndex];
+	    for(int i=NumberOfArguments-1;i>=0;i--)
 	    {
-		int Argumenti = PopStack(State);
-		//Some of the docs suggest the stack should maybe be empty after this?
+		NewState->LocalVariables[i]= PopStack(State);
 	    }
-	    LogError("Script call to %s attempted, not currently supported", Script->FunctionNames[FunctionNumber]);
+	    NewState->NumberOfLocalVariables = NumberOfArguments;
+	    NewState->StaticVariables = State->StaticVariables;
+	    NewState->NumberOfStaticVariables = State->NumberOfStaticVariables;
+	    NewState->ScriptNumber = FunctionNumber;
+	    NewState->SignalMask = State->SignalMask;
+	    NewState->ReturnTo = State;
+	    NewState->TransformationDetails = State->TransformationDetails;
+	    State->BlockedOn = BLOCK_SCRIPT;
+	    NewState->NumberOfParameters = NumberOfArguments;
+	    if(FunctionNumber >= Script->NumberOfFunctions)
+		LogDebug("%d over %d", FunctionNumber, Script->NumberOfFunctions);
+	    else
+		LogDebug("Calling new script %s",Script->FunctionNames[FunctionNumber]);
+	    return;
 	}
 	break;
 	case COB_JUMP:
-	    //NOTE(Christof): this needs testing/TA decompile, seems likely this is unconditional, docs are divided
-	    //NOTE(Chritof): this may not need to remove a value from the stack, again docs unclear, much less obvious correct choice
-	    PopStack(State);//maybe if on this?
-	    State->ProgramCounter = PostData(Script,State);
+	    //NOTE(Christof): This is unconditional, does NOT pull from the stack
+	    State->ProgramCounter =PostData(Script,State);
 	    break;
 	case COB_RETURN:
 	{
@@ -639,7 +761,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	case COB_JUMP_IF_FALSE:
 	{
 	    int32_t NewProgramCounter = PostData(Script,State);
-	    if(!PopStack(State))
+	    if(PopStack(State) == 0 )
 	    {
 		State->ProgramCounter = NewProgramCounter;
 	    }
@@ -648,7 +770,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	case COB_SIGNAL:
 	{
 	    int32_t Signal = PopStack(State);
-	    LogError("We do not currently handle signals");
+	    LogError("We do not currently handle signals %d",Signal);
 	}
 	break;
 	case COB_SET_SIGNAL_MASK:
@@ -660,25 +782,29 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object)
 	case COB_EXPLODE:
 	{
 	    int32_t ExplodeType = PopStack(State);
-	    int32_t PieceNumber = PostData(Script,State);
+	    int32_t Piece = PostData(Script,State);
+	    LogWarning("Ignoring Explosion %d directive for %s",ExplodeType,Script->PieceNames[Piece]);
 	}
 	break;
 	case COB_SET_UNIT_VALUE:
 	{
-	    int32_t UnitVariableNumber = PopStack(State);
 	    int32_t Value = PopStack(State);
+	    int32_t UnitVariableNumber = PopStack(State);
+	    LogWarning("Not setting Value %d to %d", UnitVariableNumber, Value);
 	}
 	break;
 	case COB_ATTACH_UNIT:
 	{
 	    int32_t UnitID = PopStack(State);
-	    int32_t PieceNumber = PopStack(State);
+	    int32_t Piece = PopStack(State);
 	    int32_t Unknown = PopStack(State);
+	    LogWarning("Not attaching Unit %d to %s (Unknown: %d)",UnitID,Script->PieceNames[Piece], Unknown);
 	}
 	break;
 	case COB_DROP_UNIT:
 	{
 	    int32_t UnitID = PopStack(State);
+	    LogWarning("Not Dropping UnitID %d", UnitID);
 	}
 	break;
 	}
