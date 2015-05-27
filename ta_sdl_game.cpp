@@ -59,13 +59,18 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    
 	    for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfFunctions;i++)
 	    {
-		CurrentGameState->UnitDetailsText[i]=SetupOnScreenText(CurrentGameState->CurrentUnitScript->FunctionNames[i],CurrentGameState->ScreenWidth-400, i*CurrentGameState->Times24->Height*2+40, 1,1,1, CurrentGameState->Times24);
+		int size=snprintf(NULL, 0, "%d) %s",i,CurrentGameState->CurrentUnitScript->FunctionNames[i])+2;
+		//char tmp[size];
+		STACK_ARRAY(tmp,size,char);
+		snprintf(tmp,size,"%d) %s",i,CurrentGameState->CurrentUnitScript->FunctionNames[i]);
+		LogDebug(tmp);
+		CurrentGameState->UnitDetailsText[i]=SetupOnScreenText(tmp,CurrentGameState->ScreenWidth-220, i*CurrentGameState->Times24->Height*2+40, 1,1,1, CurrentGameState->Times24);
 	    }
 	    if(CurrentGameState->temp_model->Vertices)
 		Unload3DO(CurrentGameState->temp_model);
 	    Load3DOFromBuffer(temp,CurrentGameState->temp_model,CurrentGameState->NextTexture,CurrentGameState->Textures,&CurrentGameState->GameArena);
 	    InitTransformationDetails(CurrentGameState->temp_model, CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
-	    int ScriptNum = GetScriptNumberForFunction(CurrentGameState->CurrentUnitScript,"Go");
+	    int ScriptNum = GetScriptNumberForFunction(CurrentGameState->CurrentUnitScript,"Create");
 	    if(ScriptNum !=-1)
 	    {
 		CurrentGameState->CurrentScriptPool->NumberOfScripts = 1;
@@ -146,6 +151,23 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
     float DZ[3] = { ViewRotation.Contents[2*4+0] * CameraTranslation + ViewRotation.Contents[3*4+0],
 		    ViewRotation.Contents[2*4+1] * CameraTranslation + ViewRotation.Contents[3*4+1],
 		    ViewRotation.Contents[2*4+2] * CameraTranslation + ViewRotation.Contents[3*4+2]};
+
+    for(int i=SDLK_0;i<SDLK_9;i++)
+    {
+	if(Input->KeyIsDown[i])
+	{
+	    int ScriptNumber = i -SDLK_0;
+	    if(ScriptNumber < CurrentGameState->CurrentUnitScript->NumberOfFunctions)
+	    {
+
+		CurrentGameState->CurrentScriptPool->Scripts[CurrentGameState->CurrentScriptPool->NumberOfScripts].ScriptNumber = ScriptNumber;
+		CurrentGameState->CurrentScriptPool->Scripts[CurrentGameState->CurrentScriptPool->NumberOfScripts].TransformationDetails = CurrentGameState->UnitTransformationDetails;
+		CurrentGameState->CurrentScriptPool->Scripts[CurrentGameState->CurrentScriptPool->NumberOfScripts].StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript->NumberOfStatics, int32_t);
+		CurrentGameState->CurrentScriptPool->Scripts[CurrentGameState->CurrentScriptPool->NumberOfScripts].NumberOfStaticVariables = CurrentGameState->CurrentUnitScript->NumberOfStatics;
+		CurrentGameState->CurrentScriptPool->NumberOfScripts++;
+	    }
+	}
+    }
     
     if(Input->KeyIsDown[SDLK_ESCAPE])
     {
@@ -258,6 +280,9 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->CurrentUnitScript = PushStruct(GameArena, UnitScript);
     CurrentGameState->UnitTransformationDetails = PushStruct(GameArena, Object3dTransformationDetails);
     CurrentGameState->CurrentScriptPool = PushStruct(GameArena, ScriptStatePool);
+    CurrentGameState->ScriptBackground = PushStruct(GameArena, UIElement);
+    *CurrentGameState->ScriptBackground = SetupUIElement(CurrentGameState->ScreenWidth -240,0, 240, CurrentGameState->ScreenHeight, 0,0,0, 1,1,1, 1.0, 1.0);
+	
         //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
@@ -344,6 +369,37 @@ extern "C"
 	for(int i=0;i<CurrentGameState->CurrentScriptPool->NumberOfScripts;i++)
 	{
 	    RunScript(CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool->Scripts[i], CurrentGameState->temp_model, CurrentGameState->CurrentScriptPool);
+	    ScreenText * ScriptText = &CurrentGameState->UnitDetailsText[CurrentGameState->CurrentScriptPool->Scripts[i].ScriptNumber];
+	    switch(CurrentGameState->CurrentScriptPool->Scripts[i].BlockedOn)
+	    {
+		//Green - this will at the moment never happen
+	    case BLOCK_NOT_BLOCKED:
+		ScriptText->Color = {{0,1,0}};
+		break;
+		//CYAN
+	    case BLOCK_MOVE:
+		ScriptText->Color = {{0,1,1}};
+		break;
+		//PURPLE
+	    case BLOCK_TURN:
+		ScriptText->Color = {{1,0,1}};
+		break;
+//BLUE
+	    case BLOCK_SLEEP:
+		ScriptText->Color = {{0,0,1}};
+		break;
+//YELLOW
+	    case BLOCK_DONE:
+		ScriptText->Color = {{1,1,0}};
+		break;
+		//RED
+	    case BLOCK_SCRIPT:
+		ScriptText->Color = {{1,0,0}};
+		break;
+
+
+
+	    }
 	}
 	UpdateTransformationDetails(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
 	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,ModelMatrix);
@@ -364,6 +420,7 @@ extern "C"
 
 	for(int i=0;i<5;i++)
 	    RenderUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
+	RenderUIElement(*CurrentGameState->ScriptBackground, CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
 	for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfFunctions;i++)
 	    RenderOnScreenText(CurrentGameState->UnitDetailsText[i], CurrentGameState->FontShader, CurrentGameState->FontPositionLocation, CurrentGameState->FontColorLocation);
 
