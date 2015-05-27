@@ -63,7 +63,6 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		//char tmp[size];
 		STACK_ARRAY(tmp,size,char);
 		snprintf(tmp,size,"%d) %s",i,CurrentGameState->CurrentUnitScript->FunctionNames[i]);
-		LogDebug(tmp);
 		CurrentGameState->UnitDetailsText[i]=SetupOnScreenText(tmp,CurrentGameState->ScreenWidth-220, i*CurrentGameState->Times24->Height*2+40, 1,1,1, CurrentGameState->Times24);
 	    }
 	    if(CurrentGameState->temp_model->Vertices)
@@ -152,7 +151,7 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 		    ViewRotation.Contents[2*4+1] * CameraTranslation + ViewRotation.Contents[3*4+1],
 		    ViewRotation.Contents[2*4+2] * CameraTranslation + ViewRotation.Contents[3*4+2]};
 
-    for(int i=SDLK_0;i<SDLK_9;i++)
+    for(int i=SDLK_0;i<=SDLK_9;i++)
     {
 	if(Input->KeyIsDown[i])
 	{
@@ -282,7 +281,9 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->CurrentScriptPool = PushStruct(GameArena, ScriptStatePool);
     CurrentGameState->ScriptBackground = PushStruct(GameArena, UIElement);
     *CurrentGameState->ScriptBackground = SetupUIElement(CurrentGameState->ScreenWidth -240,0, 240, CurrentGameState->ScreenHeight, 0,0,0, 1,1,1, 1.0, 1.0);
-	
+
+    CurrentGameState->UnitIndex=14;
+    
         //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
@@ -364,7 +365,7 @@ extern "C"
 	CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
 	
 	Matrix ModelMatrix;
-	ModelMatrix.SetTranslation(0.5,1.4,0.4);
+	ModelMatrix.SetTranslation(0.5,13.5,0.4);
 
 	for(int i=0;i<CurrentGameState->CurrentScriptPool->NumberOfScripts;i++)
 	{

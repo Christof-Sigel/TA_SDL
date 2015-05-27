@@ -223,6 +223,10 @@ struct SpinDetails
     float Acceleration;//NOTE(Christof): Always positive, i.e. |a|
 };
 
+
+const uint32_t OBJECT3D_FLAG_HIDE = 1<<0;
+const uint32_t OBJECT3D_FLAG_DONT_CACHE = 1<<1;
+const uint32_t OBJECT3D_FLAG_DONT_SHADE = 1<<2;
 struct Object3dTransformationDetails
 {
     RotationDetails RotationTarget[TA_AXIS_NUM];
@@ -233,8 +237,8 @@ struct Object3dTransformationDetails
     float Movement[TA_AXIS_NUM];
     float Spin[TA_AXIS_NUM];
 
-    bool32 Hide;
     Object3dTransformationDetails * Children;
+    uint32_t Flags;
 };
 
 void InitTransformationDetails(Object3d * Object, Object3dTransformationDetails *  TransformationDetails, MemoryArena * GameArena)
@@ -387,7 +391,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     {
 	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,CurrentMatrix);
     }
-    if(!TransformationDetails->Hide)
+    if(!TransformationDetails->Flags & OBJECT3D_FLAG_HIDE)
     {
 	CurrentMatrix.Upload(ModelMatrixLocation);
 	glBindVertexArray(Object->VertexBuffer);
@@ -443,6 +447,10 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     {
 	LogError("Top Level 3DO Objects should not have siblings!");
 	return 0;
+    }
+    if(header->Always_0 != 0)
+    {
+	LogWarning("Always 0 is in fact %d in %s", header->Always_0, header->OffsetToObjectName);
     }
 
     //TODO(Christof): Bounds check

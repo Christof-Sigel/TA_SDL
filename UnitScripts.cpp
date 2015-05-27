@@ -180,6 +180,8 @@ enum Block
     BLOCK_SCRIPT
 };
 
+
+const int MAX_INSTRUCTIONS_PER_FRAME = 2000;
 struct ScriptState
 {
     //TODO(Christof): determine if stack can contain floats? some docs seem to indicate they should?
@@ -199,6 +201,7 @@ struct ScriptState
     int ScriptNumber;
     int NumberOfParameters;
     struct Object3dTransformationDetails * TransformationDetails;
+    int CurrentInstructionCount;
 };
 
 inline void PushStack(ScriptState * State, int32_t Value)
@@ -261,6 +264,27 @@ struct ScriptStatePool
     int NumberOfScripts;
 };
 
+
+void CreateNewScriptState(UnitScript * Script, ScriptState * State, ScriptState * NewState)
+{
+    int32_t FunctionNumber = PostData(Script,State);
+    int32_t NumberOfArguments = PostData(Script,State);
+    memset(NewState, 0, sizeof(ScriptState));
+    for(int i=NumberOfArguments-1;i>=0;i--)
+    {
+	NewState->LocalVariables[i]= PopStack(State);
+    }
+    NewState->NumberOfLocalVariables = NumberOfArguments;
+    NewState->StaticVariables = State->StaticVariables;
+    NewState->NumberOfStaticVariables = State->NumberOfStaticVariables;
+    NewState->ScriptNumber = FunctionNumber;
+    NewState->SignalMask = State->SignalMask;
+   
+    NewState->TransformationDetails = State->TransformationDetails;
+    NewState->NumberOfParameters = NumberOfArguments;
+
+}
+
 void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool)
 {
     if(State->ScriptNumber <0)
@@ -272,7 +296,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
     {
     case BLOCK_SCRIPT:
 	//NOTE(christof): the called script will wake us on return (and kill by signal I guess?)
-	break;
+	return;
     case BLOCK_DONE:
 	return;
     case BLOCK_SLEEP:
@@ -314,6 +338,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	{
 	    LogError("Could not find piece %s while waiting for move",PieceName);
 	    return;
+
 	}
 	else
 	{
@@ -334,11 +359,16 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
     {
 	State->ProgramCounter = Script->FunctionOffsets[State->ScriptNumber];
     }
+    State->CurrentInstructionCount=0;
 
     //NOTE(Christof): in cob instructions doc, top of the stack is at the BOTTOM of the list
     while(1)
     {
-	//TODO(Christof): Implement functions
+	if(State->CurrentInstructionCount++ > MAX_INSTRUCTIONS_PER_FRAME)
+	{
+	    LogWarning("%s exceeded %d instructions per frame", Script->FunctionNames[State->ScriptNumber], MAX_INSTRUCTIONS_PER_FRAME);
+	    return;
+	}
 	switch(Script->ScriptData[State->ProgramCounter++])
 	{
 	case COB_MOVE:
@@ -449,7 +479,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    char * PieceName = Script->PieceNames[Piece];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
-	    PieceTransform->Hide=0;
+	    PieceTransform->Flags &= ~OBJECT3D_FLAG_HIDE;
 	}
 	break;
 	case COB_HIDE:
@@ -458,19 +488,25 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    char * PieceName = Script->PieceNames[Piece];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
-	    PieceTransform->Hide=1;
+	    PieceTransform->Flags |= OBJECT3D_FLAG_HIDE;
 	}
 	break;
 	case COB_CACHE:
 	{
 	    int32_t Piece = PostData(Script,State);
-	    LogWarning("Ignoring Cache directive for %s",Script->PieceNames[Piece]);
+	    char * PieceName = Script->PieceNames[Piece];
+	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	    PieceTransform->Flags &= ~OBJECT3D_FLAG_DONT_CACHE;
 	}
 	break;
 	case COB_DONT_CACHE:
 	{
 	    int32_t Piece = PostData(Script,State);
-	    LogWarning("Ignoring Dont' Cache directive for %s",Script->PieceNames[Piece]);
+	    char * PieceName = Script->PieceNames[Piece];
+	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	    PieceTransform->Flags |= OBJECT3D_FLAG_DONT_CACHE;
 	}
 	break;
 	case COB_MOVE_NOW:
@@ -513,13 +549,19 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	case COB_SHADE:
 	{
 	    int32_t Piece = PostData(Script,State);
-	    LogWarning("Ignoring Shade directive for %s",Script->PieceNames[Piece]);
+	    char * PieceName = Script->PieceNames[Piece];
+	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	    PieceTransform->Flags &= ~OBJECT3D_FLAG_DONT_SHADE;
 	}
 	break;
 	case COB_DONT_SHADE:
 	{
 	    int32_t Piece = PostData(Script,State);
-	    LogWarning("Ignoring Don't Shade directive for %s",Script->PieceNames[Piece]);
+	    char * PieceName = Script->PieceNames[Piece];
+	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
+	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
+	    PieceTransform->Flags |= OBJECT3D_FLAG_DONT_SHADE;
 	}
 	break;
 	case COB_EMIT_SPECIAL_EFFECTS:
@@ -546,11 +588,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    State->BlockTime = PopStack(State);
 	    return;
 	case COB_CREATE_LOCAL_VARIABLE:
-	    //NOTE(Christof): the set should probably be unecessary, but best to be sure
 	    if(State->NumberOfParameters)
 		State->NumberOfParameters--;
 	    else
-		State->LocalVariables[State->NumberOfLocalVariables++]=0;
+		State->NumberOfLocalVariables++;
 	break;
 	case COB_STACK_FLUSH:
 	    LogDebug("Flushing stack in %s",Script->FunctionNames[State->ScriptNumber]);
@@ -598,10 +639,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    break;
 	case COB_RANDOM:
 	{
+	    //TODO(Christof): Better random numbers
 	    int32_t LowerBound = PopStack(State);
 	    int32_t UpperBound = PopStack(State);
 	    int32_t Result = (UpperBound - LowerBound)/2;
-//	    LogWarning("Putting bogus random value on the stack");
 	    Result = (rand()%(UpperBound-LowerBound))+LowerBound;
 	    PushStack(State, Result);
 	}
@@ -647,7 +688,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_UNKNOWN5:
 	case COB_UNKNOWN6:
-	    //NOTE(Christof): these seem to just push 0 onto the stack?
+	    //NOTE(Christof): these apparently just push 0 onto the stack?
 	    LogDebug("Pushing 0 onto the stack for unknown5/6");
 	    PushStack(State, 0);
 	    break;
@@ -695,58 +736,54 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    break;
 	case COB_START_SCRIPT:
 	{
-	    int32_t FunctionNumber = PostData(Script,State);
-	    int32_t NumberOfArguments = PostData(Script,State);
 	    int ScriptIndex = Pool->NumberOfScripts++;
-	    ScriptState * NewState = &Pool->Scripts[ScriptIndex];
-	    for(int i=NumberOfArguments-1;i>=0;i--)
+
+	    if(ScriptIndex >= SCRIPT_POOL_SIZE)
 	    {
-		NewState->LocalVariables[i]= PopStack(State);
+		Pool->NumberOfScripts--;
+		int32_t FunctionNumber = PostData(Script,State);
+		PostData(Script,State);
+
+		LogError("Too many scripts, failed to start new script %s", Script->FunctionNames[FunctionNumber]);
 	    }
-	    NewState->NumberOfLocalVariables = NumberOfArguments;
-	    NewState->StaticVariables = State->StaticVariables;
-	    NewState->NumberOfStaticVariables = State->NumberOfStaticVariables;
-	    NewState->ScriptNumber = FunctionNumber;
-	    NewState->SignalMask = State->SignalMask;
-	    NewState->TransformationDetails = State->TransformationDetails;
-	    NewState->NumberOfParameters = NumberOfArguments;
-	    if(FunctionNumber >= Script->NumberOfFunctions)
-		LogDebug("%d over %d", FunctionNumber, Script->NumberOfFunctions);
 	    else
-		LogDebug("Started new script %s",Script->FunctionNames[FunctionNumber]);
+	    {
+		ScriptState * NewState = &Pool->Scripts[ScriptIndex];
+		CreateNewScriptState(Script,State,NewState);
+		if(NewState->ScriptNumber >= Script->NumberOfFunctions)
+		    LogDebug("%d over %d", NewState->ScriptNumber, Script->NumberOfFunctions);
+	    }
 	}
 	break;
 	case COB_CALL_SCRIPT2:
 	    LogDebug("Call Script NUMBER 2!!!!");
 	case COB_CALL_SCRIPT:
 	{
-	    int32_t FunctionNumber = PostData(Script,State);
-	    int32_t NumberOfArguments = PostData(Script,State);
 	    int ScriptIndex = Pool->NumberOfScripts++;
-	    ScriptState * NewState = &Pool->Scripts[ScriptIndex];
-	    for(int i=NumberOfArguments-1;i>=0;i--)
+	    if(ScriptIndex >= SCRIPT_POOL_SIZE)
 	    {
-		NewState->LocalVariables[i]= PopStack(State);
+		Pool->NumberOfScripts--;
+		int32_t FunctionNumber = PostData(Script,State);
+		PostData(Script,State);
+
+		LogError("Too many scripts, failed to call new script %s", Script->FunctionNames[FunctionNumber]);
 	    }
-	    NewState->NumberOfLocalVariables = NumberOfArguments;
-	    NewState->StaticVariables = State->StaticVariables;
-	    NewState->NumberOfStaticVariables = State->NumberOfStaticVariables;
-	    NewState->ScriptNumber = FunctionNumber;
-	    NewState->SignalMask = State->SignalMask;
-	    NewState->ReturnTo = State;
-	    NewState->TransformationDetails = State->TransformationDetails;
-	    State->BlockedOn = BLOCK_SCRIPT;
-	    NewState->NumberOfParameters = NumberOfArguments;
-	    if(FunctionNumber >= Script->NumberOfFunctions)
-		LogDebug("%d over %d", FunctionNumber, Script->NumberOfFunctions);
 	    else
-		LogDebug("Calling new script %s",Script->FunctionNames[FunctionNumber]);
-	    return;
+	    {
+		ScriptState * NewState = &Pool->Scripts[ScriptIndex];
+		CreateNewScriptState(Script,State,NewState);
+		NewState->ReturnTo = State;
+		State->BlockedOn = BLOCK_SCRIPT;
+
+		if(NewState->ScriptNumber >= Script->NumberOfFunctions)
+		    LogDebug("%d over %d", NewState->ScriptNumber, Script->NumberOfFunctions);
+		return;
+	    }
 	}
 	break;
 	case COB_JUMP:
 	    //NOTE(Christof): This is unconditional, does NOT pull from the stack
-	    State->ProgramCounter =PostData(Script,State);
+	    State->ProgramCounter = PostData(Script,State);
 	    break;
 	case COB_RETURN:
 	{
