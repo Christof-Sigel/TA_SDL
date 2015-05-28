@@ -378,13 +378,16 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
 	    char * PieceName = Script->PieceNames[PieceNumber];
-
 	    switch(Axis)
 	    {
 	    case TA_AXIS_X:
 	    case TA_AXIS_Z:
-		Target = - Target;
+		break;
+	    case TA_AXIS_Y:
+		//Target=-Target;
+		break;
 	    }
+
 
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
@@ -399,14 +402,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Speed = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
-
-	    switch(Axis)
-	    {
-	    case TA_AXIS_X:
-	    case TA_AXIS_Z:
-		Target = - Target;
-	    }
-
+//	    Target = -Target;
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
@@ -423,6 +419,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
 	    //NOTE(Christof): if Acceleration is 0 Spin change is immediate
+	    Speed=-Speed;
 	    
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
@@ -445,13 +442,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Acceleration = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
-	    switch(Axis)
-	    {
-	    case TA_AXIS_X:
-	    case TA_AXIS_Z:
-		Speed = - Speed;
-	    }
-
+	    Speed=-Speed;
 	    if(Speed !=0)
 	    {
 		LogWarning("Spin stop called with non zero speed %d?",Speed);
@@ -514,14 +505,14 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Target = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
-
 	    switch(Axis)
 	    {
 	    case TA_AXIS_X:
 	    case TA_AXIS_Z:
-		Target = - Target;
+		Target=-Target;
+		break;
 	    }
-	    
+
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
@@ -533,12 +524,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Target = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
-	    switch(Axis)
-	    {
-	    case TA_AXIS_X:
-	    case TA_AXIS_Z:
-		Target = - Target;
-	    }
+	    Target=-Target;
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
