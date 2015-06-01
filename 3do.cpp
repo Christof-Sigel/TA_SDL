@@ -75,9 +75,9 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
 
     for(int i=0;i<3;i++)
     {
-	Data[i*8+0]=-Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+0];
+	Data[i*8+0]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+0];
 	Data[i*8+1]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+1];
-	Data[i*8+2]=-Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+2];
+	Data[i*8+2]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+2];
 
 	Data[i*8+3]=Texture->U+Texture->Width*UV[i*2+0];
 	Data[i*8+4]=Texture->V+Texture->Height*UV[i*2+1];
@@ -376,10 +376,10 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     //TODO(Christof): Actually make use of TransformationDetails
 
     Matrix CurrentMatrix;
-
-    CurrentMatrix.Rotate(1,0,0, TransformationDetails->Rotation[0]);
     CurrentMatrix.Rotate(0,1,0, TransformationDetails->Rotation[1]);
+    CurrentMatrix.Rotate(1,0,0, TransformationDetails->Rotation[0]);
     CurrentMatrix.Rotate(0,0,1, TransformationDetails->Rotation[2]);
+    
     CurrentMatrix.Move(Object->Position.X,Object->Position.Y,Object->Position.Z);
 
     CurrentMatrix = ParentMatrix * CurrentMatrix ;
@@ -458,9 +458,9 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     //TODO(Christof): Bounds check
     int NameLength=(int)strlen((char*)Buffer + header->OffsetToObjectName)+1;
     memcpy(Object->Name,Buffer+header->OffsetToObjectName,NameLength);
-    Object->Position.X=-header->XFromParent*TA_TO_GL_SCALE;
+    Object->Position.X=header->XFromParent*TA_TO_GL_SCALE;
     Object->Position.Y=header->YFromParent*TA_TO_GL_SCALE;
-    Object->Position.Z=-header->ZFromParent*TA_TO_GL_SCALE;
+    Object->Position.Z=header->ZFromParent*TA_TO_GL_SCALE;
 
     FILE_Object3dPrimitive * Primitives=(FILE_Object3dPrimitive*)(Buffer+header->OffsetToPrimitiveArray);
     FILE_Object3dPrimitive * CurrentPrimitive = Primitives;

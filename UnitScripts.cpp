@@ -382,9 +382,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    {
 	    case TA_AXIS_X:
 	    case TA_AXIS_Z:
+		Target=-Target;
 		break;
 	    case TA_AXIS_Y:
-		//Target=-Target;
+		
 		break;
 	    }
 
@@ -402,7 +403,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Speed = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
-//	    Target = -Target;
+	    Target = -Target;
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
