@@ -58,6 +58,8 @@ struct Object3d
     GLfloat * Vertices;
     GLuint VertexBuffer;
     int NumTriangles;
+    int NumLines;
+    GLuint LineBuffer;
 };
 
 struct Object3dPrimitive
@@ -100,14 +102,18 @@ bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
     }
 
     Object->NumTriangles=0;
+    Object->NumLines = 0;
     for(int i=0;i<Object->NumberOfPrimitives;i++)
     {
 	Object->NumTriangles += Object->Primitives[i].NumberOfVertices-2>0?Object->Primitives[i].NumberOfVertices-2:0;
+	Object->NumLines += Object->Primitives[i].NumberOfVertices == 2;
     }
     //GLfloat Data[Object->NumTriangles * (3+2+3)*3];//3 coord, 2 tex, 3 color
     STACK_ARRAY(Data,Object->NumTriangles * (3+2+3)*3, GLfloat);
+    STACK_ARRAY(LineData,Object->NumLines * (3+2+3)*2, GLfloat);
     //NOTE: signal no texture in some way, perhaps negative texture coords?
     int CurrentTriangle=0;
+    int CurrentLine = 0;
     for(int PrimitiveIndex=0;PrimitiveIndex<Object->NumberOfPrimitives;PrimitiveIndex++)
     {
 	Object3dPrimitive * CurrentPrimitive=&Object->Primitives[PrimitiveIndex];
@@ -120,7 +126,29 @@ bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
 	    LogDebug("ignoring point in %s",Object->Name);
 	    break;
 	case 2:
-	    LogDebug("ignoring line in %s",Object->Name);
+	    LineData[CurrentLine*2*8 + 0] = Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+0];
+	    LineData[CurrentLine*2*8 + 1]= Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+1];
+	    LineData[CurrentLine*2*8 + 2]= Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+2];
+
+	    LineData[CurrentLine*2*8 + 3]= Texture->U;
+	    LineData[CurrentLine*2*8 + 4]= Texture->V;
+	    
+	    LineData[CurrentLine*2*8 + 5]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
+	    LineData[CurrentLine*2*8 + 6]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
+	    LineData[CurrentLine*2*8 + 7]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
+
+	    
+	    LineData[CurrentLine*2*8 + 8] = Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+0];
+	    LineData[CurrentLine*2*8 + 9]= Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+1];
+	    LineData[CurrentLine*2*8 + 10]= Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+2];
+
+	    LineData[CurrentLine*2*8 + 11]= Texture->U+Texture->Width;
+	    LineData[CurrentLine*2*8 + 12]= Texture->V+Texture->Height;
+
+	    LineData[CurrentLine*2*8 + 13]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
+	    LineData[CurrentLine*2*8 + 14]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
+	    LineData[CurrentLine*2*8 + 15]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
+	    CurrentLine++;
 	    break;
 	case 3:
 	{
@@ -185,7 +213,27 @@ bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
-    //glDeleteBuffers(1,&VertexBuffer);
+    glDeleteBuffers(1,&VertexBuffer);
+
+
+    glGenVertexArrays(1,&Object->LineBuffer);
+    glBindVertexArray(Object->LineBuffer);
+
+    glGenBuffers(1,&VertexBuffer);
+
+    glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumLines*(3+2+3)*2,LineData,GL_STATIC_DRAW);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),0);
+    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),(GLvoid*)(sizeof(GLfloat)*3));
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),(GLvoid*)(sizeof(GLfloat)*5));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+    glDeleteBuffers(1,&VertexBuffer);
 
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
@@ -403,6 +451,15 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 	{
 	    LogError("failed to render : %s",gluErrorString(ErrorValue));
 	}
+
+	glBindVertexArray(Object->LineBuffer);
+	glDrawArrays(GL_LINES, 0, Object->NumLines*2);
+	ErrorValue = glGetError();
+	if(ErrorValue!=GL_NO_ERROR)
+	{
+	    LogError("failed to render : %s",gluErrorString(ErrorValue));
+	}
+
     }
 }
 
