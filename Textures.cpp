@@ -77,7 +77,7 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
     Texture * Textures = CurrentGameState->Textures;
     uint8_t * TextureData = CurrentGameState->TextureData;
     uint8_t * PaletteData = CurrentGameState->PaletteData;
-
+    //NOTE(Christof): some Gafs have frames whose dimensions (height in original TA textures) do not match frame 0
     for(int i=0;i<Entry->NumberOfFrames;i++)
     {
 	FILE_GafFrameData * Frame = (FILE_GafFrameData *)(Buffer + FrameEntries[i].FrameInfoOffset);

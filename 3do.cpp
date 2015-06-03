@@ -94,7 +94,7 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
 
 Texture NoTexture={"",0,-2,-2,-1,-1,0};
 
-bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
+bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData)
 {
     if(Object->VertexBuffer)
     {
@@ -235,13 +235,7 @@ bool32 PrepareObject3dForRendering(Object3d * Object,uint8_t * PaletteData)
     glBindVertexArray(0);
     glDeleteBuffers(1,&VertexBuffer);
 
-    for(int i=0;i<Object->NumberOfChildren;i++)
-    {
-	if(!PrepareObject3dForRendering(&Object->Children[i],PaletteData))
-	    return 0;
-    }
-	      
-    
+
     return 1;
 }
 
@@ -419,8 +413,11 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
     }
 }
 
-void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, Matrix ParentMatrix=Matrix())
+void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, uint8_t * PaletteData,Matrix ParentMatrix=Matrix())
 {
+    if((TransformationDetails->Flags & OBJECT3D_FLAG_HIDE))
+	return;
+    Object3dRenderingPrep(Object, PaletteData);
     //TODO(Christof): Actually make use of TransformationDetails
 
     Matrix CurrentMatrix;
@@ -439,28 +436,27 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,CurrentMatrix);
+	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,CurrentMatrix);
     }
-    if(!(TransformationDetails->Flags & OBJECT3D_FLAG_HIDE))
+
+
+    CurrentMatrix.Upload(ModelMatrixLocation);
+    glBindVertexArray(Object->VertexBuffer);
+    glDrawArrays(GL_TRIANGLES, 0, Object->NumTriangles*3);
+    GLenum ErrorValue = glGetError();
+    if(ErrorValue!=GL_NO_ERROR)
     {
-	CurrentMatrix.Upload(ModelMatrixLocation);
-	glBindVertexArray(Object->VertexBuffer);
-	glDrawArrays(GL_TRIANGLES, 0, Object->NumTriangles*3);
-	GLenum ErrorValue = glGetError();
-	if(ErrorValue!=GL_NO_ERROR)
-	{
-	    LogError("failed to render : %s",gluErrorString(ErrorValue));
-	}
-
-	glBindVertexArray(Object->LineBuffer);
-	glDrawArrays(GL_LINES, 0, Object->NumLines*2);
-	ErrorValue = glGetError();
-	if(ErrorValue!=GL_NO_ERROR)
-	{
-	    LogError("failed to render : %s",gluErrorString(ErrorValue));
-	}
-
+	LogError("failed to render : %s",gluErrorString(ErrorValue));
     }
+    
+    glBindVertexArray(Object->LineBuffer);
+    glDrawArrays(GL_LINES, 0, Object->NumLines*2);
+    ErrorValue = glGetError();
+    if(ErrorValue!=GL_NO_ERROR)
+    {
+	LogError("failed to render : %s",gluErrorString(ErrorValue));
+    }
+
 }
 
 

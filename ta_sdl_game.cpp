@@ -126,7 +126,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		CurrentGameState->TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25f,0.75f,0.25f, 1,1,1, 5,(float)(1.0-fabs(i-2.0)/4), 2,&CurrentGameState->NameAndDescText[i*2]);
 		Y+=CurrentGameState->TestElement[i].Size.Height+5;
 	    }
-	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
+//	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
 	}
     }
 }
@@ -403,7 +403,7 @@ extern "C"
 	    }
 	}
 	UpdateTransformationDetails(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
-	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,ModelMatrix);
+	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,ModelMatrix);
 
 	
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
