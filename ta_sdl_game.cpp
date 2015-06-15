@@ -256,11 +256,12 @@ void SetupGameState( GameState * CurrentGameState)
     
 //    CurrentGameState->ViewMatrix->SetTranslation(1,-2.5,2);
     //  CurrentGameState->ViewMatrix->Rotate(0,1,0, (float)PI*0.75f);
-    	CurrentGameState->CameraYRotation = 1.25*PI;
-	//CurrentGameState->CameraXRotation += 0.1f;
-	CurrentGameState->CameraTranslation[1] =3.0f;
-	CurrentGameState->CameraTranslation[0] =-2.0f;
-	CurrentGameState->CameraTranslation[2] =-2.0f;
+    CurrentGameState->CameraYRotation = 0;//1.25*PI;
+//	CurrentGameState->CameraXRotation += 0.1f;
+
+    CurrentGameState->CameraTranslation[0] =4.0f;
+    CurrentGameState->CameraTranslation[1] =40.0f;
+    CurrentGameState->CameraTranslation[2] =50.0f;
 
 
     CurrentGameState->Textures = PushArray(GameArena,MAX_NUMBER_OF_TEXTURE,Texture);
@@ -291,7 +292,7 @@ void SetupGameState( GameState * CurrentGameState)
  
     glEnable(GL_CULL_FACE);
     //glDisable(GL_CULL_FACE);
-    //glCullFace(GL_BACK);
+    glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 }
 
@@ -343,6 +344,11 @@ extern "C"
 {
     void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
     {
+	glEnable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
+//	glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
+
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
 	if(!CurrentGameState->IsInitialised)
 	{

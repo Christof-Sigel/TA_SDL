@@ -1,4 +1,16 @@
 
+const int32_t TranslationXAxisModModel = 1;
+const int32_t TranslationYAxisModModel = 1;
+const int32_t TranslationZAxisModModel = -1;
+
+const int32_t TranslationXAxisModScript = 1;
+const int32_t TranslationYAxisModScript = 1;
+const int32_t TranslationZAxisModScript = 1;
+
+const int32_t RotationXAxisMod = -1;
+const int32_t RotationYAxisMod = -1;
+const int32_t RotationZAxisMod = -1;
+
 
 #pragma pack(push,1)
 struct FILE_Object3dHeader
@@ -511,9 +523,9 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     //TODO(Christof): Bounds check
     int NameLength=(int)strlen((char*)Buffer + header->OffsetToObjectName)+1;
     memcpy(Object->Name,Buffer+header->OffsetToObjectName,NameLength);
-    Object->Position.X=header->XFromParent*TA_TO_GL_SCALE;
-    Object->Position.Y=header->YFromParent*TA_TO_GL_SCALE;
-    Object->Position.Z=header->ZFromParent*TA_TO_GL_SCALE;
+    Object->Position.X=header->XFromParent*TA_TO_GL_SCALE*TranslationXAxisModModel;
+    Object->Position.Y=header->YFromParent*TA_TO_GL_SCALE*TranslationYAxisModModel;
+    Object->Position.Z=header->ZFromParent*TA_TO_GL_SCALE*TranslationZAxisModModel;
 
     FILE_Object3dPrimitive * Primitives=(FILE_Object3dPrimitive*)(Buffer+header->OffsetToPrimitiveArray);
     FILE_Object3dPrimitive * CurrentPrimitive = Primitives;
@@ -550,9 +562,9 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     FILE_Object3dVertex * Vertices= (FILE_Object3dVertex *)(Buffer + header->OffsetToVertexArray);
     for(int i=0;i<Object->NumberOfVertices;i++)
     {
-	Object->Vertices[i*3+0]=Vertices[i].x*TA_TO_GL_SCALE;
-	Object->Vertices[i*3+1]=Vertices[i].y*TA_TO_GL_SCALE;
-	Object->Vertices[i*3+2]=Vertices[i].z*TA_TO_GL_SCALE;
+	Object->Vertices[i*3+0]=Vertices[i].x*TA_TO_GL_SCALE*TranslationXAxisModModel;
+	Object->Vertices[i*3+1]=Vertices[i].y*TA_TO_GL_SCALE*TranslationYAxisModModel;
+	Object->Vertices[i*3+2]=Vertices[i].z*TA_TO_GL_SCALE*TranslationZAxisModModel;
     }
     
     

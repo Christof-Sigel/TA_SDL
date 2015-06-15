@@ -381,11 +381,13 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    switch(Axis)
 	    {
 	    case TA_AXIS_X:
+		Target = Target * TranslationXAxisModScript;
+		break;
 	    case TA_AXIS_Z:
-		Target=-Target;
+		Target = Target * TranslationZAxisModScript;
 		break;
 	    case TA_AXIS_Y:
-		
+		Target = Target * TranslationZAxisModScript;
 		break;
 	    }
 
@@ -403,7 +405,18 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Speed = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
-	    Target = -Target;
+	    switch(Axis)
+	    {
+	    case TA_AXIS_X:
+		Target = Target * RotationXAxisMod;
+		break;
+	    case TA_AXIS_Z:
+		Target = Target * RotationZAxisMod;
+		break;
+	    case TA_AXIS_Y:
+		Target = Target * RotationZAxisMod;
+		break;
+	    }
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
@@ -420,7 +433,18 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
 	    //NOTE(Christof): if Acceleration is 0 Spin change is immediate
-	    Speed=-Speed;
+	    switch(Axis)
+	    {
+	    case TA_AXIS_X:
+		Speed = Speed * RotationXAxisMod;
+		break;
+	    case TA_AXIS_Z:
+		Speed = Speed * RotationZAxisMod;
+		break;
+	    case TA_AXIS_Y:
+		Speed = Speed * RotationZAxisMod;
+		break;
+	    }
 	    
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
@@ -443,7 +467,19 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Acceleration = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
-	    Speed=-Speed;
+	    switch(Axis)
+	    {
+	    case TA_AXIS_X:
+		Speed = Speed * RotationXAxisMod;
+		break;
+	    case TA_AXIS_Z:
+		Speed = Speed * RotationZAxisMod;
+		break;
+	    case TA_AXIS_Y:
+		Speed = Speed * RotationZAxisMod;
+		break;
+	    }
+
 	    if(Speed !=0)
 	    {
 		LogWarning("Spin stop called with non zero speed %d?",Speed);
@@ -509,8 +545,13 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    switch(Axis)
 	    {
 	    case TA_AXIS_X:
+		Target = Target * TranslationXAxisModScript;
+		break;
 	    case TA_AXIS_Z:
-		Target=-Target;
+		Target = Target * TranslationZAxisModScript;
+		break;
+	    case TA_AXIS_Y:
+		Target = Target * TranslationZAxisModScript;
 		break;
 	    }
 
@@ -525,7 +566,21 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Target = PopStack(State);
 	    int32_t PieceNumber = PostData(Script,State);
 	    int32_t Axis = PostData(Script,State);
-	    Target=-Target;
+
+	    switch(Axis)
+	    {
+	    case TA_AXIS_X:
+		Target = Target * RotationXAxisMod;
+		break;
+	    case TA_AXIS_Z:
+		Target = Target * RotationZAxisMod;
+		break;
+	    case TA_AXIS_Y:
+		Target = Target * RotationZAxisMod;
+		break;
+	    }
+
+
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
