@@ -447,7 +447,7 @@ extern "C"
 	glEnable(GL_CULL_FACE);
 	//glDisable(GL_CULL_FACE);
 //	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
+	glFrontFace(GL_CCW);
 
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
 	if(!CurrentGameState->IsInitialised)

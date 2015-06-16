@@ -1,14 +1,14 @@
-
+ 
 const int32_t TranslationXAxisModModel = 1;
 const int32_t TranslationYAxisModModel = 1;
 const int32_t TranslationZAxisModModel = -1;
 
-const int32_t TranslationXAxisModScript = 1;
+const int32_t TranslationXAxisModScript = -1;
 const int32_t TranslationYAxisModScript = 1;
 const int32_t TranslationZAxisModScript = 1;
 
-const int32_t RotationXAxisMod = -1;
-const int32_t RotationYAxisMod = -1;
+const int32_t RotationXAxisMod = 1;
+const int32_t RotationYAxisMod = 1;
 const int32_t RotationZAxisMod = -1;
 
 
@@ -164,20 +164,20 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData)
 	    break;
 	case 3:
 	{
-	    GLfloat UVCoords[]={0,1, 1,1, 0,0};
-	    int Vertexes[]={0,1,2};
+	    GLfloat UVCoords[]={0,1, 0,0, 1,1};
+	    int Vertexes[]={0,2,1};
 	    FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData);
 	    CurrentTriangle++;
 	}
 	    break;
 	case 4:
 	{
-	    GLfloat UVCoords1[]={1,0, 0,1, 1,1};
-	    int Vertexes1[]={0,2,3};
+	    GLfloat UVCoords1[]={1,0, 1,1,  0,1 };
+	    int Vertexes1[]={0,3,2};
 	    FillObject3dData(Data,CurrentTriangle,Vertexes1,UVCoords1,Texture,Object,CurrentPrimitive,PaletteData);
 	    CurrentTriangle++;
-	    GLfloat UVCoords2[]={1,0, 0,0, 0,1};
-	    int Vertexes2[]={0,1,2};
+	    GLfloat UVCoords2[]={1,0, 0,1, 0,0};
+	    int Vertexes2[]={0,2,1};
 	    FillObject3dData(Data,CurrentTriangle,Vertexes2,UVCoords2,Texture,Object,CurrentPrimitive,PaletteData);
 	    CurrentTriangle++;
 	}

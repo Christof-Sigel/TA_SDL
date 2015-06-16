@@ -383,10 +383,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    case TA_AXIS_X:
 		Target = Target * TranslationXAxisModScript;
 		break;
-	    case TA_AXIS_Z:
-		Target = Target * TranslationZAxisModScript;
-		break;
 	    case TA_AXIS_Y:
+		Target = Target * TranslationYAxisModScript;
+		break;
+	    case TA_AXIS_Z:
 		Target = Target * TranslationZAxisModScript;
 		break;
 	    }
@@ -410,10 +410,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    case TA_AXIS_X:
 		Target = Target * RotationXAxisMod;
 		break;
-	    case TA_AXIS_Z:
-		Target = Target * RotationZAxisMod;
-		break;
 	    case TA_AXIS_Y:
+		Target = Target * RotationYAxisMod;
+		break;
+	    case TA_AXIS_Z:
 		Target = Target * RotationZAxisMod;
 		break;
 	    }
@@ -438,10 +438,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    case TA_AXIS_X:
 		Speed = Speed * RotationXAxisMod;
 		break;
-	    case TA_AXIS_Z:
-		Speed = Speed * RotationZAxisMod;
-		break;
 	    case TA_AXIS_Y:
+		Speed = Speed * RotationYAxisMod;
+		break;
+	    case TA_AXIS_Z:
 		Speed = Speed * RotationZAxisMod;
 		break;
 	    }
@@ -472,10 +472,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    case TA_AXIS_X:
 		Speed = Speed * RotationXAxisMod;
 		break;
-	    case TA_AXIS_Z:
-		Speed = Speed * RotationZAxisMod;
-		break;
 	    case TA_AXIS_Y:
+		Speed = Speed * RotationYAxisMod;
+		break;
+	    case TA_AXIS_Z:
 		Speed = Speed * RotationZAxisMod;
 		break;
 	    }
@@ -547,10 +547,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    case TA_AXIS_X:
 		Target = Target * TranslationXAxisModScript;
 		break;
-	    case TA_AXIS_Z:
-		Target = Target * TranslationZAxisModScript;
-		break;
 	    case TA_AXIS_Y:
+		Target = Target * TranslationYAxisModScript;
+		break;
+	    case TA_AXIS_Z:
 		Target = Target * TranslationZAxisModScript;
 		break;
 	    }
@@ -572,10 +572,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    case TA_AXIS_X:
 		Target = Target * RotationXAxisMod;
 		break;
-	    case TA_AXIS_Z:
-		Target = Target * RotationZAxisMod;
-		break;
 	    case TA_AXIS_Y:
+		Target = Target * RotationYAxisMod;
+		break;
+	    case TA_AXIS_Z:
 		Target = Target * RotationZAxisMod;
 		break;
 	    }
