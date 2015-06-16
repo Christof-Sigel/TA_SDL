@@ -109,10 +109,10 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		    break;
 		}
 
-		int size=snprintf(NULL, 0, "%s: %s",SideName,Name)+1;
+		int size=snprintf(NULL, 0, "%s: %s - %d of %d",SideName,Name, Index, CurrentGameState->Units.Size)+1;
 		//char tmp[size];
 		STACK_ARRAY(tmp,size,char);
-		snprintf(tmp,size,"%s: %s",SideName,Name);
+		snprintf(tmp,size,"%s: %s - %d of %d",SideName,Name, Index, CurrentGameState->Units.Size);
 		CurrentGameState->NameAndDescText[i*2+0]=SetupOnScreenText(tmp,10,30, 1,1,1, CurrentGameState->Times32);
 
 		{
