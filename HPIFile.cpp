@@ -464,6 +464,16 @@ bool32 LoadHPIFileCollection(GameState * CurrentGameState)
     return 1;
 }
 
+int32_t FindEntryInVector(HPIEntry Entry, std::vector<HPIEntry> & Entries)
+{
+    for(int i=0;i<Entries.size();i++)
+    {
+	if(CaseInsensitiveMatch(Entries[i].Name,Entry.Name))
+	    return 1;
+    }
+    return 0;
+}
+
 HPIEntry FindEntryInAllFiles(const char * Path,GameState * CurrentGameState)
 {
     HPIEntry Result={0};
@@ -495,7 +505,10 @@ HPIEntry FindEntryInAllFiles(const char * Path,GameState * CurrentGameState)
 		}
 		for(int i=0;i<temp.Directory.NumberOfEntries;i++)
 		{
-		    Entries.push_back(temp.Directory.Entries[i]);
+		    if(!FindEntryInVector(temp.Directory.Entries[i], Entries))
+		    {
+			Entries.push_back(temp.Directory.Entries[i]);
+		    }
 		}
 	    }
 	}
