@@ -425,7 +425,7 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
     }
 }
 
-void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, uint8_t * PaletteData,Matrix ParentMatrix=Matrix())
+void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, uint8_t * PaletteData, GLuint DebugAxisBuffer, Matrix ParentMatrix=Matrix())
 {
     if((TransformationDetails->Flags & OBJECT3D_FLAG_HIDE))
 	return;
@@ -448,7 +448,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,CurrentMatrix);
+	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,DebugAxisBuffer,CurrentMatrix);
     }
 
 
@@ -468,6 +468,17 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     {
 	LogError("failed to render : %s",gluErrorString(ErrorValue));
     }
+
+    
+    glBindVertexArray(DebugAxisBuffer);
+    glDrawArrays(GL_LINES, 0, 3*2);
+    ErrorValue = glGetError();
+    if(ErrorValue!=GL_NO_ERROR)
+    {
+	LogError("failed to render : %s",gluErrorString(ErrorValue));
+    }
+
+    
 
 }
 

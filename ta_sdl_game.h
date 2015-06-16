@@ -174,6 +174,7 @@ struct GameState
     float CameraTranslation[3];
     struct ScriptStatePool * CurrentScriptPool;
     struct UIElement * ScriptBackground;
+    GLuint DebugAxisBuffer;
 };
 
 const int TEXTURE_WIDTH=2048;

@@ -232,6 +232,103 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 
 }
 
+void SetupDebugAxisBuffer(GLuint * DebugAxisBuffer)
+{
+        //Setup Debug axis buffer details:
+    GLfloat LineData[3*2 * (3+2+3)];
+    int32_t CurrentLine =0;
+    LineData[CurrentLine*2*8 + 0] = 0;
+    LineData[CurrentLine*2*8 + 1]= 0;
+    LineData[CurrentLine*2*8 + 2]= 0;
+
+    LineData[CurrentLine*2*8 + 3]= -1;
+    LineData[CurrentLine*2*8 + 4]= -1;
+	    
+    LineData[CurrentLine*2*8 + 5]= 1;
+    LineData[CurrentLine*2*8 + 6]= 0;
+    LineData[CurrentLine*2*8 + 7]= 0;
+
+	    
+    LineData[CurrentLine*2*8 + 8] = 1;
+    LineData[CurrentLine*2*8 + 9]= 0;
+    LineData[CurrentLine*2*8 + 10]= 0;
+
+    LineData[CurrentLine*2*8 + 11]= -1;
+    LineData[CurrentLine*2*8 + 12]= -1;
+
+    LineData[CurrentLine*2*8 + 13]= 1;
+    LineData[CurrentLine*2*8 + 14]= 0;
+    LineData[CurrentLine*2*8 + 15]= 0;
+    CurrentLine++;
+
+    LineData[CurrentLine*2*8 + 0] = 0;
+    LineData[CurrentLine*2*8 + 1]= 0;
+    LineData[CurrentLine*2*8 + 2]= 0;
+
+    LineData[CurrentLine*2*8 + 3]= -1;
+    LineData[CurrentLine*2*8 + 4]= -1;
+	    
+    LineData[CurrentLine*2*8 + 5]= 0;
+    LineData[CurrentLine*2*8 + 6]= 1;
+    LineData[CurrentLine*2*8 + 7]= 0;
+
+	    
+    LineData[CurrentLine*2*8 + 8] = 0;
+    LineData[CurrentLine*2*8 + 9]= 1;
+    LineData[CurrentLine*2*8 + 10]= 0;
+
+    LineData[CurrentLine*2*8 + 11]= -1;
+    LineData[CurrentLine*2*8 + 12]= -1;
+
+    LineData[CurrentLine*2*8 + 13]= 0;
+    LineData[CurrentLine*2*8 + 14]= 1;
+    LineData[CurrentLine*2*8 + 15]= 0;
+    CurrentLine++;
+
+    LineData[CurrentLine*2*8 + 0] = 0;
+    LineData[CurrentLine*2*8 + 1]= 0;
+    LineData[CurrentLine*2*8 + 2]= 0;
+
+    LineData[CurrentLine*2*8 + 3]= -1;
+    LineData[CurrentLine*2*8 + 4]= -1;
+	    
+    LineData[CurrentLine*2*8 + 5]= 0;
+    LineData[CurrentLine*2*8 + 6]= 0;
+    LineData[CurrentLine*2*8 + 7]= 1;
+
+	    
+    LineData[CurrentLine*2*8 + 8] = 0;
+    LineData[CurrentLine*2*8 + 9]= 0;
+    LineData[CurrentLine*2*8 + 10]= 1;
+
+    LineData[CurrentLine*2*8 + 11]= -1;
+    LineData[CurrentLine*2*8 + 12]= -1;
+
+    LineData[CurrentLine*2*8 + 13]= 0;
+    LineData[CurrentLine*2*8 + 14]= 0;
+    LineData[CurrentLine*2*8 + 15]= 1;
+    CurrentLine++;
+
+    GLuint VertexBuffer;
+    glGenVertexArrays(1,DebugAxisBuffer);
+    glBindVertexArray(*DebugAxisBuffer);
+
+    glGenBuffers(1,&VertexBuffer);
+
+    glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*3*(3+2+3)*2,LineData,GL_STATIC_DRAW);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),0);
+    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),(GLvoid*)(sizeof(GLfloat)*3));
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),(GLvoid*)(sizeof(GLfloat)*5));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+    glDeleteBuffers(1,&VertexBuffer);
+}
 
 void SetupGameState( GameState * CurrentGameState)
 {
@@ -294,6 +391,9 @@ void SetupGameState( GameState * CurrentGameState)
     //glDisable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+	    SetupDebugAxisBuffer(&CurrentGameState->DebugAxisBuffer);
+
 }
 
 void InitialiseGame(Memory * GameMemory)
@@ -409,7 +509,7 @@ extern "C"
 	    }
 	}
 	UpdateTransformationDetails(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
-	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,ModelMatrix);
+	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,ModelMatrix);
 
 	
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
