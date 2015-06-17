@@ -362,7 +362,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
     State->CurrentInstructionCount=0;
 
     //NOTE(Christof): in cob instructions doc, top of the stack is at the BOTTOM of the list
-    while(1)
+    for(;;)
     {
 	if(State->CurrentInstructionCount++ > MAX_INSTRUCTIONS_PER_FRAME)
 	{

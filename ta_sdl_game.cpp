@@ -63,7 +63,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		//char tmp[size];
 		STACK_ARRAY(tmp,size,char);
 		snprintf(tmp,size,"%d) %s",i,CurrentGameState->CurrentUnitScript->FunctionNames[i]);
-		CurrentGameState->UnitDetailsText[i]=SetupOnScreenText(tmp,CurrentGameState->ScreenWidth-220, i*CurrentGameState->Times24->Height*2+40, 1,1,1, CurrentGameState->Times24);
+		CurrentGameState->UnitDetailsText[i]=SetupOnScreenText(tmp,float(CurrentGameState->ScreenWidth-220), float(i*CurrentGameState->Times24->Height*2+40), 1,1,1, CurrentGameState->Times24);
 	    }
 	    if(CurrentGameState->temp_model->Vertices)
 		Unload3DO(CurrentGameState->temp_model);
@@ -378,7 +378,7 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->UnitTransformationDetails = PushStruct(GameArena, Object3dTransformationDetails);
     CurrentGameState->CurrentScriptPool = PushStruct(GameArena, ScriptStatePool);
     CurrentGameState->ScriptBackground = PushStruct(GameArena, UIElement);
-    *CurrentGameState->ScriptBackground = SetupUIElement(CurrentGameState->ScreenWidth -240,0, 240, CurrentGameState->ScreenHeight, 0,0,0, 1,1,1, 1.0, 1.0);
+    *CurrentGameState->ScriptBackground = SetupUIElement(float(CurrentGameState->ScreenWidth -240),0, 240, float(CurrentGameState->ScreenHeight), 0,0,0, 1,1,1, 1.0, 1.0);
 
     CurrentGameState->UnitIndex=14;
     
