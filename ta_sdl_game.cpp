@@ -109,10 +109,10 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		    break;
 		}
 
-		int size=snprintf(NULL, 0, "%s: %s - %d of %d",SideName,Name, Index, CurrentGameState->Units.Size)+1;
+		int size=snprintf(NULL, 0, "%s: %s",SideName,Name, Index, CurrentGameState->Units.Size)+1;
 		//char tmp[size];
 		STACK_ARRAY(tmp,size,char);
-		snprintf(tmp,size,"%s: %s - %d of %d",SideName,Name, Index, CurrentGameState->Units.Size);
+		snprintf(tmp,size,"%s: %s",SideName,Name, Index, CurrentGameState->Units.Size);
 		CurrentGameState->NameAndDescText[i*2+0]=SetupOnScreenText(tmp,10,30, 1,1,1, CurrentGameState->Times32);
 
 		{
@@ -131,6 +131,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
     }
 }
 
+static int32_t Side=0;
 
 Matrix FPSViewMatrix(float * eye, float pitch, float yaw);
 void HandleInput(InputState * Input, GameState * CurrentGameState)
@@ -182,10 +183,22 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	CurrentGameState->UnitIndex++;
 	LoadCurrentModel(CurrentGameState);
     }
-    //HACK: FIX THIS SHIT
-    if(Input->KeyIsDown[SDLK_UP&255])
+    if(Input->KeyIsDown[SDLK_h] && !Input->KeyWasDown[SDLK_h])
     {
-	CurrentGameState->CameraXRotation+=0.01f;
+	Side --;
+	if(Side < 0)
+	    Side =9;
+    }
+    if(Input->KeyIsDown[SDLK_j] && !Input->KeyWasDown[SDLK_j])
+    {
+	Side ++;
+	if(Side > 9)
+	    Side =0;
+    }
+    //HACK: FIX THIS SHIT
+     if(Input->KeyIsDown[SDLK_UP&255])
+    {
+	CurrentGameState->CameraXRotation += 0.01f;
     }
     if(Input->KeyIsDown[SDLK_DOWN&255])
     {
@@ -508,8 +521,12 @@ extern "C"
 
 	    }
 	}
+	int32_t Animate = CurrentGameState->NumberOfFrames%10==0;
+//	int32_t Animate =0;
+
+
 	UpdateTransformationDetails(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
-	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,ModelMatrix);
+	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Animate,Side,ModelMatrix);
 
 	
 	glUseProgram(CurrentGameState->MapShader->ProgramID);

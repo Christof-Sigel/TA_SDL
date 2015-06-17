@@ -72,6 +72,7 @@ struct Object3d
     int NumTriangles;
     int NumLines;
     GLuint LineBuffer;
+    int TextureOffset;
 };
 
 struct Object3dPrimitive
@@ -82,19 +83,26 @@ struct Object3dPrimitive
     int * VertexIndexes;
 };
 
-void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,uint8_t * PaletteData)
+void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,uint8_t * PaletteData,int TextureOffset)
 {
     int Offset=CurrentTriangle*(3+2+3)*3;
     Data+=Offset;
-
+    float U=Texture->U;
+    float V=Texture->V;
+    float Width = Texture->Widths[TextureOffset];
+    float Height = Texture->Heights[TextureOffset];
+    for(int i=0;i<TextureOffset;i++)
+    {
+	U+=Texture->Widths[i];
+    }
     for(int i=0;i<3;i++)
     {
 	Data[i*8+0]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+0];
 	Data[i*8+1]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+1];
 	Data[i*8+2]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+2];
 
-	Data[i*8+3]=Texture->U+Texture->Width*UV[i*2+0];
-	Data[i*8+4]=Texture->V+Texture->Height*UV[i*2+1];
+	Data[i*8+3]=U+Width*UV[i*2+0];
+	Data[i*8+4]=V+Height*UV[i*2+1];
 	
 
 	Data[i*8+5]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0f;
@@ -104,13 +112,20 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
     }
 }
 
-Texture NoTexture={"",0,-2,-2,-1,-1,0};
+Texture NoTexture={"",1,-2,-2,{0},{0}};
+bool32 TextureIsSideTexture(Texture * Texture)
+{
+    //NOTE(Christof): only the side textures seem to have 10 frames?
+    //                makes sense, there are up to 10 players per game afaict
+    return Texture->NumberOfFrames ==10 ;
+}
 
-bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData)
+bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Side)
 {
     if(Object->VertexBuffer)
     {
 	glDeleteVertexArrays(1,&Object->VertexBuffer);
+	glDeleteVertexArrays(1,&Object->LineBuffer);
     }
 
     Object->NumTriangles=0;
@@ -132,6 +147,11 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData)
 	Texture * Texture=CurrentPrimitive->Texture;
 	if(!Texture)
 	    Texture=&NoTexture;
+	int32_t TextureOffset = Object->TextureOffset%Texture->NumberOfFrames;
+	if(TextureIsSideTexture(Texture))
+	{
+	    TextureOffset = Side;
+	}
 	switch(CurrentPrimitive->NumberOfVertices)
 	{
 	case 1:
@@ -154,8 +174,8 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData)
 	    LineData[CurrentLine*2*8 + 9]= Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+1];
 	    LineData[CurrentLine*2*8 + 10]= Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+2];
 
-	    LineData[CurrentLine*2*8 + 11]= Texture->U+Texture->Width;
-	    LineData[CurrentLine*2*8 + 12]= Texture->V+Texture->Height;
+	    LineData[CurrentLine*2*8 + 11]= Texture->U+Texture->Widths[0];
+	    LineData[CurrentLine*2*8 + 12]= Texture->V+Texture->Heights[0];
 
 	    LineData[CurrentLine*2*8 + 13]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
 	    LineData[CurrentLine*2*8 + 14]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
@@ -166,7 +186,7 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData)
 	{
 	    GLfloat UVCoords[]={0,1, 0,0, 1,1};
 	    int Vertexes[]={0,2,1};
-	    FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData);
+	    FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
 	    CurrentTriangle++;
 	}
 	    break;
@@ -174,11 +194,11 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData)
 	{
 	    GLfloat UVCoords1[]={1,0, 1,1,  0,1 };
 	    int Vertexes1[]={0,3,2};
-	    FillObject3dData(Data,CurrentTriangle,Vertexes1,UVCoords1,Texture,Object,CurrentPrimitive,PaletteData);
+	    FillObject3dData(Data,CurrentTriangle,Vertexes1,UVCoords1,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
 	    CurrentTriangle++;
 	    GLfloat UVCoords2[]={1,0, 0,1, 0,0};
 	    int Vertexes2[]={0,2,1};
-	    FillObject3dData(Data,CurrentTriangle,Vertexes2,UVCoords2,Texture,Object,CurrentPrimitive,PaletteData);
+	    FillObject3dData(Data,CurrentTriangle,Vertexes2,UVCoords2,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
 	    CurrentTriangle++;
 	}
 	    break;
@@ -199,7 +219,7 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData)
 		    UVCoords[j*2]=0.5f*(float)(1-(sin((2.0f*(i+j)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
 		    UVCoords[j*2+1]=0.5f*(float)(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(i+j)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
 		}
-		FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData);
+		FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
 		CurrentTriangle++;
 	    }
 	}
@@ -425,11 +445,16 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
     }
 }
 
-void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, uint8_t * PaletteData, GLuint DebugAxisBuffer, Matrix ParentMatrix=Matrix())
+void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, uint8_t * PaletteData, GLuint DebugAxisBuffer, int32_t Animate,int32_t Side,Matrix ParentMatrix=Matrix())
 {
     if((TransformationDetails->Flags & OBJECT3D_FLAG_HIDE))
 	return;
-    Object3dRenderingPrep(Object, PaletteData);
+    if(Animate)
+    {
+	Object->TextureOffset++;
+    }
+//Object->TextureOffset = 3;
+    Object3dRenderingPrep(Object, PaletteData,Side);
     //TODO(Christof): Actually make use of TransformationDetails
 
     Matrix CurrentMatrix;
@@ -439,16 +464,15 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     
     CurrentMatrix.Move(Object->Position.X,Object->Position.Y,Object->Position.Z);
 
-    CurrentMatrix = ParentMatrix * CurrentMatrix ;
-//    CurrentMatrix =  CurrentMatrix *ParentMatrix ;
+   CurrentMatrix = ParentMatrix * CurrentMatrix ;
+//       CurrentMatrix =  CurrentMatrix *ParentMatrix ;
     
     
     CurrentMatrix.Move(TransformationDetails->Movement[0],TransformationDetails->Movement[1],TransformationDetails->Movement[2]);
 
-
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,DebugAxisBuffer,CurrentMatrix);
+	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,DebugAxisBuffer,Animate,Side,CurrentMatrix);
     }
 
 
@@ -469,7 +493,8 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 	LogError("failed to render : %s",gluErrorString(ErrorValue));
     }
 
-    
+    #if 0
+    //Debug Axis rendering
     glBindVertexArray(DebugAxisBuffer);
     glDrawArrays(GL_LINES, 0, 3*2);
     ErrorValue = glGetError();
@@ -477,6 +502,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     {
 	LogError("failed to render : %s",gluErrorString(ErrorValue));
     }
+    #endif
 
     
 
@@ -546,7 +572,7 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     {
 	if(CurrentPrimitive->OffsetToTextureName)
 	{
-	    Object->Primitives[i].Texture = GetTexture((char*)Buffer+CurrentPrimitive->OffsetToTextureName,0,NextTexture,Textures);
+	    Object->Primitives[i].Texture = GetTexture((char*)Buffer+CurrentPrimitive->OffsetToTextureName,NextTexture,Textures);
 	    if(!Object->Primitives[i].Texture)
 	    {
 		LogError("Could not get texture for primitive %d in %s, %s",i,Object->Name,Buffer+CurrentPrimitive->OffsetToTextureName);
@@ -602,7 +628,11 @@ void Unload3DO(Object3d * Object)
     if(!Object)
 	return;
     if(Object->VertexBuffer)
-	glDeleteBuffers(1,&Object->VertexBuffer);
+    {
+	glDeleteBuffers(1,&Object->VertexBuffer);	
+	glDeleteBuffers(1,&Object->LineBuffer);
+	Object->LineBuffer = Object->VertexBuffer = 0;
+    }
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
 	Unload3DO(&Object->Children[i]);

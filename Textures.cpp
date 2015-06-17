@@ -45,13 +45,14 @@ struct TexturePosition
     int Y;
 };
 
+#define MAX_NUMBER_OF_TEXTURE_FRAMES 12
+
 struct Texture
 {
     char Name[32];
-    int FrameNumber;
+    int NumberOfFrames;
     float U,V;
-    float Width,Height;
-    FILE_GafEntry * From;
+    float Widths[MAX_NUMBER_OF_TEXTURE_FRAMES],Heights[MAX_NUMBER_OF_TEXTURE_FRAMES];
 };
 
 
@@ -59,12 +60,12 @@ struct Texture
 TexturePosition GetAvailableTextureLocation(int Width, int Height,uint8_t * TextureData);
 void SetTextureLocationUsed(int X, int Y, int Width, int Height);
 
-Texture * GetTexture(const char * Name,int FrameNumber,int NextTexture,Texture * Textures)
+Texture * GetTexture(const char * Name,int NextTexture,Texture * Textures)
 {
     //TODO(Christof): some better storage/retrieval mechanism for texture lookup?
     for(int i=0;i<NextTexture;i++)
     {
-	if(Textures[i].FrameNumber == FrameNumber && CaseInsensitiveMatch(Name,Textures[i].Name))
+	if(CaseInsensitiveMatch(Name,Textures[i].Name))
 	    return &Textures[i];
     }
     return 0;
@@ -78,6 +79,33 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
     uint8_t * TextureData = CurrentGameState->TextureData;
     uint8_t * PaletteData = CurrentGameState->PaletteData;
     //NOTE(Christof): some Gafs have frames whose dimensions (height in original TA textures) do not match frame 0
+    Texture * Texture=GetTexture(Entry->Name,CurrentGameState->NextTexture,CurrentGameState->Textures);
+    if(Texture)
+    {
+	LogInformation("Skipping %s as it has already been loaded");
+	return;
+    }
+    int NextTexture = CurrentGameState->NextTexture;
+    int TotalWidth =0;
+    int MaxHeight =0;
+    for(int i=0;i<Entry->NumberOfFrames;i++)
+    {
+	FILE_GafFrameData * Frame = (FILE_GafFrameData *)(Buffer + FrameEntries[i].FrameInfoOffset);
+	if(Frame->Height > MaxHeight)
+	    MaxHeight = Frame->Height;
+	TotalWidth += Frame->Width;
+    }
+    TexturePosition PositionToStore = GetAvailableTextureLocation(TotalWidth,MaxHeight, CurrentGameState->TextureData);
+    if(PositionToStore.X==-1)
+    {
+	LogError("Unable to get storage location for texture: %s",Entry->Name);
+	return;
+    }
+    Textures[NextTexture].U=PositionToStore.X/float(TEXTURE_WIDTH);
+    Textures[NextTexture].V=PositionToStore.Y/float(TEXTURE_HEIGHT);
+    Textures[NextTexture].NumberOfFrames = Entry->NumberOfFrames;
+    memcpy(Textures[NextTexture].Name,Entry->Name,32);
+
     for(int i=0;i<Entry->NumberOfFrames;i++)
     {
 	FILE_GafFrameData * Frame = (FILE_GafFrameData *)(Buffer + FrameEntries[i].FrameInfoOffset);
@@ -87,21 +115,9 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
 	    LogError("%s(%d) has %d subframes",Entry->Name,i,Frame->NumberOfSubframes);
 	    continue;
 	}
-	Texture * Texture=GetTexture(Entry->Name,i,CurrentGameState->NextTexture,CurrentGameState->Textures);
-	if(Texture)
-	{
-	    // LogInformation("Skipping %s(%d of %d) as already loaded from %s(%d)",Entry->Name,i,Entry->NumberOfFrames,Texture->From->Name,Texture->From->NumberOfFrames);
-	    continue;
-	}
 	
 	//NOTE: Many textures have non-zero X and/or Y, perhaps this influences texture coord gen in some way? rendering in the past has ignored these values and seemed fine, so going to just ignore them for now
 
-	TexturePosition PositionToStore = GetAvailableTextureLocation(Frame->Width,Frame->Height, CurrentGameState->TextureData);
-	if(PositionToStore.X==-1)
-	{
-	    LogError("Unable to get storage location for texture: %s(%d of %d)",Entry->Name,i,Entry->NumberOfFrames);
-	    continue;
-	}
 	uint8_t * FrameData= (uint8_t*)(Buffer + Frame->FrameDataOffset);
 	if(Frame->Compressed)
 	{
@@ -116,21 +132,16 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
 		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+0]=PaletteData[FrameData[x+y*Frame->Width]*4+0];
 		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+1]=PaletteData[FrameData[x+y*Frame->Width]*4+1];
 		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+2]=PaletteData[FrameData[x+y*Frame->Width]*4+2];
-		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=255;//PaletteData[FrameData[x+y*Frame->Width]*4+3];
+		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=255;
 		}
 	    }
 	    //NOTE: Move this out if we ever start handling Compressed textures
-	    int NextTexture = CurrentGameState->NextTexture;
-	    memcpy(Textures[NextTexture].Name,Entry->Name,32);
-	    Textures[NextTexture].FrameNumber = i;
-	    Textures[NextTexture].U=PositionToStore.X/float(TEXTURE_WIDTH);
-	    Textures[NextTexture].V=PositionToStore.Y/float(TEXTURE_HEIGHT);
-	    Textures[NextTexture].Width=Frame->Width/float(TEXTURE_WIDTH);
-	    Textures[NextTexture].Height=Frame->Height/float(TEXTURE_HEIGHT);
-	    Textures[NextTexture].From = Entry;
-	    CurrentGameState->NextTexture++;
 	}
+	Textures[NextTexture].Widths[i]=Frame->Width/float(TEXTURE_WIDTH);
+	Textures[NextTexture].Heights[i]=Frame->Height/float(TEXTURE_HEIGHT);
+	PositionToStore.X += Frame->Width;
     }
+    CurrentGameState->NextTexture++;
 }
 
 void LoadTexturesFromGafBuffer(uint8_t * Buffer,GameState * CurrentGameState)
