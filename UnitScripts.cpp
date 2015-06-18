@@ -396,7 +396,6 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
 	    PieceTransform->MovementTarget[Axis].Destination = Target/COB_LINEAR_CONSTANT;
 	    PieceTransform->MovementTarget[Axis].Speed = Speed/COB_LINEAR_FRAME_CONSTANT;
-	    LogDebug("Moving %s to %.4f at %.4f on Axis %d", PieceName, PieceTransform->MovementTarget[Axis].Destination, PieceTransform->MovementTarget[Axis].Speed,Axis);
 	}
 	break;
 	case COB_TURN:
@@ -423,7 +422,6 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
 	    PieceTransform->RotationTarget[Axis].Heading = Target/COB_ANGULAR_CONSTANT;
 	    PieceTransform->RotationTarget[Axis].Speed = Speed/COB_ANGULAR_FRAME_CONSTANT;
-	    LogDebug("Turning %s to %.4f at %.4f on Axis %d", PieceName, PieceTransform->RotationTarget[Axis].Heading, PieceTransform->RotationTarget[Axis].Speed,Axis);
 	}
 	break;
 	case COB_SPIN:
