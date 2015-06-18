@@ -120,6 +120,23 @@ bool32 TextureIsSideTexture(Texture * Texture)
     return Texture->NumberOfFrames ==10 ;
 }
 
+#define TEXTURE_DEBUG 0
+
+#if TEXTURE_DEBUG
+int32_t DEBUG_done = 0;
+#endif
+
+bool32 IsAirPadTexture(Texture * Texture)
+{
+#if TEXTURE_DEBUG
+    if(!DEBUG_done)
+    {
+	LogDebug("Texture name: %s",Texture->Name);
+    }
+#endif
+    return strstr(Texture->Name, "CorSe11a")!=0 || strstr(Texture->Name, "Helipad")!=0;
+}
+
 bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Side)
 {
     if(Object->VertexBuffer)
@@ -192,14 +209,30 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	    break;
 	case 4:
 	{
-	    GLfloat UVCoords1[]={1,0, 1,1,  0,1 };
-	    int Vertexes1[]={0,3,2};
-	    FillObject3dData(Data,CurrentTriangle,Vertexes1,UVCoords1,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
-	    CurrentTriangle++;
-	    GLfloat UVCoords2[]={1,0, 0,1, 0,0};
-	    int Vertexes2[]={0,2,1};
-	    FillObject3dData(Data,CurrentTriangle,Vertexes2,UVCoords2,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
-	    CurrentTriangle++;
+	    GLfloat NormalUVCoords[][6]={{1,0, 1,1,  0,1 },{1,0, 0,1, 0,0}};
+	    GLfloat AirPadUVCoords[][6]={{0,0, 1,0,  1,1 },{0,0, 1,1, 0,1}};
+	    //GLfloat UVCoords1[]={0,0, 1,0,  1,1 };
+	     int Vertexes[][3]={{0,3,2},{0,2,1}};
+	    if(IsAirPadTexture(Texture))
+	    {
+		FillObject3dData(Data,CurrentTriangle,Vertexes[0],AirPadUVCoords[0],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+		CurrentTriangle++;
+		//GLfloat UVCoords2[]={0,0, 1,1, 0,1};
+		FillObject3dData(Data,CurrentTriangle,Vertexes[1],AirPadUVCoords[1],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+		CurrentTriangle++;
+	    }
+	    else
+	    {
+		FillObject3dData(Data,CurrentTriangle,Vertexes[0],NormalUVCoords[0],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+		CurrentTriangle++;
+		//GLfloat UVCoords2[]={0,0, 1,1, 0,1};
+		FillObject3dData(Data,CurrentTriangle,Vertexes[1],NormalUVCoords[1],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+		CurrentTriangle++;
+	    }
+
+
+	   
+	    
 	}
 	    break;
 	default:

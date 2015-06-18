@@ -484,7 +484,7 @@ extern "C"
 	CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
 	
 	Matrix ModelMatrix;
-	ModelMatrix.SetTranslation(0.5,13.5,0.4);
+	ModelMatrix.SetTranslation(30.5,14.5,23.4);
 
 	for(int i=0;i<CurrentGameState->CurrentScriptPool->NumberOfScripts;i++)
 	{
@@ -526,8 +526,16 @@ extern "C"
 
 
 	UpdateTransformationDetails(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
+	#if TEXTURE_DEBUG
+	if(!DEBUG_done)
+	{
+	    LogDebug("\n\n\n\n\n");
+	}
+	#endif
 	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Animate,Side,ModelMatrix);
-
+	#if TEXTURE_DEBUG
+	DEBUG_done = 1;
+	#endif
 	
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
 	CurrentGameState->ProjectionMatrix->Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));
