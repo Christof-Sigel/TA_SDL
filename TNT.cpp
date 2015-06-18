@@ -176,7 +176,7 @@ texture_done:
     const int NUM_FLOATS_PER_HALFTILE=2*3*(3+2);//2 triangles per half tile, 3 verts per tri, 3 poscoords + 2 texcoords per vert
     GLfloat * PositionAndTexture = PushArray(TempArena,NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,GLfloat);
 
-    float UnitsPerTile=1.0;
+    float UnitsPerTile=6.0;
     //TODO(Christof): Store heightmap at least for collision stuff later?
     for(uint32_t X=0;X<Header->Width;X++)
     {
