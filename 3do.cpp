@@ -85,7 +85,7 @@ struct Object3dPrimitive
 
 void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,uint8_t * PaletteData,int TextureOffset)
 {
-    int Offset=CurrentTriangle*(3+2+3)*3;
+    int Offset=CurrentTriangle*(3+4+3)*3;
     Data+=Offset;
     float U=Texture->U;
     float V=Texture->V;
@@ -97,17 +97,19 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
     }
     for(int i=0;i<3;i++)
     {
-	Data[i*8+0]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+0];
-	Data[i*8+1]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+1];
-	Data[i*8+2]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+2];
+	Data[i*10+0]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+0];
+	Data[i*10+1]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+1];
+	Data[i*10+2]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+2];
 
-	Data[i*8+3]=U+Width*UV[i*2+0];
-	Data[i*8+4]=V+Height*UV[i*2+1];
+	Data[i*10+3]=(U+Width*UV[i*3+0])*UV[i*3+2];
+	Data[i*10+4]=(V+Height*UV[i*3+1])*UV[i*3+2];
+	Data[i*10+5]=0;
+	Data[i*10+6]=UV[2];
 	
 
-	Data[i*8+5]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0f;
-	Data[i*8+6]=(uint8_t)PaletteData[Primitive->ColorIndex*4+1]/255.0f;
-	Data[i*8+7]=(uint8_t)PaletteData[Primitive->ColorIndex*4+2]/255.0f;
+	Data[i*10+7]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0f;
+	Data[i*10+8]=(uint8_t)PaletteData[Primitive->ColorIndex*4+1]/255.0f;
+	Data[i*10+9]=(uint8_t)PaletteData[Primitive->ColorIndex*4+2]/255.0f;
 
     }
 }
@@ -153,8 +155,8 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	Object->NumLines += Object->Primitives[i].NumberOfVertices == 2;
     }
     //GLfloat Data[Object->NumTriangles * (3+2+3)*3];//3 coord, 2 tex, 3 color
-    STACK_ARRAY(Data,Object->NumTriangles * (3+2+3)*3, GLfloat);
-    STACK_ARRAY(LineData,Object->NumLines * (3+2+3)*2, GLfloat);
+    STACK_ARRAY(Data,Object->NumTriangles * (3+4+3)*3, GLfloat);
+    STACK_ARRAY(LineData,Object->NumLines * (3+4+3)*2, GLfloat);
     //NOTE: signal no texture in some way, perhaps negative texture coords?
     int CurrentTriangle=0;
     int CurrentLine = 0;
@@ -175,28 +177,33 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	    LogDebug("ignoring point in %s",Object->Name);
 	    break;
 	case 2:
-	    LineData[CurrentLine*2*8 + 0] = Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+0];
-	    LineData[CurrentLine*2*8 + 1]= Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+1];
-	    LineData[CurrentLine*2*8 + 2]= Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+2];
+	    LineData[CurrentLine*2*10 + 0] = Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+0];
+	    LineData[CurrentLine*2*10 + 1]= Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+1];
+	    LineData[CurrentLine*2*10 + 2]= Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+2];
 
-	    LineData[CurrentLine*2*8 + 3]= Texture->U;
-	    LineData[CurrentLine*2*8 + 4]= Texture->V;
+	    LineData[CurrentLine*2*10 + 3]= Texture->U;
+	    LineData[CurrentLine*2*10 + 4]= Texture->V;
+	    LineData[CurrentLine*2*10 + 5]= 0;
+	    LineData[CurrentLine*2*10 + 6]= 1;
 	    
-	    LineData[CurrentLine*2*8 + 5]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
-	    LineData[CurrentLine*2*8 + 6]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
-	    LineData[CurrentLine*2*8 + 7]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
+	    LineData[CurrentLine*2*10 + 7]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
+	    LineData[CurrentLine*2*10 + 8]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
+	    LineData[CurrentLine*2*10 + 9]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
 
 	    
-	    LineData[CurrentLine*2*8 + 8] = Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+0];
-	    LineData[CurrentLine*2*8 + 9]= Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+1];
-	    LineData[CurrentLine*2*8 + 10]= Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+2];
+	    LineData[CurrentLine*2*10 + 10] = Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+0];
+	    LineData[CurrentLine*2*10 + 11]= Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+1];
+	    LineData[CurrentLine*2*10 + 12]= Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+2];
 
-	    LineData[CurrentLine*2*8 + 11]= Texture->U+Texture->Widths[0];
-	    LineData[CurrentLine*2*8 + 12]= Texture->V+Texture->Heights[0];
-
-	    LineData[CurrentLine*2*8 + 13]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
-	    LineData[CurrentLine*2*8 + 14]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
-	    LineData[CurrentLine*2*8 + 15]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
+	    LineData[CurrentLine*2*10 + 13]= Texture->U+Texture->Widths[0];
+	    LineData[CurrentLine*2*10 + 14]= Texture->V+Texture->Heights[0];
+	    LineData[CurrentLine*2*10 + 15]= 0;
+	    LineData[CurrentLine*2*10 + 16]= 1;
+	    
+	    
+	    LineData[CurrentLine*2*10 + 17]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
+	    LineData[CurrentLine*2*10 + 18]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
+	    LineData[CurrentLine*2*10 + 19]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
 	    CurrentLine++;
 	    break;
 	case 3:
@@ -209,10 +216,11 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	    break;
 	case 4:
 	{
-	    GLfloat NormalUVCoords[][6]={{1,0, 1,1,  0,1 },{1,0, 0,1, 0,0}};
-	    GLfloat AirPadUVCoords[][6]={{0,0, 1,0,  1,1 },{0,0, 1,1, 0,1}};
+	    GLfloat NormalUVCoords[][9]={{1,0,1,  1,1,1,   0,1,1 },{1,0,1,  0,1,1,  0,0,1}};
+	    GLfloat AirPadUVCoords[][9]={{0,0,1,  1,0,1,   1,1,1 },{0,0,1,  1,1,1,  0,1,1}};
 	    //GLfloat UVCoords1[]={0,0, 1,0,  1,1 };
-	     int Vertexes[][3]={{0,3,2},{0,2,1}};
+	    int Vertexes[][3]={{0,3,2},{0,2,1}};
+	    float m0 = Object->Vertices[Vertexes[0][0]*3+0];
 	    if(IsAirPadTexture(Texture))
 	    {
 		FillObject3dData(Data,CurrentTriangle,Vertexes[0],AirPadUVCoords[0],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
@@ -267,14 +275,14 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
     glGenBuffers(1,&VertexBuffer);
 
     glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(3+2+3)*3,Data,GL_STATIC_DRAW);
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),0);
-    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),(GLvoid*)(sizeof(GLfloat)*3));
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(3+4+3)*3,Data,GL_STATIC_DRAW);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),0);
+    glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*3));
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),(GLvoid*)(sizeof(GLfloat)*5));
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*7));
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
@@ -287,14 +295,14 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
     glGenBuffers(1,&VertexBuffer);
 
     glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumLines*(3+2+3)*2,LineData,GL_STATIC_DRAW);
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),0);
-    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),(GLvoid*)(sizeof(GLfloat)*3));
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumLines*(3+4+3)*2,LineData,GL_STATIC_DRAW);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),0);
+    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*3));
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+2+3),(GLvoid*)(sizeof(GLfloat)*5));
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*7));
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
