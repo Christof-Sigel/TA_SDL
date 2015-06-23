@@ -13,7 +13,7 @@ void main(void)
 	out_Color=vec4(ColorPalette[FColorIndex],1);
     }
     else*/
-    out_Color=texture(UnitTexture,FTexCoord.xy/FTexCoord[3]);
+    out_Color=texture(UnitTexture,FTexCoord.xy/FTexCoord.w);
     if(FTexCoord.x<0)
     {
 	//out_Color=vec4(1,FTexCoord.x,FTexCoord.y,1);

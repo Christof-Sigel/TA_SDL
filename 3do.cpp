@@ -104,7 +104,7 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
 	Data[i*10+3]=(U+Width*UV[i*3+0])*UV[i*3+2];
 	Data[i*10+4]=(V+Height*UV[i*3+1])*UV[i*3+2];
 	Data[i*10+5]=0;
-	Data[i*10+6]=UV[2];
+	Data[i*10+6]=UV[i*3+2];
 	
 
 	Data[i*10+7]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0f;
@@ -137,6 +137,79 @@ bool32 IsAirPadTexture(Texture * Texture)
     }
 #endif
     return strstr(Texture->Name, "CorSe11a")!=0 || strstr(Texture->Name, "Helipad")!=0;
+}
+
+union v3
+{
+    float v[3];
+    struct
+    {
+	float x,y,z;
+    };
+    struct
+    {
+	float r,g,b;
+    };
+};
+
+
+float dot(v3 v1, v3 v2)
+{
+    return v1.x*v2.x+
+	v1.y*v2.y+
+	v1.z*v2.z;
+}
+
+v3 cross(v3 u, v3 v)
+{
+    v3 Result;
+
+    Result.x = u.y*v.z - u.z*v.y;
+    Result.y = u.z*v.x - u.x*v.z;
+    Result.z = u.x*v.y - u.y*v.x;
+    
+    return Result;
+}
+
+v3 v3_from_array(float v[3])
+{
+    v3 Result;
+    Result.x = v[0];
+    Result.y = v[1];
+    Result.z = v[2];
+    return Result;
+}
+
+v3 sub(v3 sub, v3 from)
+{
+    v3 Result;
+    Result.x = from.x - sub.x;
+    Result.y = from.y - sub.y;
+    Result.z = from.z - sub.z;
+    return Result;
+}
+
+v3 mult(v3 m, float s)
+{
+    v3 Result;
+    Result.x = m.x * s;
+    Result.y = m.y * s;
+    Result.z = m.z * s;
+    return Result;
+}
+
+v3 add(v3 v1, v3 v2)
+{
+    v3 Result;
+    Result.x = v1.x + v2.x;
+    Result.y = v1.y + v2.y;
+    Result.z = v1.z + v2.z;
+    return Result;
+}
+
+float length(v3 v)
+{
+    return sqrt(v.x*v.x+ v.y*v.y + v.z*v.z);
 }
 
 bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Side)
@@ -216,11 +289,40 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	    break;
 	case 4:
 	{
-	    GLfloat NormalUVCoords[][9]={{1,0,1,  1,1,1,   0,1,1 },{1,0,1,  0,1,1,  0,0,1}};
-	    GLfloat AirPadUVCoords[][9]={{0,0,1,  1,0,1,   1,1,1 },{0,0,1,  1,1,1,  0,1,1}};
 	    //GLfloat UVCoords1[]={0,0, 1,0,  1,1 };
 	    int Vertexes[][3]={{0,3,2},{0,2,1}};
-	    float m0 = Object->Vertices[Vertexes[0][0]*3+0];
+//	    Object->Vertices[Primitive->VertexIndexes[VertexIndices
+	    v3 P0 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[0][0]]*3]);
+	    v3 P1 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[1][2]]*3]);
+	    v3 P2 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[0][2]]*3]);
+	    v3 P3 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[0][1]]*3]);
+
+	    
+	    v3 P03 = sub(P0, P3);
+	    v3 P20 = sub(P2, P0);
+	    v3 P31 = sub(P3, P1);
+	    v3 n = cross( cross(P31,P20),P31);
+	    v3 Center = add(mult(P20,dot(P03, n)/dot(P20,n)),P0);
+	    float d[4] = {};
+	    d[0] = length(sub(P0,Center));
+	    d[1] = length(sub(P1,Center));
+	    d[2] = length(sub(P2,Center));
+	    d[3] = length(sub(P3,Center));
+	    
+	    float mod[4]= {1,1,1,1};
+	    #if 1
+	    mod[0] = (d[0]+d[2])/d[2];
+	    mod[1] = (d[1]+d[3])/d[3];
+	    mod[2] = (d[2]+d[0])/d[0];
+	    mod[3] = (d[3]+d[1])/d[1];
+	    #endif
+
+
+	    
+	    GLfloat NormalUVCoords[][9]={{1,0,mod[0],  1,1,mod[3],   0,1,mod[2] },{1,0,mod[0],  0,1,mod[2],  0,0,mod[1]}};
+	    GLfloat AirPadUVCoords[][9]={{0,0,mod[0],  1,0,mod[3],   1,1,mod[2] },{0,0,mod[0],  1,1,mod[2],  0,1,mod[1]}};
+
+	    
 	    if(IsAirPadTexture(Texture))
 	    {
 		FillObject3dData(Data,CurrentTriangle,Vertexes[0],AirPadUVCoords[0],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
