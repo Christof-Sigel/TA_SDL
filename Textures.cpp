@@ -176,7 +176,7 @@ void LoadPalette(GameState * CurrentGameState)
     else
     {
 	CurrentGameState->PaletteLoaded=1;
-	LoadHPIFileEntryData(Palette,CurrentGameState->PaletteData);
+	LoadHPIFileEntryData(Palette,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
     }
 }
 
@@ -222,7 +222,7 @@ bool32 LoadAllTextures(GameState * CurrentGameState)
 	//uint8_t GafBuffer[Textures.Directory.Entries[i].File.FileSize];
 	//STACK_ARRAY(GafBuffer,Textures.Directory.Entries[i].File.FileSize,uint8_t);
 	uint8_t * GafBuffer = PushArray(&CurrentGameState->TempArena, Textures.Directory.Entries[i].File.FileSize,uint8_t);
-	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer);
+	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer,&CurrentGameState->TempArena);
 	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
 	PopArray(&CurrentGameState->TempArena, GafBuffer,  Textures.Directory.Entries[i].File.FileSize,uint8_t);
     }

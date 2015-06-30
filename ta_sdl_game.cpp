@@ -43,7 +43,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
     HPIEntry Entry=FindEntryInAllFiles(ModelName,CurrentGameState); 
     //uint8_t temp[Entry.File.FileSize];
     STACK_ARRAY(temp,Entry.File.FileSize,uint8_t);
-    if(LoadHPIFileEntryData(Entry,temp))
+    if(LoadHPIFileEntryData(Entry,temp,&CurrentGameState->TempArena))
     {
 	int ScriptLength=snprintf(0,0,"scripts/%s.cob",UnitName)+1;
 	//char ScriptName[ScriptLength];
@@ -52,7 +52,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	HPIEntry ScriptEntry=FindEntryInAllFiles(ScriptName,CurrentGameState); 
 	//uint8_t ScriptBuffer[ScriptEntry.File.FileSize];
 	STACK_ARRAY(ScriptBuffer, ScriptEntry.File.FileSize, uint8_t);
-	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer))
+	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer,&CurrentGameState->TempArena))
 	{
 	    LoadUnitScriptFromBuffer(CurrentGameState->CurrentUnitScript, ScriptBuffer,&CurrentGameState->GameArena);
 	    memset(CurrentGameState->CurrentScriptPool,0,sizeof(ScriptStatePool));

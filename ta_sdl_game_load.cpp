@@ -82,12 +82,12 @@ extern "C"{
         
 	LoadHPIFileCollection(CurrentGameState);
 	LoadAllTextures(CurrentGameState);
-	HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",CurrentGameState);
+	HPIEntry Map = FindEntryInAllFiles("maps/Seven Islands.tnt",CurrentGameState);
 	if(Map.Name)
 	{
 	    uint8_t * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,uint8_t);
     
-	    if(LoadHPIFileEntryData(Map,temp))
+	    if(LoadHPIFileEntryData(Map,temp,&CurrentGameState->TempArena))
 	    {
 		LoadTNTFromBuffer(temp,CurrentGameState->TestMap,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
 	    }
@@ -108,7 +108,7 @@ extern "C"{
 		//char temp[Entry.Directory.Entries[i].File.FileSize];
 		//STACK_ARRAY(temp,Entry.Directory.Entries[i].File.FileSize,char);
 		char * temp = PushArray(&CurrentGameState->TempArena, Entry.Directory.Entries[i].File.FileSize,char);
-		if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(uint8_t*)temp))
+		if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(uint8_t*)temp,&CurrentGameState->TempArena))
 		{
 		    if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
 		    {

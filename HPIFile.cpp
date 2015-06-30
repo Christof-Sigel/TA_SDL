@@ -326,7 +326,7 @@ uint8_t * LoadChunk(uint8_t * Source, uint8_t * Destination)
 
 
 
-bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination)
+bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination, MemoryArena * TempArena)
 {
     if(Entry.IsDirectory)
     {
@@ -356,8 +356,8 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination)
 	{
 	    ChunkDataSize += ChunkSizes[i];
 	}
-	//uint8_t DecryptedChunkData[ChunkDataSize];
-	STACK_ARRAY(DecryptedChunkData,ChunkDataSize,uint8_t);
+	uint8_t * DecryptedChunkData = PushArray(TempArena, ChunkDataSize, uint8_t);
+//	STACK_ARRAY(DecryptedChunkData,ChunkDataSize,uint8_t);
 	DecryptHPIBuffer(Entry.ContainedInFile,DecryptedChunkData,ChunkDataSize,ChunkDataOffset);
 	uint8_t * DataSource=DecryptedChunkData;
 	for(int i=0;i<NumChunks;i++)
@@ -369,6 +369,7 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination)
 	    }
 	    DataSource=LoadChunk(DataSource,&Destination[i*CHUNK_SIZE]);
 	}
+	PopArray(TempArena, DecryptedChunkData, ChunkDataSize, uint8_t);
     }
     }
 
