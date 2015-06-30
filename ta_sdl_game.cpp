@@ -360,7 +360,7 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->GlobalArchiveCollection = PushStruct(GameArena,HPIFileCollection);
     CurrentGameState->TestElement = PushArray(GameArena,5,UIElement);
     
-    CurrentGameState->ProjectionMatrix->SetProjection(60,float(CurrentGameState->ScreenWidth)/CurrentGameState->ScreenHeight,1.0,1000.0);
+    CurrentGameState->ProjectionMatrix->SetProjection(60,float(CurrentGameState->ScreenWidth)/CurrentGameState->ScreenHeight,1.0,10000.0);
 
 
     
@@ -484,7 +484,7 @@ extern "C"
 	CurrentGameState->ViewMatrix->Upload(CurrentGameState->ViewMatrixLocation);
 	
 	Matrix ModelMatrix;
-	ModelMatrix.SetTranslation(30.5,14.5,23.4);
+
 
 	for(int i=0;i<CurrentGameState->CurrentScriptPool->NumberOfScripts;i++)
 	{
@@ -532,7 +532,14 @@ extern "C"
 	    LogDebug("\n\n\n\n\n");
 	}
 	#endif
-	RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Animate,Side,ModelMatrix);
+	for(int x=0;x<10;x++)
+	{
+	    for(int y=0;y<10;y++)
+	    {
+		ModelMatrix.SetTranslation(30.5+x*50,14.5,23.4+y*40);
+		RenderObject3d(CurrentGameState->temp_model,CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Animate,Side,ModelMatrix);
+	    }
+	}
 	#if TEXTURE_DEBUG
 	DEBUG_done = 1;
 	#endif

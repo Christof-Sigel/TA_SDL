@@ -73,6 +73,7 @@ struct Object3d
     int NumLines;
     GLuint LineBuffer;
     int TextureOffset;
+    GLuint TextureCoordBuffer;
 };
 
 struct Object3dPrimitive
@@ -218,6 +219,7 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
     {
 	glDeleteVertexArrays(1,&Object->VertexBuffer);
 	glDeleteVertexArrays(1,&Object->LineBuffer);
+	glDeleteArrays(1,&Object->TextureCoordBuffer);
     }
 
     Object->NumTriangles=0;
