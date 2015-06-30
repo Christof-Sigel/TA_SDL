@@ -41,8 +41,10 @@ clean:
 
 rebuild:clean all
 
-git-hook: clean
-	./build.w32.sh 2>&1 | ansi2html > /srv/http/TA_SDL/win32.html
-	./build.w64.sh 2>&1 | ansi2html > /srv/http/TA_SDL/win64.html
-	./build.sh 2>&1 | ansi2html > /srv/http/TA_SDL/linux.html
-	cp ta_sdl_32.exe ta_sdl_64.exe ta_sdl /srv/http/TA_SDL
+git-hook:
+
+#clean
+#	./build.w32.sh 2>&1 | ansi2html > /srv/http/TA_SDL/win32.html
+#	./build.w64.sh 2>&1 | ansi2html > /srv/http/TA_SDL/win64.html
+#	./build.sh 2>&1 | ansi2html > /srv/http/TA_SDL/linux.html
+#	cp ta_sdl_32.exe ta_sdl_64.exe ta_sdl /srv/http/TA_SDL
