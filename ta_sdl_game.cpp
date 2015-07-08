@@ -393,7 +393,8 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->ScriptBackground = PushStruct(GameArena, UIElement);
     *CurrentGameState->ScriptBackground = SetupUIElement(float(CurrentGameState->ScreenWidth -240),0, 240, float(CurrentGameState->ScreenHeight), 0,0,0, 1,1,1, 1.0, 1.0);
 
-    CurrentGameState->UnitIndex=14;
+    CurrentGameState->UnitIndex=13;
+
     
         //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
@@ -521,7 +522,7 @@ extern "C"
 
 	    }
 	}
-	int32_t Animate = CurrentGameState->NumberOfFrames%10==0;
+	int32_t Animate = CurrentGameState->NumberOfFrames%30==0;
 //	int32_t Animate =0;
 
 
@@ -532,7 +533,7 @@ extern "C"
 	    LogDebug("\n\n\n\n\n");
 	}
 	#endif
-	for(int x=0;x<10;x++)
+	for(int x=0;x<5;x++)
 	{
 	    for(int y=0;y<10;y++)
 	    {

@@ -82,7 +82,7 @@ extern "C"{
         
 	LoadHPIFileCollection(CurrentGameState);
 	LoadAllTextures(CurrentGameState);
-	HPIEntry Map = FindEntryInAllFiles("maps/Seven Islands.tnt",CurrentGameState);
+	HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",CurrentGameState);
 	if(Map.Name)
 	{
 	    uint8_t * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,uint8_t);

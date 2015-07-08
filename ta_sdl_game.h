@@ -4,9 +4,12 @@
 // _snprintf return value for buffer size too small IS NOT WHAT WE EXPECT!!!
 #ifdef _MSC_VER
 #define snprintf _snprintf
+#define Assert(Expression) if(!(Expression)) {__debugbreak();}
+#else
+#define Assert(Expression) if(!(Expression)) {__builtin_trap();}
 #endif
 #include <stdio.h>
-#define Assert(Expression) if(!(Expression)) {__builtin_trap();}
+
 
 struct InputState
 {

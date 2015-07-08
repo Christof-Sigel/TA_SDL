@@ -84,9 +84,9 @@ struct Object3dPrimitive
     int * VertexIndexes;
 };
 
-void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,uint8_t * PaletteData,int TextureOffset)
+void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,uint8_t * PaletteData,int TextureOffset, GLfloat * TextureData)
 {
-    int Offset=CurrentTriangle*(3+4+3)*3;
+    int Offset=CurrentTriangle*(3+3)*3;
     Data+=Offset;
     float U=Texture->U;
     float V=Texture->V;
@@ -96,21 +96,23 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
     {
 	U+=Texture->Widths[i];
     }
+    TextureData += (CurrentTriangle * 4)*3;
     for(int i=0;i<3;i++)
     {
-	Data[i*10+0]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+0];
-	Data[i*10+1]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+1];
-	Data[i*10+2]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+2];
+	Data[i*6+0]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+0];
+	Data[i*6+1]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+1];
+	Data[i*6+2]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+2];
 
-	Data[i*10+3]=(U+Width*UV[i*3+0])*UV[i*3+2];
-	Data[i*10+4]=(V+Height*UV[i*3+1])*UV[i*3+2];
-	Data[i*10+5]=0;
-	Data[i*10+6]=UV[i*3+2];
 	
 
-	Data[i*10+7]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0f;
-	Data[i*10+8]=(uint8_t)PaletteData[Primitive->ColorIndex*4+1]/255.0f;
-	Data[i*10+9]=(uint8_t)PaletteData[Primitive->ColorIndex*4+2]/255.0f;
+	Data[i*6+3]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0f;
+	Data[i*6+4]=(uint8_t)PaletteData[Primitive->ColorIndex*4+1]/255.0f;
+	Data[i*6+5]=(uint8_t)PaletteData[Primitive->ColorIndex*4+2]/255.0f;
+
+	TextureData[i*4+0]=(U+Width*UV[i*3+0])*UV[i*3+2];
+	TextureData[i*4+1]=(V+Height*UV[i*3+1])*UV[i*3+2];
+	TextureData[i*4+2]=0;
+	TextureData[i*4+3]=UV[i*3+2];
 
     }
 }
@@ -215,23 +217,20 @@ float length(v3 v)
 
 bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Side)
 {
-    if(Object->VertexBuffer)
+    if(!Object->NumTriangles)
     {
-	glDeleteVertexArrays(1,&Object->VertexBuffer);
-	glDeleteVertexArrays(1,&Object->LineBuffer);
-	glDeleteArrays(1,&Object->TextureCoordBuffer);
-    }
-
-    Object->NumTriangles=0;
-    Object->NumLines = 0;
-    for(int i=0;i<Object->NumberOfPrimitives;i++)
-    {
-	Object->NumTriangles += Object->Primitives[i].NumberOfVertices-2>0?Object->Primitives[i].NumberOfVertices-2:0;
-	Object->NumLines += Object->Primitives[i].NumberOfVertices == 2;
+	Object->NumTriangles=0;
+	Object->NumLines = 0;
+	for(int i=0;i<Object->NumberOfPrimitives;i++)
+	{
+	    Object->NumTriangles += Object->Primitives[i].NumberOfVertices-2>0?Object->Primitives[i].NumberOfVertices-2:0;
+	    Object->NumLines += Object->Primitives[i].NumberOfVertices == 2;
+	}
     }
     //GLfloat Data[Object->NumTriangles * (3+2+3)*3];//3 coord, 2 tex, 3 color
-    STACK_ARRAY(Data,Object->NumTriangles * (3+4+3)*3, GLfloat);
+    STACK_ARRAY(Data,Object->NumTriangles * (3+3)*3, GLfloat);
     STACK_ARRAY(LineData,Object->NumLines * (3+4+3)*2, GLfloat);
+    STACK_ARRAY(TextureData,Object->NumTriangles * (4)*3, GLfloat);
     //NOTE: signal no texture in some way, perhaps negative texture coords?
     int CurrentTriangle=0;
     int CurrentLine = 0;
@@ -256,8 +255,6 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	    LineData[CurrentLine*2*10 + 1]= Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+1];
 	    LineData[CurrentLine*2*10 + 2]= Object->Vertices[CurrentPrimitive->VertexIndexes[0]*3+2];
 
-	    LineData[CurrentLine*2*10 + 3]= Texture->U;
-	    LineData[CurrentLine*2*10 + 4]= Texture->V;
 	    LineData[CurrentLine*2*10 + 5]= 0;
 	    LineData[CurrentLine*2*10 + 6]= 1;
 	    
@@ -285,7 +282,7 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	{
 	    GLfloat UVCoords[]={0,1, 0,0, 1,1};
 	    int Vertexes[]={0,2,1};
-	    FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+	    FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset,TextureData);
 	    CurrentTriangle++;
 	}
 	    break;
@@ -327,18 +324,18 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	    
 	    if(IsAirPadTexture(Texture))
 	    {
-		FillObject3dData(Data,CurrentTriangle,Vertexes[0],AirPadUVCoords[0],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+		FillObject3dData(Data,CurrentTriangle,Vertexes[0],AirPadUVCoords[0],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset,TextureData);
 		CurrentTriangle++;
 		//GLfloat UVCoords2[]={0,0, 1,1, 0,1};
-		FillObject3dData(Data,CurrentTriangle,Vertexes[1],AirPadUVCoords[1],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+		FillObject3dData(Data,CurrentTriangle,Vertexes[1],AirPadUVCoords[1],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset,TextureData);
 		CurrentTriangle++;
 	    }
 	    else
 	    {
-		FillObject3dData(Data,CurrentTriangle,Vertexes[0],NormalUVCoords[0],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+		FillObject3dData(Data,CurrentTriangle,Vertexes[0],NormalUVCoords[0],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset, TextureData);
 		CurrentTriangle++;
 		//GLfloat UVCoords2[]={0,0, 1,1, 0,1};
-		FillObject3dData(Data,CurrentTriangle,Vertexes[1],NormalUVCoords[1],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+		FillObject3dData(Data,CurrentTriangle,Vertexes[1],NormalUVCoords[1],Texture,Object,CurrentPrimitive,PaletteData,TextureOffset, TextureData);
 		CurrentTriangle++;
 	    }
 
@@ -364,14 +361,17 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 		    UVCoords[j*2]=0.5f*(float)(1-(sin((2.0f*(i+j)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
 		    UVCoords[j*2+1]=0.5f*(float)(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(i+j)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
 		}
-		FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset);
+		FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData,TextureOffset,TextureData);
 		CurrentTriangle++;
 	    }
 	}
 	    break;
 	}
     }
-    
+
+    if(!Object->VertexBuffer)
+    {
+    //VERTEX DATA
     glGenVertexArrays(1,&Object->VertexBuffer);
     glBindVertexArray(Object->VertexBuffer);
 
@@ -379,27 +379,33 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
     glGenBuffers(1,&VertexBuffer);
 
     glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(3+4+3)*3,Data,GL_STATIC_DRAW);
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),0);
-    glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*3));
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(3+3)*3,Data,GL_STATIC_DRAW);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+3),0);
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+3),(GLvoid*)(sizeof(GLfloat)*3));
 
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*7));
     glEnableVertexAttribArray(2);
 
+    //TEXTURES
+
+    glGenBuffers(1,&Object->TextureCoordBuffer);
+
+    glBindBuffer(GL_ARRAY_BUFFER,Object->TextureCoordBuffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(4)*3,TextureData,GL_STATIC_DRAW);
+    
+    glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(4),0);
+    glEnableVertexAttribArray(1);
+
     glBindVertexArray(0);
-    glDeleteBuffers(1,&VertexBuffer);
 
-
+    //LINES
     glGenVertexArrays(1,&Object->LineBuffer);
     glBindVertexArray(Object->LineBuffer);
 
     glGenBuffers(1,&VertexBuffer);
 
     glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumLines*(3+4+3)*2,LineData,GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumLines*(3+4+3)*2,LineData,GL_DYNAMIC_DRAW);
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),0);
     glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*3));
 
@@ -410,7 +416,15 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
-    glDeleteBuffers(1,&VertexBuffer);
+	
+    }
+    else
+    {
+	glBindVertexArray(Object->VertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER,Object->TextureCoordBuffer);
+	glBufferSubData(GL_ARRAY_BUFFER, 0,sizeof(GLfloat)*4*Object->NumTriangles * 3 ,TextureData);
+    }
+
 
 
     return 1;
