@@ -130,12 +130,14 @@ extern "C"{
 	LoadCurrentModel(CurrentGameState);
 
 	Entry = FindEntryInAllFiles("fonts/ROMAN10.fnt", CurrentGameState);
+	FNTFont Font;
 	if(!Entry.IsDirectory)
 	{
 	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);
-	    LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena);
-	    LoadFNTFont(temp, 0, Entry.File.FileSize, CurrentGameState);
-
+	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
+	    {
+		LoadFNTFont(temp, &Font, Entry.File.FileSize, CurrentGameState);
+	    }
 	}
 	
 	CurrentGameState->StartTime= GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);

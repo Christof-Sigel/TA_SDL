@@ -10,10 +10,18 @@ struct FILE_FNT
 
 #pragma pack(pop)
 
+struct FNTGlyph
+{
+    int Width;
+    float U;
+    float TextureWidth;
+};
 
 struct FNTFont
 {
-
+    int Height;
+    GLuint Texture;
+    FNTGlyph Characters[256];
 };
 
 void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
@@ -50,20 +58,29 @@ void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * Text
 
 void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * CurrentGameState)
 {
-    uint8_t * ImageData = Buffer + sizeof(FILE_FNT);
     FILE_FNT * Header = (FILE_FNT*)Buffer;
     GLuint FontTexture;
-    int TextureHeight =  Header->Height*32;
-    int TextureWidth = 8096/16;
-    STACK_ARRAY(TextureData, TextureWidth*TextureHeight*4, uint8_t);
+    Font->Height = Header->Height;
+    int TextureWidth = 0;
+    for(int i=0;i<255;i++)
+    {
+	Font->Characters[i].Width= *( Buffer + Header->CharacterOffset[i]);
+	TextureWidth += Font->Characters[i].Width;
+    }
+
+    STACK_ARRAY(TextureData, TextureWidth*Font->Height*4, uint8_t);
+    int XOffset = 0;
     for(int i=0;i<254;i++)
     {
-	LoadCharacter(Header->CharacterOffset[i] ,Buffer, TextureData, (i%32)*16, (i/32)*16, Header->Height, TextureWidth);
+	LoadCharacter(Header->CharacterOffset[i] ,Buffer, TextureData, XOffset, 0, Header->Height, TextureWidth);
+	Font->Characters[i].U=XOffset/(float)TextureWidth;
+	Font->Characters[i].TextureWidth = Font->Characters[i].Width/(float)TextureWidth;
+	XOffset += Font->Characters[i].Width;
     }
     glGenTextures(1,&FontTexture);
     glBindTexture(GL_TEXTURE_2D,FontTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureWidth,TextureHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureWidth,Font->Height,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
 
 }
