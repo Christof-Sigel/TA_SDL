@@ -1,16 +1,11 @@
 #pragma pack(push,1)
 
-struct FILE_FNT_Char
-{
-    uint8_t Offset;
-    uint8_t Segment;
-};
 
 struct FILE_FNT
 {
     uint8_t Height;
     uint8_t Padding1[3];
-    FILE_FNT_Char Character[255];
+    int16_t CharacterOffset[255];
 };
 
 #pragma pack(pop)
@@ -21,14 +16,14 @@ struct FNTFont
 
 };
 
-void LoadCharacter(FILE_FNT_Char Character, uint8_t * FileBuffer, uint8_t * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
+void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
 {
-    if(Character.Offset == 0 && Character.Segment ==0)
+    if(CharacterOffset ==0)
 	return;
-    int Width = * (FileBuffer + Character.Offset + Character.Segment * 0x100);
+    int Width = * (FileBuffer + CharacterOffset );
     if(Width == 0) 
 	return;
-    uint8_t * ImageData = (FileBuffer + Character.Offset + Character.Segment * 0x100 +1);
+    uint8_t * ImageData = (FileBuffer + CharacterOffset + 1);
     int ByteOffset = 0, X =0, Y=0;
     while(Y< Height)
     {
@@ -58,13 +53,12 @@ void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * Current
     uint8_t * ImageData = Buffer + sizeof(FILE_FNT);
     FILE_FNT * Header = (FILE_FNT*)Buffer;
     GLuint FontTexture;
-    int SizeInColors = Size ;
     int TextureHeight =  Header->Height*32;
     int TextureWidth = 8096/16;
     STACK_ARRAY(TextureData, TextureWidth*TextureHeight*4, uint8_t);
     for(int i=0;i<254;i++)
     {
-	LoadCharacter(Header->Character[i],Buffer, TextureData, (i%32)*16, (i/32)*16, Header->Height, TextureWidth);
+	LoadCharacter(Header->CharacterOffset[i] ,Buffer, TextureData, (i%32)*16, (i/32)*16, Header->Height, TextureWidth);
     }
     glGenTextures(1,&FontTexture);
     glBindTexture(GL_TEXTURE_2D,FontTexture);
