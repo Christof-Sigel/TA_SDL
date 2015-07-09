@@ -129,7 +129,7 @@ extern "C"{
 
 	LoadCurrentModel(CurrentGameState);
 
-	Entry = FindEntryInAllFiles("fonts/SMLFONT.fnt", CurrentGameState);
+	Entry = FindEntryInAllFiles("fonts/ROMAN10.fnt", CurrentGameState);
 	if(!Entry.IsDirectory)
 	{
 	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);

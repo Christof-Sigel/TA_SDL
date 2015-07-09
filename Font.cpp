@@ -21,7 +21,7 @@ struct FNTFont
 
 };
 
-void LoadCharacter(FILE_FNT_Char Character, uint8_t * FileBuffer, uint8_t * TextureBuffer, int CharNum, int Height, int TextureWidth)
+void LoadCharacter(FILE_FNT_Char Character, uint8_t * FileBuffer, uint8_t * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
 {
     if(Character.Offset == 0 && Character.Segment ==0)
 	return;
@@ -32,13 +32,13 @@ void LoadCharacter(FILE_FNT_Char Character, uint8_t * FileBuffer, uint8_t * Text
     int ByteOffset = 0, X =0, Y=0;
     while(Y< Height)
     {
-	for(int i=0;i<8;i++)
+	for(int i=7;i>=0;i--)
 	{
 	    int bit = ImageData[ByteOffset]&(1<<i);
-	    TextureBuffer[(CharNum*32+X + Y*TextureWidth)*4+0] = 0;
-	    TextureBuffer[(CharNum*32+X + Y*TextureWidth)*4+1] = 0;
-	    TextureBuffer[(CharNum*32+X + Y*TextureWidth)*4+2] = 0;
-	    TextureBuffer[(CharNum*32+X + Y*TextureWidth)*4+3] = bit*255;
+	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+0] = 0;
+	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+1] = 0;
+	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+2] = 0;
+	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+3] = bit*255;
 	    X++;
 	    if(X>=Width)
 	    {
@@ -59,12 +59,12 @@ void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * Current
     FILE_FNT * Header = (FILE_FNT*)Buffer;
     GLuint FontTexture;
     int SizeInColors = Size ;
-    int TextureHeight =  Header->Height;
-    int TextureWidth = 8096;
+    int TextureHeight =  Header->Height*32;
+    int TextureWidth = 8096/16;
     STACK_ARRAY(TextureData, TextureWidth*TextureHeight*4, uint8_t);
-    for(int i=0;i<250;i++)
+    for(int i=0;i<254;i++)
     {
-	LoadCharacter(Header->Character[i],Buffer, TextureData, i, Header->Height, TextureWidth);
+	LoadCharacter(Header->Character[i],Buffer, TextureData, (i%32)*16, (i/32)*16, Header->Height, TextureWidth);
     }
     glGenTextures(1,&FontTexture);
     glBindTexture(GL_TEXTURE_2D,FontTexture);
