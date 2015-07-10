@@ -184,8 +184,8 @@ struct GameState
     GLuint FontVertexBuffer;
 };
 
-const int TEXTURE_WIDTH=2048;
-const int TEXTURE_HEIGHT=2048;
+const int TEXTURE_WIDTH=4096;
+const int TEXTURE_HEIGHT=1024;
 const int MAX_NUMBER_OF_TEXTURE=1024;
 
 

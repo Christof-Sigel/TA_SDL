@@ -244,6 +244,34 @@ bool32 LoadAllTextures(GameState * CurrentGameState)
     {
 	LoadPalette(CurrentGameState);
     }
+    HPIEntry Font = FindEntryInAllFiles("anims/hattfont12.GAF", CurrentGameState);
+    if(Font.IsDirectory)
+    {
+	LogError("Unexpectedly found a directory while trying to load hatfont12.gaf");
+    }
+    else
+    {
+	uint8_t * GafBuffer = PushArray(&CurrentGameState->TempArena, Font.File.FileSize,uint8_t);
+	LoadHPIFileEntryData(Font,GafBuffer,&CurrentGameState->TempArena);
+	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
+	PopArray(&CurrentGameState->TempArena, GafBuffer,  Font.File.FileSize,uint8_t);
+    }
+    
+    Font = FindEntryInAllFiles("anims/hattfont11.GAF", CurrentGameState);
+    if(Font.IsDirectory)
+    {
+	LogError("Unexpectedly found a directory while trying to load hatfont11.gaf");
+    }
+    else
+    {
+	uint8_t * GafBuffer = PushArray(&CurrentGameState->TempArena, Font.File.FileSize,uint8_t);
+	LoadHPIFileEntryData(Font,GafBuffer,&CurrentGameState->TempArena);
+	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
+	PopArray(&CurrentGameState->TempArena, GafBuffer,  Font.File.FileSize,uint8_t);
+    }
+
+    
+    
     HPIEntry Textures = FindEntryInAllFiles("textures",CurrentGameState);
     if(!Textures.Name)
     {
