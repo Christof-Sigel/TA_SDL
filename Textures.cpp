@@ -82,7 +82,7 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
     Texture * Texture=GetTexture(Entry->Name,CurrentGameState->NextTexture,CurrentGameState->Textures);
     if(Texture)
     {
-	LogInformation("Skipping %s as it has already been loaded");
+	LogInformation("Skipping %s as it has already been loaded",Entry->Name);
 	return;
     }
     int NextTexture = CurrentGameState->NextTexture;
@@ -98,7 +98,7 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
     TexturePosition PositionToStore = GetAvailableTextureLocation(TotalWidth,MaxHeight, CurrentGameState->TextureData);
     if(PositionToStore.X==-1)
     {
-	LogError("Unable to get storage location for texture: %s",Entry->Name);
+	LogError("Unable to get storage location for texture: %s (%dx%d)",Entry->Name,TotalWidth,MaxHeight);
 	return;
     }
     Textures[NextTexture].U=PositionToStore.X/float(TEXTURE_WIDTH);
@@ -121,7 +121,59 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
 	uint8_t * FrameData= (uint8_t*)(Buffer + Frame->FrameDataOffset);
 	if(Frame->Compressed)
 	{
-	    LogWarning("Compressed Data not currently supported for %s(%d)",Entry->Name,i);
+//	    LogWarning("Compressed Data not currently supported for %s(%d)",Entry->Name,i);
+	    for(int y=0;y<Frame->Height;y++)
+	    {
+		int LineBytes = *(int16_t*)FrameData;
+		FrameData +=2;
+		int x=0;
+		while(LineBytes>0)
+		{
+		    uint8_t mask = *FrameData++;
+		    LineBytes--;
+		    if(mask & 0x01)
+		    {
+			int count = mask >>1;
+			for(;count>0;count--)
+			{
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+0]=0;
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+1]=0;
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+2]=0;
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=0;
+			    x++;
+			}
+		    }
+		    else if(mask & 0x02)
+		    {
+			int count = (mask >>2) +1;
+			int ColorIndex = *FrameData++;
+			LineBytes--;
+			for(;count>0;count--)
+			{
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+0]=PaletteData[ColorIndex*4+0];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+1]=PaletteData[ColorIndex*4+1];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+2]=PaletteData[ColorIndex*4+2];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=255;
+			    x++;
+			}
+			
+		    }
+		    else
+		    {
+			int count = (mask >>2 )+1;
+			for(;count>0;count--)
+			{
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+0]=PaletteData[*FrameData*4+0];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+1]=PaletteData[*FrameData*4+1];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+2]=PaletteData[*FrameData*4+2];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=255;
+			    x++;
+			    FrameData++;
+			    LineBytes--;
+			}
+		    }
+		}
+	    }
 	}
 	else
 	{
@@ -179,15 +231,6 @@ void LoadPalette(GameState * CurrentGameState)
 	LoadHPIFileEntryData(Palette,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
     }
 }
-
-
-void LoadTextures(HPIFile* HPI)
-{
-   
-}
-
-
-
 
 bool32 LoadAllTextures(GameState * CurrentGameState)
 {
