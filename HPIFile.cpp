@@ -333,6 +333,11 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination, MemoryArena *
 	LogError("%s is a directory, no data to load!",Entry.Name);
 	return 0;
     }
+    if(!Entry.ContainedInFile)
+    {
+	LogError("%s has no HPI file",Entry.Name);
+	return 0;
+    }
     switch(Entry.File.Compression)
     {
     case COMPRESSION_NONE:

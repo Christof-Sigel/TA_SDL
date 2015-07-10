@@ -78,10 +78,15 @@ void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * Current
     GLuint FontTexture;
     Font->Height = Header->Height;
     int TextureWidth = 0;
+
     for(int i=0;i<255;i++)
     {
-	Font->Characters[i].Width= *( Buffer + Header->CharacterOffset[i]);
-	TextureWidth += Font->Characters[i].Width;
+	Font->Characters[i] = {};
+	if( Header->CharacterOffset[i])
+	{
+	    Font->Characters[i].Width= *( Buffer + Header->CharacterOffset[i]);
+	    TextureWidth += Font->Characters[i].Width;
+	}
     }
 
     STACK_ARRAY(TextureData, TextureWidth*Font->Height*4, uint8_t);
@@ -93,8 +98,8 @@ void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * Current
 	Font->Characters[i].TextureWidth = Font->Characters[i].Width/(float)TextureWidth;
 	XOffset += Font->Characters[i].Width;
     }
-    glGenTextures(1,&FontTexture);
-    glBindTexture(GL_TEXTURE_2D,FontTexture);
+    glGenTextures(1,&Font->Texture);
+    glBindTexture(GL_TEXTURE_2D,Font->Texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureWidth,Font->Height,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
@@ -112,8 +117,58 @@ void DrawCharacter(char Character, FontShaderDetails * ShaderDetails, GLuint Ver
     glUniform2f(ShaderDetails->SizeLocation,Font->Characters[Character].Width, Font->Height);
 
     
-    glBindTexture(GL_TEXTURE_2D,Font->Texture);
+
 		 
     glBindVertexArray(VertexBuffer);
+    glBindTexture(GL_TEXTURE_2D,Font->Texture);
     glDrawArrays(GL_TRIANGLES,0,6);
+}
+
+
+void SetupFontRendering(GameState * CurrentGameState)
+{
+    GLfloat RenderData[6*(2+2)];//6 Vert (2 triangles) each 2 position coords and 2 texture coords
+    
+    glGenVertexArrays(1,&CurrentGameState->FontVertexBuffer);
+
+    GLfloat Vertices[]={0,0, 1,0, 1,1, 0,1};
+
+    int Indexes1[]={0,3,1};
+    for(int i=0;i<3;i++)
+    {
+	RenderData[i*(2+2)+0]=Vertices[Indexes1[i]*2+0];
+	RenderData[i*(2+2)+1]=Vertices[Indexes1[i]*2+1];
+
+	RenderData[i*(2+2)+2]=Vertices[Indexes1[i]*2+0];
+	RenderData[i*(2+2)+3]=Vertices[Indexes1[i]*2+1];
+
+    }
+
+    int Indexes2[]={1,3,2};
+
+    for(int i=0;i<3;i++)
+    {
+	RenderData[(i+3)*(2+2)+0]=Vertices[Indexes2[i]*2+0];
+	RenderData[(i+3)*(2+2)+1]=Vertices[Indexes2[i]*2+1];
+
+	RenderData[(i+3)*(2+2)+2]=Vertices[Indexes2[i]*2+0];
+	RenderData[(i+3)*(2+2)+3]=Vertices[Indexes2[i]*2+1];
+    }
+		      
+    
+    glBindVertexArray(CurrentGameState->FontVertexBuffer);
+
+    GLuint VertexBuffer;
+    glGenBuffers(1,&VertexBuffer);
+
+
+    glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*6*(2+2),RenderData,GL_STATIC_DRAW);
+    glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*4,0);
+    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*4,(void*)(sizeof(GLfloat)*2));
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
 }

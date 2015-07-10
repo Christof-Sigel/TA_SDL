@@ -94,6 +94,8 @@ extern "C"{
         
 	LoadHPIFileCollection(CurrentGameState);
 	LoadAllTextures(CurrentGameState);
+
+	SetupFontRendering(CurrentGameState);
 	HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",CurrentGameState);
 	if(Map.Name)
 	{
@@ -141,7 +143,7 @@ extern "C"{
 
 	LoadCurrentModel(CurrentGameState);
 
-	Entry = FindEntryInAllFiles("fonts/ROMAN10.fnt", CurrentGameState);
+	Entry = FindEntryInAllFiles("fonts/ARMFONT.fnt", CurrentGameState);
 	if(!Entry.IsDirectory)
 	{
 	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);

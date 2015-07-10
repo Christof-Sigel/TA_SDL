@@ -181,6 +181,7 @@ struct GameState
     GLuint DebugAxisBuffer;
     struct FontShaderDetails * FontShaderDetails;
     struct FNTFont * Fonts;
+    GLuint FontVertexBuffer;
 };
 
 const int TEXTURE_WIDTH=2048;
@@ -198,3 +199,4 @@ const float COB_LINEAR_CONSTANT = 168340;
 const float COB_LINEAR_FRAME_CONSTANT = COB_LINEAR_CONSTANT *2.0f  ;
 const float COB_ANGULAR_CONSTANT = 182.044444f*180.0f/PI;
 const float COB_ANGULAR_FRAME_CONSTANT = COB_ANGULAR_CONSTANT *2.0f ;
+const int MAX_TA_FONT_NUMBER = 32;

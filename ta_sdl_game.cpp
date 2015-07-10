@@ -396,7 +396,7 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->UnitIndex=13;
 
     CurrentGameState->FontShaderDetails = PushStruct(GameArena, FontShaderDetails);
-    CurrentGameState->Fonts = PushArray(GameArena, 10, FNTFont);
+    CurrentGameState->Fonts = PushArray(GameArena, MAX_TA_FONT_NUMBER, FNTFont);
 										     
 
     
@@ -571,7 +571,7 @@ extern "C"
 	int X=0;
 	for(int i=0;i<100;i++)
 	{
-	    DrawCharacter(i, CurrentGameState->FontShaderDetails, CurrentGameState->UIElementRenderingVertexBuffer,  X,0, {1.0,1.0,0.0}, 1.0, &CurrentGameState->Fonts[0]);
+	    DrawCharacter(i, CurrentGameState->FontShaderDetails, CurrentGameState->FontVertexBuffer,  X,0, {1.0,1.0,0.0}, 1.0, &CurrentGameState->Fonts[0]);
 	    X+=CurrentGameState->Fonts[0].Characters[i].Width;
 	}	
 	CurrentGameState->NumberOfFrames++;
