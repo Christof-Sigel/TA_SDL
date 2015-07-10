@@ -175,7 +175,7 @@ ScreenText SetupOnScreenText(char * Text, float X, float Y,float Red, float Gree
     return result;
 }
 
-void RenderOnScreenText(ScreenText Text, ShaderProgram * FontShader, GLuint FontPositionLocation, GLuint FontColorLocation)
+void DrawOnScreenText(ScreenText Text, ShaderProgram * FontShader, GLuint FontPositionLocation, GLuint FontColorLocation)
 {
     if(!FontShader)
 	return;
@@ -230,7 +230,7 @@ struct UIElement
 };
 
 
-void SetupUIElementRender(GameState * CurrentGameState)
+void SetupUIElementDrawing(GameState * CurrentGameState)
 {
     GLfloat RenderData[6*(2+4)];//6 Vert (2 triangles) each 2 position coords and 4 distance to edge "coords"
     
@@ -331,7 +331,7 @@ UIElement SetupUIElementEnclosingText(float X, float Y,float BackgroundRed, floa
 }
 
 
-void RenderUIElement(UIElement Element,ShaderProgram * UIElementShaderProgram,GLuint UIElementPositionLocation, GLuint UIElementSizeLocation, GLuint UIElementColorLocation,GLuint UIElementBorderColorLocation,GLuint UIElementBorderWidthLocation, GLuint UIElementAlphaLocation, GLuint UIElementRenderingVertexBuffer, ShaderProgram * FontShader, GLuint FontPositionLocation, GLuint FontColorLocation)
+void DrawUIElement(UIElement Element,ShaderProgram * UIElementShaderProgram,GLuint UIElementPositionLocation, GLuint UIElementSizeLocation, GLuint UIElementColorLocation,GLuint UIElementBorderColorLocation,GLuint UIElementBorderWidthLocation, GLuint UIElementAlphaLocation, GLuint UIElementRenderingVertexBuffer, ShaderProgram * FontShader, GLuint FontPositionLocation, GLuint FontColorLocation)
 {
     glUseProgram(UIElementShaderProgram->ProgramID);
     glUniform2fv(UIElementPositionLocation,1,Element.Position.Contents);
@@ -344,7 +344,7 @@ void RenderUIElement(UIElement Element,ShaderProgram * UIElementShaderProgram,GL
     glDrawArrays(GL_TRIANGLES,0,6);
     for(int i=0;i<Element.NumberOfTexts;i++)
     {
-	RenderOnScreenText(Element.Texts[i], FontShader, FontPositionLocation, FontColorLocation);
+	DrawOnScreenText(Element.Texts[i], FontShader, FontPositionLocation, FontColorLocation);
     }
 }
 

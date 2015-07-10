@@ -24,6 +24,22 @@ struct FNTFont
     FNTGlyph Characters[256];
 };
 
+
+union FontColor
+{
+    struct
+    {
+	float Red,Green,Blue;
+    };
+    float Contents[3];
+};
+
+struct FontShaderDetails
+{
+    GLuint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation;
+    ShaderProgram Program;
+};
+
 void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
 {
     if(CharacterOffset ==0)
@@ -83,4 +99,21 @@ void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * Current
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureWidth,Font->Height,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
 
+}
+
+
+void DrawCharacter(char Character, FontShaderDetails * ShaderDetails, GLuint VertexBuffer , float X, float Y, FontColor Color, float Alpha, FNTFont * Font )
+{
+    glUseProgram(ShaderDetails->Program.ProgramID);
+    glUniform3fv(ShaderDetails->ColorLocation,1,Color.Contents);
+    glUniform2f(ShaderDetails->PositionLocation,X,Y);
+    glUniform1f(ShaderDetails->AlphaLocation,Alpha);
+    glUniform2f(ShaderDetails->TextureOffsetLocation,Font->Characters[Character].U, Font->Characters[Character].TextureWidth);
+    glUniform2f(ShaderDetails->SizeLocation,Font->Characters[Character].Width, Font->Height);
+
+    
+    glBindTexture(GL_TEXTURE_2D,Font->Texture);
+		 
+    glBindVertexArray(VertexBuffer);
+    glDrawArrays(GL_TRIANGLES,0,6);
 }

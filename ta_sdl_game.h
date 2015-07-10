@@ -179,6 +179,8 @@ struct GameState
     struct ScriptStatePool * CurrentScriptPool;
     struct UIElement * ScriptBackground;
     GLuint DebugAxisBuffer;
+    struct FontShaderDetails * FontShaderDetails;
+    struct FNTFont * Fonts;
 };
 
 const int TEXTURE_WIDTH=2048;

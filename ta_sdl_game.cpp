@@ -395,6 +395,10 @@ void SetupGameState( GameState * CurrentGameState)
 
     CurrentGameState->UnitIndex=13;
 
+    CurrentGameState->FontShaderDetails = PushStruct(GameArena, FontShaderDetails);
+    CurrentGameState->Fonts = PushArray(GameArena, 10, FNTFont);
+										     
+
     
         //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
@@ -406,7 +410,7 @@ void SetupGameState( GameState * CurrentGameState)
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-	    SetupDebugAxisBuffer(&CurrentGameState->DebugAxisBuffer);
+    SetupDebugAxisBuffer(&CurrentGameState->DebugAxisBuffer);
 
 }
 
@@ -559,11 +563,17 @@ extern "C"
 	glDisable(GL_DEPTH_TEST);        //Turn Depth Testing off
 
 	for(int i=0;i<5;i++)
-	    RenderUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
-	RenderUIElement(*CurrentGameState->ScriptBackground, CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
+	    DrawUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
+	DrawUIElement(*CurrentGameState->ScriptBackground, CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
 	for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfFunctions;i++)
-	    RenderOnScreenText(CurrentGameState->UnitDetailsText[i], CurrentGameState->FontShader, CurrentGameState->FontPositionLocation, CurrentGameState->FontColorLocation);
+	    DrawOnScreenText(CurrentGameState->UnitDetailsText[i], CurrentGameState->FontShader, CurrentGameState->FontPositionLocation, CurrentGameState->FontColorLocation);
 
+	int X=0;
+	for(int i=0;i<100;i++)
+	{
+	    DrawCharacter(i, CurrentGameState->FontShaderDetails, CurrentGameState->UIElementRenderingVertexBuffer,  X,0, {1.0,1.0,0.0}, 1.0, &CurrentGameState->Fonts[0]);
+	    X+=CurrentGameState->Fonts[0].Characters[i].Width;
+	}	
 	CurrentGameState->NumberOfFrames++;
     }
 

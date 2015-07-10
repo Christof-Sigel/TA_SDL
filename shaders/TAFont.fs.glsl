@@ -12,8 +12,8 @@ noperspective in vec2 FTexCoord;
 
 void main(void)
 {
-    out_Color=vec4(Color,Alpha);
     out_Color=texture(Texture,FTexCoord);
-    out_Color=vec4((vec3(1,1,1)-out_Color.xyz)*Color*Alpha,out_Color.w*Alpha);
+    out_Color=vec4((vec3(1,1,1)-out_Color.xyz)*Color,out_Color.w);
+//    out_Color=vec4(FTexCoord.x, FTexCoord.y, 0,1);
 }
     

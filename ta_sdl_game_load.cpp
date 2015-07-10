@@ -42,7 +42,7 @@ void ReloadShaders(Memory * GameMemory)
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 
-   glUniform2iv(GetUniformLocation(CurrentGameState->FontShader,"Viewport"),1,viewport+2);
+    glUniform2iv(GetUniformLocation(CurrentGameState->FontShader,"Viewport"),1,viewport+2);
     CurrentGameState->FontPositionLocation=GetUniformLocation(CurrentGameState->FontShader,"Position");
     CurrentGameState->FontColorLocation=GetUniformLocation(CurrentGameState->FontShader,"TextColor");
 
@@ -59,6 +59,18 @@ void ReloadShaders(Memory * GameMemory)
 
     glUniform2iv(GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Viewport"),1,viewport+2);
 
+
+    FontShaderDetails * FDetails = CurrentGameState->FontShaderDetails;
+    LoadShaderProgram("shaders/TAFont.vs.glsl","shaders/TAFont.fs.glsl",&FDetails->Program);
+    FDetails->ColorLocation=GetUniformLocation(&FDetails->Program,"Color");
+    FDetails->AlphaLocation=GetUniformLocation(&FDetails->Program,"Alpha");
+    FDetails->PositionLocation=GetUniformLocation(&FDetails->Program,"Position");
+    FDetails->SizeLocation=GetUniformLocation(&FDetails->Program,"Size");
+    FDetails->TextureOffsetLocation=GetUniformLocation(&FDetails->Program,"TextureOffset");
+    
+    glUniform1i(GetUniformLocation(&FDetails->Program,"Texture"), 0);
+    glUniform2iv(GetUniformLocation(&FDetails->Program,"Viewport"),1,viewport+2);
+    
 }
 
 void SetupGameState( GameState * CurrentGameState);
@@ -76,7 +88,7 @@ extern "C"{
 	PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
 #endif
 	LoadFonts(CurrentGameState);
-	SetupUIElementRender(CurrentGameState);
+	SetupUIElementDrawing(CurrentGameState);
 
 	ReloadShaders(GameMemory);
         
@@ -130,13 +142,12 @@ extern "C"{
 	LoadCurrentModel(CurrentGameState);
 
 	Entry = FindEntryInAllFiles("fonts/ROMAN10.fnt", CurrentGameState);
-	FNTFont Font;
 	if(!Entry.IsDirectory)
 	{
 	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);
 	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
 	    {
-		LoadFNTFont(temp, &Font, Entry.File.FileSize, CurrentGameState);
+		LoadFNTFont(temp, &CurrentGameState->Fonts[0], Entry.File.FileSize, CurrentGameState);
 	    }
 	}
 	
@@ -174,10 +185,14 @@ extern "C"{
 
 	uint64_t TextVertexShaderTime = GetFileModifiedTime("shaders/font.vs.glsl");
 	uint64_t TextPixelShaderTime = GetFileModifiedTime("shaders/font.fs.glsl");
+
+	uint64_t TAFontVertexShaderTime = GetFileModifiedTime("shaders/TAFont.vs.glsl");
+	uint64_t TAFontPixelShaderTime = GetFileModifiedTime("shaders/TAFont.fs.glsl");
 	if(UnitVertexShaderTime > CurrentGameState->UnitShader->VertexFileModifiedTime || UnitPixelShaderTime > CurrentGameState->UnitShader->PixelFileModifiedTime
 	   || MapPixelShaderTime > CurrentGameState->MapShader->VertexFileModifiedTime || MapVertexShaderTime > CurrentGameState->MapShader->PixelFileModifiedTime
 	   || UIVertexShaderTime > CurrentGameState->UIElementShaderProgram->VertexFileModifiedTime || UIPixelShaderTime > CurrentGameState->UIElementShaderProgram->PixelFileModifiedTime
 	   || TextVertexShaderTime > CurrentGameState->FontShader->VertexFileModifiedTime || TextPixelShaderTime > CurrentGameState->FontShader->PixelFileModifiedTime
+	    || TAFontVertexShaderTime > CurrentGameState->FontShaderDetails->Program.VertexFileModifiedTime || TAFontPixelShaderTime > CurrentGameState->FontShaderDetails->Program.PixelFileModifiedTime
 	    )
 	    ReloadShaders(GameMemory);
     }
