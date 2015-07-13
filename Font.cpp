@@ -37,7 +37,7 @@ union FontColor
 struct FontShaderDetails
 {
     GLuint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation;
-    ShaderProgram Program;
+    ShaderProgram * Program;
 };
 
 void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
@@ -75,7 +75,6 @@ void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * Text
 void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * CurrentGameState)
 {
     FILE_FNT * Header = (FILE_FNT*)Buffer;
-    GLuint FontTexture;
     Font->Height = Header->Height;
     int TextureWidth = 0;
 
@@ -109,19 +108,28 @@ void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * Current
 
 void DrawCharacter(char Character, FontShaderDetails * ShaderDetails, GLuint VertexBuffer , float X, float Y, FontColor Color, float Alpha, FNTFont * Font )
 {
-    glUseProgram(ShaderDetails->Program.ProgramID);
-    glUniform3fv(ShaderDetails->ColorLocation,1,Color.Contents);
-    glUniform2f(ShaderDetails->PositionLocation,X,Y);
-    glUniform1f(ShaderDetails->AlphaLocation,Alpha);
-    glUniform2f(ShaderDetails->TextureOffsetLocation,Font->Characters[Character].U, Font->Characters[Character].TextureWidth);
-    glUniform2f(ShaderDetails->SizeLocation,Font->Characters[Character].Width, Font->Height);
-
-    
-
+    if(ShaderDetails->Program->ProgramID)
+    {
+	glUseProgram(ShaderDetails->Program->ProgramID);
+	glUniform3fv(ShaderDetails->ColorLocation,1,Color.Contents);
+	glUniform2f(ShaderDetails->PositionLocation,X,Y);
+	glUniform1f(ShaderDetails->AlphaLocation,Alpha);
+	glUniform2f(ShaderDetails->TextureOffsetLocation,Font->Characters[Character].U, Font->Characters[Character].TextureWidth);
+	glUniform2f(ShaderDetails->SizeLocation,Font->Characters[Character].Width, Font->Height);
 		 
-    glBindVertexArray(VertexBuffer);
-    glBindTexture(GL_TEXTURE_2D,Font->Texture);
-    glDrawArrays(GL_TRIANGLES,0,6);
+	glBindVertexArray(VertexBuffer);
+	glBindTexture(GL_TEXTURE_2D,Font->Texture);
+	glDrawArrays(GL_TRIANGLES,0,6);
+    }
+    else
+    {
+	static uint8_t Once = 1;
+	if(Once)
+	{
+	    Once=0;
+	    LogWarning("Font shader not loaded, ignoring font rendering calls");
+	}
+    }
 }
 
 

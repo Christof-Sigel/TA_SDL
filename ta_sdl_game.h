@@ -182,6 +182,9 @@ struct GameState
     struct FontShaderDetails * FontShaderDetails;
     struct FNTFont * Fonts;
     GLuint FontVertexBuffer;
+
+    struct ShaderProgram * Shaders;
+    int NumberOfShaders;
 };
 
 const int TEXTURE_WIDTH=4096;
@@ -201,3 +204,5 @@ const float COB_ANGULAR_CONSTANT = 182.044444f*180.0f/PI;
 const float COB_ANGULAR_FRAME_CONSTANT = COB_ANGULAR_CONSTANT *2.0f ;
 
 const int MAX_TA_FONT_NUMBER = 32;
+const int MAX_SHADER_NUMBER = 32;
+const int MAX_SHADER_FILENAME = 50;

@@ -17,59 +17,71 @@ void InitialiseGame(Memory * GameMemory);
 void ReloadShaders(Memory * GameMemory)
 {
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
+    UnloadAllShaders(CurrentGameState);
+    CurrentGameState->UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",CurrentGameState);
     if(CurrentGameState->UnitShader->ProgramID)
-	UnloadShaderProgram(CurrentGameState->UnitShader);
+    {
+	glUseProgram(CurrentGameState->UnitShader->ProgramID);
+	glUniform1i(GetUniformLocation(CurrentGameState->UnitShader,"UnitTexture"),0);
+        CurrentGameState->ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ProjectionMatrix");
+	CurrentGameState->ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ModelMatrix");
+	CurrentGameState->ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ViewMatrix");
+
+    }
+
+    CurrentGameState->MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl",CurrentGameState);
+
     if(CurrentGameState->MapShader->ProgramID)
-	UnloadShaderProgram(CurrentGameState->MapShader);
-    LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",CurrentGameState->UnitShader);
-    
-    glUseProgram(CurrentGameState->UnitShader->ProgramID);
-    glUniform1i(GetUniformLocation(CurrentGameState->UnitShader,"UnitTexture"),0);
-
-    LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl",CurrentGameState->MapShader);
-    
-    glUseProgram(CurrentGameState->MapShader->ProgramID);
-    glUniform1i(GetUniformLocation(CurrentGameState->MapShader,"Texture"),0);
-
-    CurrentGameState->ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ProjectionMatrix");
-    CurrentGameState->ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ModelMatrix");
-    CurrentGameState->ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ViewMatrix");
+    {
+	glUseProgram(CurrentGameState->MapShader->ProgramID);
+	glUniform1i(GetUniformLocation(CurrentGameState->MapShader,"Texture"),0);
+    }
 
 
-    LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl",CurrentGameState->FontShader);
-    glUseProgram(CurrentGameState->FontShader->ProgramID);
-    glUniform1i(GetUniformLocation(CurrentGameState->FontShader,"Texture"),0);
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 
-    glUniform2iv(GetUniformLocation(CurrentGameState->FontShader,"Viewport"),1,viewport+2);
-    CurrentGameState->FontPositionLocation=GetUniformLocation(CurrentGameState->FontShader,"Position");
-    CurrentGameState->FontColorLocation=GetUniformLocation(CurrentGameState->FontShader,"TextColor");
+    CurrentGameState->FontShader= LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl",CurrentGameState);
+    if(CurrentGameState->FontShader->ProgramID)
+    {
+	glUseProgram(CurrentGameState->FontShader->ProgramID);
+	glUniform1i(GetUniformLocation(CurrentGameState->FontShader,"Texture"),0);
+
+	glUniform2iv(GetUniformLocation(CurrentGameState->FontShader,"Viewport"),1,viewport+2);
+	CurrentGameState->FontPositionLocation=GetUniformLocation(CurrentGameState->FontShader,"Position");
+	CurrentGameState->FontColorLocation=GetUniformLocation(CurrentGameState->FontShader,"TextColor");
+    }
 
     
-    LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl",CurrentGameState->UIElementShaderProgram);
-    glUseProgram(CurrentGameState->UIElementShaderProgram->ProgramID);
+    CurrentGameState->UIElementShaderProgram = LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl",CurrentGameState);
+    if(CurrentGameState->UIElementShaderProgram->ProgramID)
+    {
+	glUseProgram(CurrentGameState->UIElementShaderProgram->ProgramID);
 
-    CurrentGameState->UIElementPositionLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Position");
-    CurrentGameState->UIElementSizeLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Size");
-    CurrentGameState->UIElementColorLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Color");
-    CurrentGameState->UIElementBorderColorLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"BorderColor");
-    CurrentGameState->UIElementBorderWidthLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"BorderWidth");
-    CurrentGameState->UIElementAlphaLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Alpha");
+	CurrentGameState->UIElementPositionLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Position");
+	CurrentGameState->UIElementSizeLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Size");
+	CurrentGameState->UIElementColorLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Color");
+	CurrentGameState->UIElementBorderColorLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"BorderColor");
+	CurrentGameState->UIElementBorderWidthLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"BorderWidth");
+	CurrentGameState->UIElementAlphaLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Alpha");
 
-    glUniform2iv(GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Viewport"),1,viewport+2);
+	glUniform2iv(GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Viewport"),1,viewport+2);
+    }
 
 
     FontShaderDetails * FDetails = CurrentGameState->FontShaderDetails;
-    LoadShaderProgram("shaders/TAFont.vs.glsl","shaders/TAFont.fs.glsl",&FDetails->Program);
-    FDetails->ColorLocation=GetUniformLocation(&FDetails->Program,"Color");
-    FDetails->AlphaLocation=GetUniformLocation(&FDetails->Program,"Alpha");
-    FDetails->PositionLocation=GetUniformLocation(&FDetails->Program,"Position");
-    FDetails->SizeLocation=GetUniformLocation(&FDetails->Program,"Size");
-    FDetails->TextureOffsetLocation=GetUniformLocation(&FDetails->Program,"TextureOffset");
+    FDetails->Program = LoadShaderProgram("shaders/TAFont.vs.glsl","shaders/TAFont.fs.glsl",CurrentGameState);
+    if(FDetails->Program->ProgramID)
+    {
+	FDetails->ColorLocation=GetUniformLocation(FDetails->Program,"Color");
+	FDetails->AlphaLocation=GetUniformLocation(FDetails->Program,"Alpha");
+	FDetails->PositionLocation=GetUniformLocation(FDetails->Program,"Position");
+	FDetails->SizeLocation=GetUniformLocation(FDetails->Program,"Size");
+	FDetails->TextureOffsetLocation=GetUniformLocation(FDetails->Program,"TextureOffset");
     
-    glUniform1i(GetUniformLocation(&FDetails->Program,"Texture"), 0);
-    glUniform2iv(GetUniformLocation(&FDetails->Program,"Viewport"),1,viewport+2);
+	glUniform1i(GetUniformLocation(FDetails->Program,"Texture"), 0);
+	glUniform2iv(GetUniformLocation(FDetails->Program,"Viewport"),1,viewport+2);
+    }
     
 }
 
@@ -177,25 +189,21 @@ extern "C"{
 	//return;
 	//TODO(Christof): Fix shaders unecessarily reloading here (cause of the blue flickering)
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-	uint64_t UnitVertexShaderTime = GetFileModifiedTime("shaders/unit3do.vs.glsl");
-	uint64_t UnitPixelShaderTime = GetFileModifiedTime("shaders/unit3do.fs.glsl");
-	uint64_t MapVertexShaderTime = GetFileModifiedTime("shaders/map.vs.glsl");
-	uint64_t MapPixelShaderTime = GetFileModifiedTime("shaders/map.fs.glsl");
-
-	uint64_t UIVertexShaderTime = GetFileModifiedTime("shaders/UI.vs.glsl");
-	uint64_t UIPixelShaderTime = GetFileModifiedTime("shaders/UI.fs.glsl");
-
-	uint64_t TextVertexShaderTime = GetFileModifiedTime("shaders/font.vs.glsl");
-	uint64_t TextPixelShaderTime = GetFileModifiedTime("shaders/font.fs.glsl");
-
-	uint64_t TAFontVertexShaderTime = GetFileModifiedTime("shaders/TAFont.vs.glsl");
-	uint64_t TAFontPixelShaderTime = GetFileModifiedTime("shaders/TAFont.fs.glsl");
-	if(UnitVertexShaderTime > CurrentGameState->UnitShader->VertexFileModifiedTime || UnitPixelShaderTime > CurrentGameState->UnitShader->PixelFileModifiedTime
-	   || MapPixelShaderTime > CurrentGameState->MapShader->VertexFileModifiedTime || MapVertexShaderTime > CurrentGameState->MapShader->PixelFileModifiedTime
-	   || UIVertexShaderTime > CurrentGameState->UIElementShaderProgram->VertexFileModifiedTime || UIPixelShaderTime > CurrentGameState->UIElementShaderProgram->PixelFileModifiedTime
-	   || TextVertexShaderTime > CurrentGameState->FontShader->VertexFileModifiedTime || TextPixelShaderTime > CurrentGameState->FontShader->PixelFileModifiedTime
-	    || TAFontVertexShaderTime > CurrentGameState->FontShaderDetails->Program.VertexFileModifiedTime || TAFontPixelShaderTime > CurrentGameState->FontShaderDetails->Program.PixelFileModifiedTime
-	    )
+	uint8_t Reload =0;
+	for(int i=0;i<CurrentGameState->NumberOfShaders;i++)
+	{
+	    if(GetFileModifiedTime(CurrentGameState->Shaders[i].VertexFileName) > CurrentGameState->Shaders[i].VertexFileModifiedTime)
+	    {
+		Reload=1;
+		break;
+	    }
+	    if(GetFileModifiedTime(CurrentGameState->Shaders[i].PixelFileName) > CurrentGameState->Shaders[i].PixelFileModifiedTime)
+	    {
+		Reload=1;
+		break;
+	    }
+	}
+	if(Reload)
 	    ReloadShaders(GameMemory);
     }
     

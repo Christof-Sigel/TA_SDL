@@ -188,7 +188,12 @@ struct ShaderProgram
 {
     GLuint ProgramID, VertexID, PixelID;
     uint64_t VertexFileModifiedTime, PixelFileModifiedTime;
+    char PixelFileName[MAX_SHADER_FILENAME];
+    char VertexFileName[MAX_SHADER_FILENAME];
 };
+
+static ShaderProgram NullShader
+= {0,0,0,0,0,0,0};
 
 
 inline GLuint LoadShader(GLenum Type,MemoryMappedFile ShaderFile, const
@@ -232,13 +237,33 @@ void UnloadShaderProgram(ShaderProgram * Program)
     }
 }
 
-bool32 LoadShaderProgram( const char * VertexShaderFileName, const char * PixelShaderFileName, ShaderProgram  * Shader)
+void UnloadAllShaders(GameState * CurrentGameState)
 {
+    for(int i=0;i<CurrentGameState->NumberOfShaders;i++)
+    {
+	UnloadShaderProgram(&CurrentGameState->Shaders[i]);
+    }
+    CurrentGameState->NumberOfShaders=0;
+}
+
+ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char * PixelShaderFileName, GameState * CurrentGameState)
+{
+    ShaderProgram * Shader = &CurrentGameState->Shaders[CurrentGameState->NumberOfShaders++];
+    *Shader = {};
+   
+    strncpy(Shader->PixelFileName, PixelShaderFileName, MAX_SHADER_FILENAME);
+    strncpy(Shader->VertexFileName, VertexShaderFileName, MAX_SHADER_FILENAME);
+   
+    if(CurrentGameState->NumberOfShaders+1>= MAX_SHADER_NUMBER)
+    {
+	LogError("Not enough shaders allocated, failed to load shader program for %s, %s", VertexShaderFileName, PixelShaderFileName);
+	return &NullShader;
+    }
     MemoryMappedFile VertexShaderFile=MemoryMapFile(VertexShaderFileName);
     if(!VertexShaderFile.MMapBuffer)
     {
 	LogError("Failed to load vertex shader file %s",VertexShaderFileName);
-	return 0;
+	return &NullShader;
     }
     
     MemoryMappedFile PixelShaderFile=MemoryMapFile(PixelShaderFileName);
@@ -246,17 +271,22 @@ bool32 LoadShaderProgram( const char * VertexShaderFileName, const char * PixelS
     {
 	UnMapFile(PixelShaderFile);
 	LogError("Failed to load pixel shader file %s",PixelShaderFileName);
-	return 0;
+	return &NullShader;
     }
     
-    Shader->VertexFileModifiedTime = VertexShaderFile.ModifiedTime;
-    Shader->PixelFileModifiedTime = PixelShaderFile.ModifiedTime;
     Shader->ProgramID = glCreateProgram();
     GLenum ErrorValue = glGetError();
     if(ErrorValue!=GL_NO_ERROR)
     {
 	LogError("OpenGL error in CreateProgram for %s,%s : %s", VertexShaderFileName,PixelShaderFileName,gluErrorString(ErrorValue));
+	Shader->ProgramID=0;
+	UnMapFile(VertexShaderFile);
+	UnMapFile(PixelShaderFile);
+	return &NullShader;
     }
+    Shader->VertexFileModifiedTime = VertexShaderFile.ModifiedTime;
+    Shader->PixelFileModifiedTime = PixelShaderFile.ModifiedTime;
+  
     Shader->VertexID = LoadShader(GL_VERTEX_SHADER,VertexShaderFile,VertexShaderFileName);
     glAttachShader(Shader->ProgramID,Shader->VertexID);
     
@@ -265,15 +295,25 @@ bool32 LoadShaderProgram( const char * VertexShaderFileName, const char * PixelS
 
     UnMapFile(VertexShaderFile);
     UnMapFile(PixelShaderFile);
+
+    ErrorValue = glGetError();
+    if(ErrorValue!=GL_NO_ERROR)
+    {
+	LogError("OpenGL error in shader loading for %s,%s : %s", VertexShaderFileName,PixelShaderFileName,gluErrorString(ErrorValue));
+	Shader->ProgramID=Shader->VertexID = Shader->PixelID = 0;
+	return &NullShader;
+    }
     
     if(!Shader->PixelID || !Shader->VertexID)
     {
 	UnloadShaderProgram(Shader);
-	return 0;
+	Shader->ProgramID=Shader->VertexID = Shader->PixelID = 0;
+	return &NullShader;
     }
     glLinkProgram(Shader->ProgramID);
     glUseProgram(Shader->ProgramID);
-    return 1;
+  
+    return Shader;
 }
 
 inline GLint GetUniformLocation(ShaderProgram * Program, const char * UniformName)
@@ -287,3 +327,10 @@ inline GLint GetUniformLocation(ShaderProgram * Program, const char * UniformNam
     }
     return Location;
 }
+
+
+struct Texture2DShaderDetails
+{
+    GLuint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation, TextureSizeLocation;
+    ShaderProgram Program;
+};
