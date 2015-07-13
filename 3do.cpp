@@ -796,4 +796,5 @@ void Unload3DO(Object3d * Object)
     {
 	Unload3DO(&Object->Children[i]);
     }
+    *Object ={};
 }
