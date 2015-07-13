@@ -82,6 +82,21 @@ void ReloadShaders(Memory * GameMemory)
 	glUniform1i(GetUniformLocation(FDetails->Program,"Texture"), 0);
 	glUniform2iv(GetUniformLocation(FDetails->Program,"Viewport"),1,viewport+2);
     }
+
+    Texture2DShaderDetails * TDetails = CurrentGameState->DrawTextureShaderDetails;
+    TDetails->Program = LoadShaderProgram("shaders/2DRender.vs.glsl","shaders/2DRender.fs.glsl",CurrentGameState);
+    if(TDetails->Program->ProgramID)
+    {
+	TDetails->ColorLocation=GetUniformLocation(TDetails->Program,"Color");
+	TDetails->AlphaLocation=GetUniformLocation(TDetails->Program,"Alpha");
+	TDetails->PositionLocation=GetUniformLocation(TDetails->Program,"Position");
+	TDetails->SizeLocation=GetUniformLocation(TDetails->Program,"Size");
+	TDetails->TextureOffsetLocation=GetUniformLocation(TDetails->Program,"TextureOffset");
+	TDetails->TextureSizeLocation=GetUniformLocation(TDetails->Program,"TextureSize");
+    
+	glUniform1i(GetUniformLocation(TDetails->Program,"Texture"), 0);
+	glUniform2iv(GetUniformLocation(TDetails->Program,"Viewport"),1,viewport+2);
+    }
     
 }
 
@@ -105,9 +120,13 @@ extern "C"{
 	ReloadShaders(GameMemory);
         
 	LoadHPIFileCollection(CurrentGameState);
+	SetupTextureContainer(CurrentGameState->UnitTextures, UNIT_TEXTURE_WIDTH, UNIT_TEXTURE_HEIGHT, UNIT_MAX_TEXTURES, &CurrentGameState->GameArena);
+	LoadGafFonts(CurrentGameState);
+		
 	LoadAllTextures(CurrentGameState);
 
-	SetupFontRendering(CurrentGameState);
+	SetupFontRendering(CurrentGameState);	
+	
 	HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",CurrentGameState);
 	if(Map.Name)
 	{
@@ -164,7 +183,6 @@ extern "C"{
 		LoadFNTFont(temp, &CurrentGameState->Fonts[0], Entry.File.FileSize, CurrentGameState);
 	    }
 	}
-	
 	CurrentGameState->StartTime= GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
     }
 

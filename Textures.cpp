@@ -45,7 +45,7 @@ struct TexturePosition
     int Y;
 };
 
-#define MAX_NUMBER_OF_TEXTURE_FRAMES 12
+#define MAX_NUMBER_OF_TEXTURE_FRAMES 256
 
 struct Texture
 {
@@ -55,37 +55,98 @@ struct Texture
     float Widths[MAX_NUMBER_OF_TEXTURE_FRAMES],Heights[MAX_NUMBER_OF_TEXTURE_FRAMES];
 };
 
+struct TextureContainer
+{
+    Texture * Textures;
+    int MaximumTextures;
+    int NumberOfTextures;
+    uint8_t * TextureData;
+    int TextureWidth, TextureHeight;
+    GLuint Texture;
+};
+
+void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int Height, int MaxTextures, MemoryArena * Arena)
+{
+    *TextureContainer = {};
+    TextureContainer->MaximumTextures = MaxTextures;
+    TextureContainer->TextureWidth = Width;
+    TextureContainer->TextureHeight = Height;
+    TextureContainer->TextureData = PushArray(Arena, Width*Height*4, uint8_t);
+    TextureContainer->Textures = PushArray(Arena, MaxTextures, Texture);
+
+    int size=TextureContainer->TextureWidth * TextureContainer->TextureHeight*4/4;
+  
+    int32_t * ClearDataPointer=(int32_t *)TextureContainer->TextureData;
+    for(int i=0;i<size;i++)
+	ClearDataPointer[i]=0xdeadbeef;
+}
 
 
-TexturePosition GetAvailableTextureLocation(int Width, int Height,uint8_t * TextureData);
-void SetTextureLocationUsed(int X, int Y, int Width, int Height);
 
-Texture * GetTexture(const char * Name,int NextTexture,Texture * Textures)
+Texture * GetTexture(const char * Name,TextureContainer * TextureContainer)
 {
     //TODO(Christof): some better storage/retrieval mechanism for texture lookup?
-    for(int i=0;i<NextTexture;i++)
+    for(int i=0;i<TextureContainer->NumberOfTextures;i++)
     {
-	if(CaseInsensitiveMatch(Name,Textures[i].Name))
-	    return &Textures[i];
+	if(CaseInsensitiveMatch(Name,TextureContainer->Textures[i].Name))
+	    return &TextureContainer->Textures[i];
     }
     return 0;
 }
 
-void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState)
+inline bool32 TexturePixelFree(int X, int Y,TextureContainer * TextureContainer)
+{
+    return *(int32_t *)&TextureContainer->TextureData[(X+Y*TextureContainer->TextureWidth)*4]==0xdeadbeef;
+}
+
+TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContainer * TextureContainer)
+{
+    static TexturePosition FirstFreeTexture = {};
+    int StartX=FirstFreeTexture.X;
+    for(int Y=FirstFreeTexture.Y;Y<TextureContainer->TextureHeight;Y++)
+    {
+	for(int X=StartX;X<TextureContainer->TextureWidth;X++)
+	{
+	    if(Y+Height>=TextureContainer->TextureHeight || X+ Width >= TextureContainer->TextureWidth)
+		continue;
+	    //TODO(Christof): figure out a better way to do this without goto
+	    for(int TexY=0;TexY<Height;TexY++)
+	    {
+		for(int TexX=0;TexX<Width;TexX++)
+		{
+		    if(!TexturePixelFree(X+TexX,Y+TexY,TextureContainer))
+		    {
+			goto next;
+		    }
+		}
+	    }
+	    //NOTE: if texure search has to loop (total textures size -> big texture size) this will get quite slow, should be ok for now though
+	    FirstFreeTexture.X=X;
+	    FirstFreeTexture.Y=Y;
+	    return {X,Y};
+	next:
+	    continue;
+	}
+	StartX=0;
+    }
+    return {-1,-1};
+}
+
+
+void LoadGafFrameEntry(uint8_t * Buffer, int Offset, TextureContainer * TextureContainer, uint8_t * PaletteData)
 {
     FILE_GafEntry * Entry = (FILE_GafEntry*)(Buffer +Offset);
     FILE_GafFrameEntry * FrameEntries=(FILE_GafFrameEntry *)(Buffer + Offset + sizeof(*Entry));
-    Texture * Textures = CurrentGameState->Textures;
-    uint8_t * TextureData = CurrentGameState->TextureData;
-    uint8_t * PaletteData = CurrentGameState->PaletteData;
+    Texture * Textures = TextureContainer->Textures;
+    uint8_t * TextureData = TextureContainer->TextureData;
     //NOTE(Christof): some Gafs have frames whose dimensions (height in original TA textures) do not match frame 0
-    Texture * Texture=GetTexture(Entry->Name,CurrentGameState->NextTexture,CurrentGameState->Textures);
+    Texture * Texture=GetTexture(Entry->Name,TextureContainer);
     if(Texture)
     {
 	LogInformation("Skipping %s as it has already been loaded",Entry->Name);
 	return;
     }
-    int NextTexture = CurrentGameState->NextTexture;
+    int NextTexture = TextureContainer->NumberOfTextures;
     int TotalWidth =0;
     int MaxHeight =0;
     for(int i=0;i<Entry->NumberOfFrames;i++)
@@ -95,14 +156,14 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
 	    MaxHeight = Frame->Height;
 	TotalWidth += Frame->Width;
     }
-    TexturePosition PositionToStore = GetAvailableTextureLocation(TotalWidth,MaxHeight, CurrentGameState->TextureData);
+    TexturePosition PositionToStore = GetAvailableTextureLocation(TotalWidth,MaxHeight, TextureContainer);
     if(PositionToStore.X==-1)
     {
 	LogError("Unable to get storage location for texture: %s (%dx%d)",Entry->Name,TotalWidth,MaxHeight);
 	return;
     }
-    Textures[NextTexture].U=PositionToStore.X/float(TEXTURE_WIDTH);
-    Textures[NextTexture].V=PositionToStore.Y/float(TEXTURE_HEIGHT);
+    Textures[NextTexture].U=PositionToStore.X/float(TextureContainer->TextureWidth);
+    Textures[NextTexture].V=PositionToStore.Y/float(TextureContainer->TextureHeight);
     Textures[NextTexture].NumberOfFrames = Entry->NumberOfFrames;
     memcpy(Textures[NextTexture].Name,Entry->Name,32);
 
@@ -136,10 +197,10 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
 			int count = mask >>1;
 			for(;count>0;count--)
 			{
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+0]=0;
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+1]=0;
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+2]=0;
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=0;
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+0]=0;
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+1]=0;
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+2]=0;
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+3]=0;
 			    x++;
 			}
 		    }
@@ -150,10 +211,10 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
 			LineBytes--;
 			for(;count>0;count--)
 			{
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+0]=PaletteData[ColorIndex*4+0];
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+1]=PaletteData[ColorIndex*4+1];
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+2]=PaletteData[ColorIndex*4+2];
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=255;
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+0]=PaletteData[ColorIndex*4+0];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+1]=PaletteData[ColorIndex*4+1];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+2]=PaletteData[ColorIndex*4+2];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+3]=255;
 			    x++;
 			}
 			
@@ -163,10 +224,10 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
 			int count = (mask >>2 )+1;
 			for(;count>0;count--)
 			{
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+0]=PaletteData[*FrameData*4+0];
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+1]=PaletteData[*FrameData*4+1];
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+2]=PaletteData[*FrameData*4+2];
-			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=255;
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+0]=PaletteData[*FrameData*4+0];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+1]=PaletteData[*FrameData*4+1];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+2]=PaletteData[*FrameData*4+2];
+			    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+3]=255;
 			    x++;
 			    FrameData++;
 			    LineBytes--;
@@ -181,22 +242,22 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset,GameState * CurrentGameState
 	    {
 		for(int x=0;x<Frame->Width;x++)
 		{
-		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+0]=PaletteData[FrameData[x+y*Frame->Width]*4+0];
-		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+1]=PaletteData[FrameData[x+y*Frame->Width]*4+1];
-		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+2]=PaletteData[FrameData[x+y*Frame->Width]*4+2];
-		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TEXTURE_WIDTH)*4+3]=255;
+		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+0]=PaletteData[FrameData[x+y*Frame->Width]*4+0];
+		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+1]=PaletteData[FrameData[x+y*Frame->Width]*4+1];
+		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+2]=PaletteData[FrameData[x+y*Frame->Width]*4+2];
+		    TextureData[(x+PositionToStore.X+(y+PositionToStore.Y)*TextureContainer->TextureWidth)*4+3]=255;
 		}
 	    }
 	    //NOTE: Move this out if we ever start handling Compressed textures
 	}
-	Textures[NextTexture].Widths[i]=Frame->Width/float(TEXTURE_WIDTH);
-	Textures[NextTexture].Heights[i]=Frame->Height/float(TEXTURE_HEIGHT);
+	Textures[NextTexture].Widths[i]=Frame->Width/float(TextureContainer->TextureWidth);
+	Textures[NextTexture].Heights[i]=Frame->Height/float(TextureContainer->TextureHeight);
 	PositionToStore.X += Frame->Width;
     }
-    CurrentGameState->NextTexture++;
+    TextureContainer->NumberOfTextures++;
 }
 
-void LoadTexturesFromGafBuffer(uint8_t * Buffer,GameState * CurrentGameState)
+void LoadTexturesFromGafBuffer(uint8_t * Buffer,TextureContainer * TextureContainer, uint8_t * PalletteData)
 {
     FILE_GafHeader * header= (FILE_GafHeader *)Buffer;
     if(header->IDVersion != GAF_IDVERSION)
@@ -207,7 +268,7 @@ void LoadTexturesFromGafBuffer(uint8_t * Buffer,GameState * CurrentGameState)
     int32_t * EntryOffsets = (int32_t *)(Buffer + sizeof(*header));
     for(int i=0;i<header->NumberOfEntries;i++)
     {
-	LoadGafFrameEntry(Buffer, EntryOffsets[i], CurrentGameState);
+	LoadGafFrameEntry(Buffer, EntryOffsets[i], TextureContainer, PalletteData);
     }
 }
 
@@ -232,119 +293,59 @@ void LoadPalette(GameState * CurrentGameState)
     }
 }
 
-bool32 LoadAllTextures(GameState * CurrentGameState)
+void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * TextureContainer, MemoryArena * TempArena,uint8_t * PaletteData)
 {
-    //Clear Texture data so we can lookup whether a space is free
-    int size=TEXTURE_WIDTH *TEXTURE_HEIGHT*4/4;
-    int32_t * ClearDataPointer=(int32_t *)CurrentGameState->TextureData;
-    for(int i=0;i<size;i++)
-	ClearDataPointer[i]=0xdeadbeef;
+    if(!Textures->IsDirectory)
+    {
+	uint8_t * GafBuffer = PushArray(TempArena, Textures->File.FileSize,uint8_t);
+	LoadHPIFileEntryData(*Textures,GafBuffer,TempArena);
+	LoadTexturesFromGafBuffer(GafBuffer,TextureContainer,PaletteData);
+	PopArray(TempArena, GafBuffer,  Textures->File.FileSize, uint8_t);
+    }
+    else
+    {
+	for(int i=0;i<Textures->Directory.NumberOfEntries;i++)
+	{
+	    if(Textures->Directory.Entries[i].IsDirectory)
+	    {
+		LogWarning("Unexpectedly found directory %s inside textures directory of %s",Textures->Directory.Entries[i].Name, Textures->Directory.Entries[i].ContainedInFile->Name);
+	    }
+	    //uint8_t GafBuffer[Textures->Directory.Entries[i].File.FileSize];
+	    //STACK_ARRAY(GafBuffer,Textures->Directory.Entries[i].File.FileSize,uint8_t);
+	    uint8_t * GafBuffer = PushArray(TempArena, Textures->Directory.Entries[i].File.FileSize,uint8_t);
+	    LoadHPIFileEntryData(Textures->Directory.Entries[i],GafBuffer,TempArena);
+	    LoadTexturesFromGafBuffer(GafBuffer,TextureContainer, PaletteData);
+	    PopArray(TempArena, GafBuffer,Textures->Directory.Entries[i].File.FileSize,uint8_t);
+	}    
+    }
 
+    glGenTextures(1,&TextureContainer->Texture);
+    glBindTexture(GL_TEXTURE_2D,TextureContainer->Texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureContainer->TextureWidth,TextureContainer->TextureHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureContainer->TextureData);
+}
+
+void LoadAllTextures(GameState * CurrentGameState)
+{
     if(!CurrentGameState->PaletteLoaded)
     {
 	LoadPalette(CurrentGameState);
-    }
-    HPIEntry Font = FindEntryInAllFiles("anims/hattfont12.GAF", CurrentGameState);
-    if(Font.IsDirectory)
-    {
-	LogError("Unexpectedly found a directory while trying to load hatfont12.gaf");
-    }
-    else
-    {
-	uint8_t * GafBuffer = PushArray(&CurrentGameState->TempArena, Font.File.FileSize,uint8_t);
-	LoadHPIFileEntryData(Font,GafBuffer,&CurrentGameState->TempArena);
-	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
-	PopArray(&CurrentGameState->TempArena, GafBuffer,  Font.File.FileSize,uint8_t);
-    }
-    
-    Font = FindEntryInAllFiles("anims/hattfont11.GAF", CurrentGameState);
-    if(Font.IsDirectory)
-    {
-	LogError("Unexpectedly found a directory while trying to load hatfont11.gaf");
-    }
-    else
-    {
-	uint8_t * GafBuffer = PushArray(&CurrentGameState->TempArena, Font.File.FileSize,uint8_t);
-	LoadHPIFileEntryData(Font,GafBuffer,&CurrentGameState->TempArena);
-	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
-	PopArray(&CurrentGameState->TempArena, GafBuffer,  Font.File.FileSize,uint8_t);
-    }
-
-    
+    }   
     
     HPIEntry Textures = FindEntryInAllFiles("textures",CurrentGameState);
     if(!Textures.Name)
     {
 	LogWarning("No Textures found in archives");
-	return 0;
+	return;
     }
-    if(!Textures.IsDirectory)
+    else
     {
-	LogError("Found a file instead of a directory while trying to load textures from archives");
-	return 0;
+	LoadAllTexturesFromHPIEntry(&Textures, CurrentGameState->UnitTextures, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
     }
-    for(int i=0;i<Textures.Directory.NumberOfEntries;i++)
-    {
-	if(Textures.Directory.Entries[i].IsDirectory)
-	{
-	    LogWarning("Unexpectedly found directory %s inside textures directory of %s",Textures.Directory.Entries[i].Name,
-		       Textures.Directory.Entries[i].ContainedInFile->Name);
-	}
-	//uint8_t GafBuffer[Textures.Directory.Entries[i].File.FileSize];
-	//STACK_ARRAY(GafBuffer,Textures.Directory.Entries[i].File.FileSize,uint8_t);
-	uint8_t * GafBuffer = PushArray(&CurrentGameState->TempArena, Textures.Directory.Entries[i].File.FileSize,uint8_t);
-	LoadHPIFileEntryData(Textures.Directory.Entries[i],GafBuffer,&CurrentGameState->TempArena);
-	LoadTexturesFromGafBuffer(GafBuffer,CurrentGameState);
-	PopArray(&CurrentGameState->TempArena, GafBuffer,  Textures.Directory.Entries[i].File.FileSize,uint8_t);
-    }
+
     UnloadCompositeEntry(&Textures,&CurrentGameState->TempArena);
-    
-    glGenTextures(1,&CurrentGameState->UnitTexture);
-    glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TEXTURE_WIDTH,TEXTURE_HEIGHT,0, GL_RGBA, GL_UNSIGNED_BYTE, CurrentGameState->TextureData);
-    return 1;
-
-}
-
-inline bool32 TexturePixelFree(int X, int Y,uint8_t * TextureData)
-{
-    return *(int32_t *)&TextureData[(X+Y*TEXTURE_WIDTH)*4]==0xdeadbeef;
 }
 
 
-
-TexturePosition GetAvailableTextureLocation(int Width, int Height, uint8_t *TextureData)
-{
-    static TexturePosition FirstFreeTexture = {};
-    int StartX=FirstFreeTexture.X;
-    for(int Y=FirstFreeTexture.Y;Y<TEXTURE_HEIGHT;Y++)
-    {
-	for(int X=StartX;X<TEXTURE_WIDTH;X++)
-	{
-	    if(Y+Height>=TEXTURE_HEIGHT || X+ Width >= TEXTURE_WIDTH)
-		continue;
-	    //TODO(Christof): figure out a better way to do this without goto
-	    for(int TexY=0;TexY<Height;TexY++)
-	    {
-		for(int TexX=0;TexX<Width;TexX++)
-		{
-		    if(!TexturePixelFree(X+TexX,Y+TexY,TextureData))
-		    {
-			goto next;
-		    }
-		}
-	    }
-	    //NOTE: if texure search has to loop (total textures size -> big texture size) this will get quite slow, should be ok for now though
-	    FirstFreeTexture.X=X;
-	    FirstFreeTexture.Y=Y;
-	    return {X,Y};
-	next:
-	    continue;
-	}
-	StartX=0;
-    }
-    return {-1,-1};
-}
 

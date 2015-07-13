@@ -67,7 +67,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    }
 	    if(CurrentGameState->temp_model->Vertices)
 		Unload3DO(CurrentGameState->temp_model);
-	    Load3DOFromBuffer(temp,CurrentGameState->temp_model,CurrentGameState->NextTexture,CurrentGameState->Textures,&CurrentGameState->GameArena);
+	    Load3DOFromBuffer(temp,CurrentGameState->temp_model,CurrentGameState->UnitTextures,&CurrentGameState->GameArena);
 	    InitTransformationDetails(CurrentGameState->temp_model, CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
 	    int ScriptNum = GetScriptNumberForFunction(CurrentGameState->CurrentUnitScript,"Create");
 	    if(ScriptNum !=-1)
@@ -350,11 +350,6 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->ViewMatrix = PushStruct(GameArena,Matrix);
     CurrentGameState->ModelMatrix = PushStruct(GameArena,Matrix);
 
-    CurrentGameState->MapShader = PushStruct(GameArena, ShaderProgram);
-    CurrentGameState->UnitShader = PushStruct(GameArena, ShaderProgram);
-    CurrentGameState->FontShader = PushStruct(GameArena, ShaderProgram);
-    CurrentGameState->UIElementShaderProgram = PushStruct(GameArena, ShaderProgram);
-
     CurrentGameState->temp_model = PushStruct(GameArena, Object3d);
     CurrentGameState->TestMap = PushStruct(GameArena, TAMap);
     CurrentGameState->GlobalArchiveCollection = PushStruct(GameArena,HPIFileCollection);
@@ -374,12 +369,15 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->CameraTranslation[2] =50.0f;
 
 
-    CurrentGameState->Textures = PushArray(GameArena,MAX_NUMBER_OF_TEXTURE,Texture);
-    CurrentGameState->TextureData = PushArray(GameArena,TEXTURE_HEIGHT*TEXTURE_WIDTH*4,uint8_t);
     CurrentGameState->PaletteData = PushArray(GameArena,1024,uint8_t);
     CurrentGameState->FontBitmap = PushArray(GameArena,FONT_BITMAP_SIZE*FONT_BITMAP_SIZE,uint8_t);
+    CurrentGameState->UnitTextures = PushStruct(GameArena, TextureContainer);
     CurrentGameState->Units.Details = PushArray(GameArena,MAX_UNITS_LOADED,UnitDetails);
+    
+    CurrentGameState->Font11 = PushStruct(GameArena, TextureContainer);
+    CurrentGameState->Font12 = PushStruct(GameArena, TextureContainer);
 
+     
     CurrentGameState->Times32 = PushStruct(GameArena,FontDetails);
     CurrentGameState->Times24 = PushStruct(GameArena,FontDetails);
     CurrentGameState->Times16 = PushStruct(GameArena,FontDetails);
@@ -393,9 +391,10 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->ScriptBackground = PushStruct(GameArena, UIElement);
     *CurrentGameState->ScriptBackground = SetupUIElement(float(CurrentGameState->ScreenWidth -240),0, 240, float(CurrentGameState->ScreenHeight), 0,0,0, 1,1,1, 1.0, 1.0);
 
-    CurrentGameState->UnitIndex=13;
+    CurrentGameState->UnitIndex=14;
 
     CurrentGameState->FontShaderDetails = PushStruct(GameArena, FontShaderDetails);
+    CurrentGameState->DrawTextureShaderDetails = PushStruct(GameArena, Texture2DShaderDetails);
     CurrentGameState->Fonts = PushArray(GameArena, MAX_TA_FONT_NUMBER, FNTFont);
     CurrentGameState->Shaders = PushArray(GameArena, MAX_SHADER_NUMBER, ShaderProgram);
 										     
@@ -480,7 +479,7 @@ extern "C"
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glUseProgram(CurrentGameState->UnitShader->ProgramID);
-	glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTexture);
+	glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTextures->Texture);
 	CurrentGameState->ProjectionMatrix->Upload(CurrentGameState->ProjectionMatrixLocation);
 
 
@@ -569,12 +568,17 @@ extern "C"
 	for(int i=0;i<CurrentGameState->CurrentUnitScript->NumberOfFunctions;i++)
 	    DrawOnScreenText(CurrentGameState->UnitDetailsText[i], CurrentGameState->FontShader, CurrentGameState->FontPositionLocation, CurrentGameState->FontColorLocation);
 
-	int X=0;
-	for(int i=0;i<100;i++)
+	int X=0, bX=0;
+	int Width, Height;
+	for(int i=150;i<256;i++)
 	{
-	    DrawCharacter(i, CurrentGameState->FontShaderDetails, CurrentGameState->FontVertexBuffer,  X,0, {1.0,1.0,0.0}, 1.0, &CurrentGameState->Fonts[0]);
+	    DrawCharacter(i, CurrentGameState->DrawTextureShaderDetails,  X,0, {1.0,1.0,1.0}, 1.0, &CurrentGameState->Fonts[0]);
+	 //   DrawBitmapCharacter(i, CurrentGameState->DrawTextureShaderDetails, CurrentGameState->Font11, X, 30, {1.0, 0.0, 0.0}, 1.0);
+	    DrawBitmapCharacter(i, CurrentGameState->DrawTextureShaderDetails, CurrentGameState->Font12, bX, 30, {1.0, 1.0, 1.0}, 1.0, &Width, &Height);
+	    bX+=Width;
 	    X+=CurrentGameState->Fonts[0].Characters[i].Width;
-	}	
+	}
+
 	CurrentGameState->NumberOfFrames++;
     }
 

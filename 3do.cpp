@@ -698,7 +698,7 @@ int Count3DOChildren(uint8_t * Buffer,FILE_Object3dHeader * header)
 
 
 
-bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Texture * Textures, MemoryArena * GameArena, int Offset=0)
+bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object, TextureContainer * TextureContainer, MemoryArena * GameArena, int Offset=0)
 {
     FILE_Object3dHeader * header = (FILE_Object3dHeader *)(Buffer+Offset);
     if(header->Version != 1)
@@ -731,7 +731,7 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     {
 	if(CurrentPrimitive->OffsetToTextureName)
 	{
-	    Object->Primitives[i].Texture = GetTexture((char*)Buffer+CurrentPrimitive->OffsetToTextureName,NextTexture,Textures);
+	    Object->Primitives[i].Texture = GetTexture((char*)Buffer+CurrentPrimitive->OffsetToTextureName,TextureContainer);
 	    if(!Object->Primitives[i].Texture)
 	    {
 		LogError("Could not get texture for primitive %d in %s, %s",i,Object->Name,Buffer+CurrentPrimitive->OffsetToTextureName);
@@ -771,7 +771,7 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object,int NextTexture,Tex
     int ChildOffset=header->OffsetToChildObject;
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	Load3DOFromBuffer(Buffer, &(Object->Children[i]),NextTexture,Textures,GameArena,ChildOffset);
+	Load3DOFromBuffer(Buffer, &(Object->Children[i]),TextureContainer,GameArena,ChildOffset);
 	header = (FILE_Object3dHeader *)(Buffer+ChildOffset);
 	ChildOffset=header->OffsetToSiblingObject;
     }

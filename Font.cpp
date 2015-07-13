@@ -24,16 +24,6 @@ struct FNTFont
     FNTGlyph Characters[256];
 };
 
-
-union FontColor
-{
-    struct
-    {
-	float Red,Green,Blue;
-    };
-    float Contents[3];
-};
-
 struct FontShaderDetails
 {
     GLuint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation;
@@ -54,9 +44,9 @@ void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * Text
 	for(int i=7;i>=0;i--)
 	{
 	    int bit = ImageData[ByteOffset]&(1<<i);
-	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+0] = 0;
-	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+1] = 0;
-	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+2] = 0;
+	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+0] = 255;
+	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+1] = 255;
+	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+2] = 255;
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+3] = bit*255;
 	    X++;
 	    if(X>=Width)
@@ -106,30 +96,9 @@ void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * Current
 }
 
 
-void DrawCharacter(char Character, FontShaderDetails * ShaderDetails, GLuint VertexBuffer , float X, float Y, FontColor Color, float Alpha, FNTFont * Font )
+void DrawCharacter(uint8_t Character, Texture2DShaderDetails * ShaderDetails, float X, float Y, Color Color, float Alpha, FNTFont * Font )
 {
-    if(ShaderDetails->Program->ProgramID)
-    {
-	glUseProgram(ShaderDetails->Program->ProgramID);
-	glUniform3fv(ShaderDetails->ColorLocation,1,Color.Contents);
-	glUniform2f(ShaderDetails->PositionLocation,X,Y);
-	glUniform1f(ShaderDetails->AlphaLocation,Alpha);
-	glUniform2f(ShaderDetails->TextureOffsetLocation,Font->Characters[Character].U, Font->Characters[Character].TextureWidth);
-	glUniform2f(ShaderDetails->SizeLocation,Font->Characters[Character].Width, Font->Height);
-		 
-	glBindVertexArray(VertexBuffer);
-	glBindTexture(GL_TEXTURE_2D,Font->Texture);
-	glDrawArrays(GL_TRIANGLES,0,6);
-    }
-    else
-    {
-	static uint8_t Once = 1;
-	if(Once)
-	{
-	    Once=0;
-	    LogWarning("Font shader not loaded, ignoring font rendering calls");
-	}
-    }
+    DrawTexture2D(Font->Texture, X,Y, Font->Characters[Character].Width, Font->Height, Color, Alpha, ShaderDetails, Font->Characters[Character].U, 0.0f,  Font->Characters[Character].TextureWidth, 1.0f);
 }
 
 
@@ -137,7 +106,7 @@ void SetupFontRendering(GameState * CurrentGameState)
 {
     GLfloat RenderData[6*(2+2)];//6 Vert (2 triangles) each 2 position coords and 2 texture coords
     
-    glGenVertexArrays(1,&CurrentGameState->FontVertexBuffer);
+    glGenVertexArrays(1,&CurrentGameState->Draw2DVertexBuffer);
 
     GLfloat Vertices[]={0,0, 1,0, 1,1, 0,1};
 
@@ -164,7 +133,7 @@ void SetupFontRendering(GameState * CurrentGameState)
     }
 		      
     
-    glBindVertexArray(CurrentGameState->FontVertexBuffer);
+    glBindVertexArray(CurrentGameState->Draw2DVertexBuffer);
 
     GLuint VertexBuffer;
     glGenBuffers(1,&VertexBuffer);
@@ -179,4 +148,53 @@ void SetupFontRendering(GameState * CurrentGameState)
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
+    CurrentGameState->DrawTextureShaderDetails->VertexBuffer = CurrentGameState->Draw2DVertexBuffer;
+}
+
+
+void LoadGafFonts(GameState * CurrentGameState)
+{
+    SetupTextureContainer(CurrentGameState->Font11, 1700, 15, 1, &CurrentGameState->GameArena);
+    SetupTextureContainer(CurrentGameState->Font12, 2200, 18, 1, &CurrentGameState->GameArena);
+    
+    if(!CurrentGameState->PaletteLoaded)
+    {
+	LoadPalette(CurrentGameState);
+    }
+    HPIEntry Font = FindEntryInAllFiles("anims/hattfont12.GAF", CurrentGameState);
+    if(Font.IsDirectory)
+    {
+	LogError("Unexpectedly found a directory while trying to load hatfont12.gaf");
+    }
+    else
+    {
+	LoadAllTexturesFromHPIEntry(&Font, CurrentGameState->Font12, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
+    }
+    
+    Font = FindEntryInAllFiles("anims/hattfont11.GAF", CurrentGameState);
+    if(Font.IsDirectory)
+    {
+	LogError("Unexpectedly found a directory while trying to load hatfont11.gaf");
+    }
+    else
+    {
+	LoadAllTexturesFromHPIEntry(&Font, CurrentGameState->Font11, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
+    }
+}
+
+
+void DrawBitmapCharacter(uint8_t Character, Texture2DShaderDetails * ShaderDetails, TextureContainer * TextureContainer, float X, float Y, Color Color, float Alpha, int * oWidth, int *oHeight)
+{
+    Texture tex = TextureContainer->Textures[0];
+    float Width = tex.Widths[Character] * TextureContainer->TextureWidth;
+    float Height = tex.Heights[Character] * TextureContainer->TextureHeight;
+    *oWidth = (int)ceil(Width);
+    *oHeight = (int)ceil(Height);
+    float U = tex.U;
+    float V = tex.V;
+    for(int i=0;i<Character;i++)
+    {
+	U+= tex.Widths[i];
+    }
+    DrawTexture2D(TextureContainer->Texture, X, Y-Height, Width, Height, Color, Alpha, ShaderDetails, U, V, tex.Widths[Character], tex.Heights[Character]);
 }

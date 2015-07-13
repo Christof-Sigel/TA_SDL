@@ -329,8 +329,46 @@ inline GLint GetUniformLocation(ShaderProgram * Program, const char * UniformNam
 }
 
 
+union Color
+{
+    struct
+    {
+	float Red,Green,Blue;
+    };
+    float Contents[3];
+};
+
 struct Texture2DShaderDetails
 {
     GLuint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation, TextureSizeLocation;
-    ShaderProgram Program;
+    ShaderProgram * Program;
+    GLuint VertexBuffer;
 };
+
+
+void DrawTexture2D(GLuint Texture, float X, float Y, float Width, float Height, Color Color, float Alpha, Texture2DShaderDetails * ShaderDetails, float U, float V, float TextureWidth, float TextureHeight)
+{
+    if(ShaderDetails->Program->ProgramID)
+    {
+	glUseProgram(ShaderDetails->Program->ProgramID);
+	glUniform3fv(ShaderDetails->ColorLocation,1,Color.Contents);
+	glUniform2f(ShaderDetails->PositionLocation,X,Y);
+	glUniform1f(ShaderDetails->AlphaLocation,Alpha);
+	glUniform2f(ShaderDetails->TextureOffsetLocation, U,V);
+	glUniform2f(ShaderDetails->TextureSizeLocation, TextureWidth,TextureHeight);
+	glUniform2f(ShaderDetails->SizeLocation,Width, Height);
+		 
+	glBindVertexArray(ShaderDetails->VertexBuffer);
+	glBindTexture(GL_TEXTURE_2D,Texture);
+	glDrawArrays(GL_TRIANGLES,0,6);
+    }
+    else
+    {
+	static uint8_t Once = 1;
+	if(Once)
+	{
+	    Once=0;
+	    LogWarning("2D Texture shader not loaded, ignoring font rendering calls");
+	}
+    }
+}

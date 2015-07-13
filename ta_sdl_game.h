@@ -152,13 +152,12 @@ struct GameState
 
     struct HPIFileCollection * GlobalArchiveCollection;
     
-    struct Texture * Textures;
-    int NextTexture;
-    uint8_t * TextureData;
+    struct TextureContainer * UnitTextures;
+    struct TextureContainer * Font11;
+    struct TextureContainer * Font12;
 
     uint8_t * PaletteData;
     bool32 PaletteLoaded;
-    GLuint UnitTexture;
     uint8_t * FontBitmap;
 
     struct ScreenText * NameAndDescText;
@@ -181,15 +180,17 @@ struct GameState
     GLuint DebugAxisBuffer;
     struct FontShaderDetails * FontShaderDetails;
     struct FNTFont * Fonts;
-    GLuint FontVertexBuffer;
+    GLuint Draw2DVertexBuffer;
+    struct Texture2DShaderDetails * DrawTextureShaderDetails;
+    
 
     struct ShaderProgram * Shaders;
     int NumberOfShaders;
 };
 
-const int TEXTURE_WIDTH=4096;
-const int TEXTURE_HEIGHT=1024;
-const int MAX_NUMBER_OF_TEXTURE=1024;
+const int UNIT_TEXTURE_WIDTH=2048;
+const int UNIT_TEXTURE_HEIGHT=1024;
+const int UNIT_MAX_TEXTURES=1024;
 
 
 const float TA_TO_GL_SCALE=1.0f/168340.0f;
