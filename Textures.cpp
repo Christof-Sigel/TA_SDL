@@ -36,6 +36,18 @@ struct FILE_GafFrameData
     int32_t FrameDataOffset;
     int32_t Unknow3;//completely unknown
 };
+
+struct FILE_PCXHeader
+{
+    uint8_t Manufacturer;//should always be 0x0A
+    uint8_t Version;
+    uint8_t Encoding;
+    uint8_t BitsPerPlane;
+    uint16_t XMin, YMin, XMax, YMax, VerticalDPIOrResolution, HorizontalDPIOrResolution /* this can apparently be ommitted??? */;
+    uint8_t palette[48], reserved, ColorPlanes;
+    uint16_t BytesPerPlaneLine, PalletteType, HorizontalScrSize, VerticalScrSize;
+    uint8_t Pad[54];
+};
 #pragma pack(pop)
 
 
@@ -367,3 +379,50 @@ void LoadAllTextures(GameState * CurrentGameState)
 
 
 
+
+Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * FileName, GameState * CurrentGameState)
+{
+    HPIEntry PCX = FindEntryInAllFiles(FileName, CurrentGameState);
+    if(PCX.IsDirectory)
+    {
+	LogError("Unexpectedly found a directory while trying to load %s", FileName);
+    }
+    else
+    {
+	uint8_t * PCXBuffer = PushArray(&CurrentGameState->TempArena, PCX.File.FileSize,uint8_t);
+	LoadHPIFileEntryData(PCX,PCXBuffer,&CurrentGameState->TempArena);
+
+	FILE_PCXHeader * Header = (FILE_PCXHeader*)PCXBuffer;
+	int Width = Header->XMax - Header->XMin +1;
+	int Height = Header->YMax - Header->YMin +1;
+	if(Header->BitsPerPlane != 8 || Header->Encoding != 1 || Header->ColorPlanes != 1 || Header->PalletteType != 1 || Header->BytesPerPlaneLine != Width)
+	{
+	    LogError("Unsupported PCX %s not loaded.", FileName);
+	    PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	    return 0;
+	}
+
+	uint8_t * PaletteData = PCXBuffer + (PCX.File.FileSize -768);
+	if(*(PaletteData -1)!=0x0C)
+	{
+	    LogError("Could not find expected palette in PCX %s", FileName);
+	    PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	    return 0;
+	}
+
+	TexturePosition PCXPos = GetAvailableTextureLocation(Width, Height, Textures);
+
+	if(PCXPos.X == -1)
+	{
+	    LogError("Could not fit %s into texture",FileName);
+	    PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	    return 0;
+	}
+
+	
+
+	PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+    }
+
+    return 0;
+}

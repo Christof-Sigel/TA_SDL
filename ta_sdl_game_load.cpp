@@ -185,6 +185,17 @@ extern "C"{
 		LoadFNTFont(temp, &CurrentGameState->Fonts[0], Entry.File.FileSize, CurrentGameState);
 	    }
 	}
+
+	Entry = FindEntryInAllFiles("guis/mainmenu.gui", CurrentGameState);
+	if(!Entry.IsDirectory)
+	{
+	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);
+	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
+	    {
+		TAUIElement * MaingGUI = LoadGUIFromBuffer((char*)temp, (char*)temp+Entry.File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,Entry.Name, CurrentGameState);
+	    }
+	}
+
 	CurrentGameState->StartTime= GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
     }
 
