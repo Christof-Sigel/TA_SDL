@@ -55,18 +55,21 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, MemoryAre
     }
     
     Script->PieceNames = PushArray(GameArena, Script->NumberOfPieces, char*);
-    Script->PieceNames[0] = PushArray(GameArena, Script->NumberOfPieces * SCRIPT_NAME_STORAGE_SIZE, char);
-    for(int i=1;i<Script->NumberOfPieces;i++)
+    if(Script->PieceNames)
     {
-	Script->PieceNames[i] = Script->PieceNames[0] + SCRIPT_NAME_STORAGE_SIZE*i; 
-    }
-    NameOffsetArray = (int32_t *)(Buffer + Header->OffsetToPieceNameOffsetArray);
-    for(int i=0;i<Script->NumberOfPieces;i++)
-    {
-	int Length = (int)strlen((char*)Buffer + NameOffsetArray[i]);
-	Length= Length<SCRIPT_NAME_STORAGE_SIZE?Length:SCRIPT_NAME_STORAGE_SIZE-1;
-	memcpy(Script->PieceNames[i],Buffer + NameOffsetArray[i], Length);
-	Script->PieceNames[i][Length]=0;
+	Script->PieceNames[0] = PushArray(GameArena, Script->NumberOfPieces * SCRIPT_NAME_STORAGE_SIZE, char);
+	for(int i=1;i<Script->NumberOfPieces;i++)
+	{
+	    Script->PieceNames[i] = Script->PieceNames[0] + SCRIPT_NAME_STORAGE_SIZE*i; 
+	}
+	NameOffsetArray = (int32_t *)(Buffer + Header->OffsetToPieceNameOffsetArray);
+	for(int i=0;i<Script->NumberOfPieces;i++)
+	{
+	    int Length = (int)strlen((char*)Buffer + NameOffsetArray[i]);
+	    Length= Length<SCRIPT_NAME_STORAGE_SIZE?Length:SCRIPT_NAME_STORAGE_SIZE-1;
+	    memcpy(Script->PieceNames[i],Buffer + NameOffsetArray[i], Length);
+	    Script->PieceNames[i][Length]=0;
+	}
     }
 
 
@@ -642,10 +645,32 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    break;
 	    //TODO(Christof): bounds checks on local/static vars
 	case COB_PUSH_LOCAL_VARIABLE:
-	    PushStack(State, State->LocalVariables[PostData(Script,State)]);
-	    break;
+	{
+	    int32_t Index = PostData(Script,State);
+	    if(Index>=State->NumberOfLocalVariables)
+	    {
+		LogError("Trying to push the value of local variable %d, but only %d exist, pushoing 0 instead", Index, State->NumberOfLocalVariables);
+		PushStack(State,0);
+	    }
+	    else
+	    { 
+		PushStack(State, State->LocalVariables[Index]);
+	    }
+	}
+	break;
 	case COB_PUSH_STATIC_VARIABLE:
-	    PushStack(State, State->StaticVariables[PostData(Script,State)]);
+	{
+	    int32_t Index = PostData(Script,State);
+	    if(Index >= State->NumberOfStaticVariables)
+	    {
+	    	LogError("Trying to push the value of static variable %d, but only %d exist, pushoing 0 instead", Index, State->NumberOfStaticVariables);
+		PushStack(State, 0);
+	    }
+	    else
+	    { 
+		PushStack(State, State->StaticVariables[Index]);
+	    }
+	}
 	    break;
 	case COB_POP_LOCAL_VARIABLE:
 	{
