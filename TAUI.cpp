@@ -36,7 +36,7 @@ struct TAUIButton
 {
     int StartingFrame;//pulls from status
     int Stages;
-    char * Text;// | seperator for multistage buttons, enter aligned for simple (single stage) buttons, right aligned otherwise
+    char * Text;// | seperator for multistage buttons, center aligned for simple (single stage) buttons, right aligned otherwise
     uint8_t Disabled;//pulls from grayedout
 };
 
@@ -76,3 +76,26 @@ TAUIElement LoadGUIFromBuffer(char * Buffer)
     return{0};
 }
 
+
+void LoadCommonUITextures(GameState * CurrentGameState)
+{
+    SetupTextureContainer(CurrentGameState->CommonGUITextures, COMMONUI_TEXTURE_WIDTH, COMMONUI_TEXTURE_HEIGHT, COMMONUI_MAX_TEXTURES, &CurrentGameState->GameArena);
+        if(!CurrentGameState->PaletteLoaded)
+    {
+	LoadPalette(CurrentGameState);
+    }
+    HPIEntry CommonUI = FindEntryInAllFiles("anims/commonGUI.GAF", CurrentGameState);
+    if(CommonUI.IsDirectory)
+    {
+	LogError("Unexpectedly found a directory while trying to load hatfont12.gaf");
+    }
+    else if(!CommonUI.Name)
+    {
+	LogError("Failed to get commonGUI.gaf");
+    }
+    else
+    {
+	LoadAllTexturesFromHPIEntry(&CommonUI, CurrentGameState->CommonGUITextures, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
+    }
+
+}

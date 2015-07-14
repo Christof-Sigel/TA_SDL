@@ -186,11 +186,16 @@ struct GameState
 
     struct ShaderProgram * Shaders;
     int NumberOfShaders;
+    struct TextureContainer * CommonGUITextures;
 };
 
 const int UNIT_TEXTURE_WIDTH=2048;
 const int UNIT_TEXTURE_HEIGHT=1024;
 const int UNIT_MAX_TEXTURES=1024;
+
+const int COMMONUI_TEXTURE_WIDTH=4096;
+const int COMMONUI_TEXTURE_HEIGHT=1024;
+const int COMMONUI_MAX_TEXTURES=1024;
 
 
 const float TA_TO_GL_SCALE=1.0f/168340.0f;

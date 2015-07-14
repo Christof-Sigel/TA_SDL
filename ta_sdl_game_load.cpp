@@ -121,7 +121,9 @@ extern "C"{
         
 	LoadHPIFileCollection(CurrentGameState);
 	SetupTextureContainer(CurrentGameState->UnitTextures, UNIT_TEXTURE_WIDTH, UNIT_TEXTURE_HEIGHT, UNIT_MAX_TEXTURES, &CurrentGameState->GameArena);
+	LoadCommonUITextures(CurrentGameState);
 	LoadGafFonts(CurrentGameState);
+	
 		
 	LoadAllTextures(CurrentGameState);
 

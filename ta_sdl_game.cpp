@@ -397,6 +397,8 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->DrawTextureShaderDetails = PushStruct(GameArena, Texture2DShaderDetails);
     CurrentGameState->Fonts = PushArray(GameArena, MAX_TA_FONT_NUMBER, FNTFont);
     CurrentGameState->Shaders = PushArray(GameArena, MAX_SHADER_NUMBER, ShaderProgram);
+
+    CurrentGameState->CommonGUITextures = PushStruct(GameArena, TextureContainer);
 										     
 
     
