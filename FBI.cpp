@@ -198,6 +198,11 @@ void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, MemoryArena *
     }
     while(*Start!='}')
     {
+	if(UnitDeets->DetailsSize >= MAX_UNIT_DETAILS)
+	{
+	    LogError("More than %d unit details",MAX_UNIT_DETAILS);
+	    return;
+	}
 	char * Name=Start;
 	while(*++Start != '=');
 	*Start = 0;
