@@ -46,6 +46,8 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
     Arena->TempCount = 0;
 }
 
+
+
 #define VERBOSE_ALLOCATIONS 0
 
 #if VERBOSE_ALLOCATIONS
@@ -53,6 +55,8 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 #define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (Count)*sizeof(type),__func__,__LINE__,__FILE__)
 #define PushSize(Arena, Size) PushSize_(Arena, Size,__func__,__LINE__,__FILE__)
 #define PopArray(Arena, Memory, Count, type) PopSize_(Arena,Memory,(Count)*sizeof(type),__func__,__LINE__,__FILE__)
+#define PushSubArena(Arena, Size) PushSubArena_(Arena,Size,__func__,__LINE__,__FILE__)
+#define PopSubArena(Arena, SubArena) PopSubArena_(Arena, SubArena,__func__,__LINE__,__FILE__)
 
 inline void *
 PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, const char * file)
@@ -67,6 +71,13 @@ PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, 
     return(Result);
 }
 
+MemoryArena * PushSubArena_(MemoryArena * Arena, memory_index Size, const char * caller, int line, const char * file)
+{
+    MemoryArena * Result = (MemoryArena*)PushSize_(Arena, Size+sizeof(MemoryArena),  caller,  line, file);
+    InitializeArena(Result, Size, Result+sizeof(MemoryArena));
+    return Result;
+}
+
 
 inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, const char * caller, int line, const char * file)
 {
@@ -77,6 +88,11 @@ inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, cons
 	return;
     }
     Arena->Used -=Size;
+}
+
+void PopSubArena_(MemoryArena * Arena, MemoryArena * SubArena ,const char * caller, int line, const char * file)
+{
+    PopSize_(Arena, SubArena, SubArena->Size+sizeof(MemoryArena), caller,  line, file);
 }
 
 
@@ -99,6 +115,13 @@ PushSize_(MemoryArena *Arena, memory_index Size)
     return(Result);
 }
 
+MemoryArena * PushSubArena(MemoryArena * Arena, memory_index Size)
+{
+    MemoryArena * Result = (MemoryArena*)PushSize_(Arena, Size+sizeof(MemoryArena));
+    InitializeArena(Result, Size, Result+sizeof(MemoryArena));
+    return Result;
+}
+
 inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
 {
     if((uint64_t)Memory + Size != Arena->Used + (uint64_t)Arena->Base)
@@ -108,6 +131,12 @@ inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
     }
     Arena->Used -=Size;
 }
+
+void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
+{
+    PopSize_(Arena, SubArena, SubArena->Size+sizeof(MemoryArena));
+}
+
 
 #endif
 #define MAX_UNITS_LOADED 1024
