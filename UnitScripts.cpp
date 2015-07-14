@@ -648,10 +648,31 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    PushStack(State, State->StaticVariables[PostData(Script,State)]);
 	    break;
 	case COB_POP_LOCAL_VARIABLE:
-	    State->LocalVariables[PostData(Script,State)] = PopStack(State);
+	{
+	    int32_t Index = PostData(Script,State);
+	    if(Index >= State->NumberOfLocalVariables)
+	    {
+		LogError("Trying to set local variable %d to %d, but only %d exists!", Index,	PopStack(State),  State->NumberOfLocalVariables);
+	    }
+	    else
+	    {
+		State->LocalVariables[Index] = PopStack(State);
+	    }
+	}
 	    break;
 	case COB_POP_STATIC_VARIABLE:
-	    State->StaticVariables[PostData(Script,State)] = PopStack(State);
+	    	{
+	    int32_t Index = PostData(Script,State);
+	    if(Index >= State->NumberOfStaticVariables)
+	    {
+		LogError("Trying to set local variable %d to %d, but only %d exists!", Index,	PopStack(State),  State->NumberOfStaticVariables);
+	    }
+	    else
+	    {
+		State->StaticVariables[Index] = PopStack(State);
+	    }
+	}
+	    
 	    break;
 	case COB_ADD:
 	    PushStack(State, PopStack(State)+PopStack(State));
