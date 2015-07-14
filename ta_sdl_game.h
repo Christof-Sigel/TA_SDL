@@ -57,6 +57,8 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 inline void *
 PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, const char * file)
 {
+    if(Size ==0)
+	return 0;
     Assert((Arena->Used + Size) <= Arena->Size);
     printf("Allocating %d from %s in %s:%d\n",Size,caller, file,line);
     void *Result = Arena->Base + Arena->Used;
@@ -88,6 +90,8 @@ inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, cons
 inline void *
 PushSize_(MemoryArena *Arena, memory_index Size)
 {
+    if(Size ==0)
+	return 0;
     Assert((Arena->Used + Size) <= Arena->Size);
     void *Result = Arena->Base + Arena->Used;
     Arena->Used += Size;
