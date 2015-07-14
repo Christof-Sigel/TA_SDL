@@ -193,7 +193,7 @@ struct ShaderProgram
 };
 
 static ShaderProgram NullShader
-= {0,0,0,0,0,0,0};
+= {0,0,0,0,0,{0},{0}};
 
 
 inline GLuint LoadShader(GLenum Type,MemoryMappedFile ShaderFile, const

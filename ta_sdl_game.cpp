@@ -574,9 +574,9 @@ extern "C"
 	int Width, Height;
 	for(int i=150;i<256;i++)
 	{
-	    DrawCharacter(i, CurrentGameState->DrawTextureShaderDetails,  X,0, {1.0,1.0,1.0}, 1.0, &CurrentGameState->Fonts[0]);
+	    DrawCharacter(i, CurrentGameState->DrawTextureShaderDetails,  X,0, {{1.0,1.0,1.0}}, 1.0, &CurrentGameState->Fonts[0]);
 	 //   DrawBitmapCharacter(i, CurrentGameState->DrawTextureShaderDetails, CurrentGameState->Font11, X, 30, {1.0, 0.0, 0.0}, 1.0);
-	    DrawBitmapCharacter(i, CurrentGameState->DrawTextureShaderDetails, CurrentGameState->Font12, bX, 30, {1.0, 1.0, 1.0}, 1.0, &Width, &Height);
+	    DrawBitmapCharacter(i, CurrentGameState->DrawTextureShaderDetails, CurrentGameState->Font12, bX, 30, {{1.0, 1.0, 1.0}}, 1.0, &Width, &Height);
 	    bX+=Width;
 	    X+=CurrentGameState->Fonts[0].Characters[i].Width;
 	}
