@@ -134,8 +134,8 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContai
 		}
 	    }
 	    //NOTE: if texure search has to loop (total textures size -> big texture size) this will get quite slow, should be ok for now though
-	    TextureContainer->FirstFreeTexture.X=X;
 	    TextureContainer->FirstFreeTexture.Y=Y;
+	    TextureContainer->FirstFreeTexture.X=X;
 	    return {X,Y};
 	next:
 	    continue;
@@ -395,14 +395,14 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	FILE_PCXHeader * Header = (FILE_PCXHeader*)PCXBuffer;
 	int Width = Header->XMax - Header->XMin +1;
 	int Height = Header->YMax - Header->YMin +1;
-	if(Header->BitsPerPlane != 8 || Header->Encoding != 1 || Header->ColorPlanes != 1 || Header->PalletteType != 1 || Header->BytesPerPlaneLine != Width)
+	if(Header->BitsPerPlane != 8 || Header->Encoding != 1 || Header->ColorPlanes != 1 || Header->PalletteType != 1 || Header->BytesPerPlaneLine != Width || Header->YMin != 0 || Header->XMin !=0 || Header->Version != 5)
 	{
 	    LogError("Unsupported PCX %s not loaded.", FileName);
 	    PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
 	    return 0;
 	}
 
-	uint8_t * PaletteData = PCXBuffer + (PCX.File.FileSize -768);
+	uint8_t * PaletteData = PCXBuffer + (PCX.File.FileSize - (256*3));
 	if(*(PaletteData -1)!=0x0C)
 	{
 	    LogError("Could not find expected palette in PCX %s", FileName);
@@ -414,14 +414,70 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 
 	if(PCXPos.X == -1)
 	{
-	    LogError("Could not fit %s into texture",FileName);
+	    LogError("Could not fit %s into texture (%dx%d)",FileName,Width,Height);
 	    PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
 	    return 0;
 	}
 
-	
+	int X=0, Y=0;
+	uint8_t * ImageBuffer = PCXBuffer + 0x80;
+	uint8_t * TextureData = PushArray(&CurrentGameState->TempArena, Width*Height*4, uint8_t) ;
 
+	//TODO(Christof): Transparency, might be default TA blue, or the horrible FF00FF pink
+	while(ImageBuffer < PaletteData && Y<Height)
+	{
+	    uint8_t ColorOrCount = *ImageBuffer++;
+	    if((ColorOrCount & 0xC0) == 0xC0)
+	    {
+		int count = ColorOrCount & 0x3F;
+		int ColorIndex = *ImageBuffer++;
+		while(count-->0)
+		{
+		   
+			TextureData[(X+Y*Width)*4+0]=PaletteData[ColorIndex*3+0];
+			TextureData[(X+Y*Width)*4+1]=PaletteData[ColorIndex*3+1];
+			TextureData[(X+Y*Width)*4+2]=PaletteData[ColorIndex*3+2];
+			TextureData[(X+Y*Width)*4+3]=255;
+		  
+		    X++;
+		}
+	    }
+	    else
+	    {
+		int ColorIndex = ColorOrCount;
+	
+		    TextureData[(X+Y*Width)*4+0]=PaletteData[ColorIndex*3+0];
+		    TextureData[(X+Y*Width)*4+1]=PaletteData[ColorIndex*3+1];
+		    TextureData[(X+Y*Width)*4+2]=PaletteData[ColorIndex*3+2];
+		    TextureData[(X+Y*Width)*4+3]=255;
+		
+		
+		X++;
+	    }
+	    if(X>=Width)
+	    {
+		X=0;
+		Y++;
+	    }
+	}
+
+	glBindTexture(GL_TEXTURE_2D, Textures->Texture);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, PCXPos.X, PCXPos.Y, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
+	
+	PopArray(&CurrentGameState->TempArena, TextureData,  Width*Height*4, uint8_t);
 	PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+
+	int NextTexture = Textures->NumberOfTextures;
+	Textures->Textures[NextTexture].Widths[0]=Width/float( Textures->TextureWidth);
+	Textures->Textures[NextTexture].Heights[0]=Height/float( Textures->TextureHeight);
+	Textures->Textures[NextTexture].X[0]=0;
+	Textures->Textures[NextTexture].Y[0]=0;
+	Textures->Textures[NextTexture].U=PCXPos.X/float(Textures->TextureWidth);
+	Textures->Textures[NextTexture].V=PCXPos.Y/float(Textures->TextureHeight);
+	Textures->Textures[NextTexture].NumberOfFrames = 1;
+	
+	
+	return &Textures->Textures[Textures->NumberOfTextures++];
     }
 
     return 0;

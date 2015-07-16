@@ -320,26 +320,10 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 
 TAUIElement * LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, char * FileName, GameState * CurrentGameState)
 {
-    MemoryArena * UIElementsArena = PushSubArena(TempArena, 16 * 1024);
-    FILE_UIElement * First = LoadUIElementsFromBuffer(&Buffer, End, UIElementsArena);
-
-    if(GetIntValue(GetSubElement(First,"common"),"ID") != 0)
-    {
-	LogError("First UI element is not a container (%d)!",GetIntValue(GetSubElement(First,"common"),"ID"));
-	return 0;
-    }
-
-    TAUIElement * Container = PushStruct(Arena, TAUIElement);
     TextureContainer * Textures =PushStruct(Arena, TextureContainer);
-    SetupTextureContainer(Textures, 512,512, 40, Arena);
-    LoadElementFromTree(Container, First, Arena, Textures, CurrentGameState);
+    SetupTextureContainer(Textures, 1024,1024, 40, Arena);
 
-    TAUIContainer * ContainerDetails = (TAUIContainer *)Container->Details;
-    ContainerDetails->NumberOfElements = CountElements(First)-1;
-    ContainerDetails->Elements = PushArray(Arena, ContainerDetails->NumberOfElements, TAUIElement);
-    ContainerDetails->Textures = Textures;
-
-
+    
     int len=snprintf(0,0,"anims/%s",FileName)+1;
     STACK_ARRAY(GafFileName,len,char);
     snprintf(GafFileName,len,"anims/%s",FileName);
@@ -358,20 +342,43 @@ TAUIElement * LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, 
     }
     else
     {
-	LoadAllTexturesFromHPIEntry(&UITextures, ContainerDetails->Textures, TempArena, CurrentGameState->PaletteData);
+	LoadAllTexturesFromHPIEntry(&UITextures, Textures, TempArena, CurrentGameState->PaletteData);
     }
+    MemoryArena * UIElementsArena = PushSubArena(TempArena, 16 * 1024);
+    FILE_UIElement * First = LoadUIElementsFromBuffer(&Buffer, End, UIElementsArena);
+
+    if(GetIntValue(GetSubElement(First,"common"),"ID") != 0)
+    {
+	LogError("First UI element is not a container (%d)!",GetIntValue(GetSubElement(First,"common"),"ID"));
+	return 0;
+    }
+
+    TAUIElement * Container = PushStruct(Arena, TAUIElement);
+    LoadElementFromTree(Container, First, Arena, Textures, CurrentGameState);
+
+    TAUIContainer * ContainerDetails = (TAUIContainer *)Container->Details;
+    ContainerDetails->NumberOfElements = CountElements(First)-1;
+    ContainerDetails->Elements = PushArray(Arena, ContainerDetails->NumberOfElements, TAUIElement);
+    ContainerDetails->Textures = Textures;
+
+    for(int i=0;i<ContainerDetails->NumberOfElements;i++)
+    {
+	LoadElementFromTree(&ContainerDetails->Elements[i], GetNthElement(First, i+1), Arena, Textures, CurrentGameState);
+    }
+
+  
 
 
     
     PopSubArena(TempArena, UIElementsArena);
-    return 0;
+    return Container;
 }
 
 
 void LoadCommonUITextures(GameState * CurrentGameState)
 {
     SetupTextureContainer(CurrentGameState->CommonGUITextures, COMMONUI_TEXTURE_WIDTH, COMMONUI_TEXTURE_HEIGHT, COMMONUI_MAX_TEXTURES, &CurrentGameState->GameArena);
-        if(!CurrentGameState->PaletteLoaded)
+    if(!CurrentGameState->PaletteLoaded)
     {
 	LoadPalette(CurrentGameState);
     }

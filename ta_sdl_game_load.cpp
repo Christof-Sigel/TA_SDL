@@ -192,7 +192,7 @@ extern "C"{
 	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);
 	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
 	    {
-		TAUIElement * MaingGUI = LoadGUIFromBuffer((char*)temp, (char*)temp+Entry.File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,Entry.Name, CurrentGameState);
+		CurrentGameState->MainGUI = LoadGUIFromBuffer((char*)temp, (char*)temp+Entry.File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,Entry.Name, CurrentGameState);
 	    }
 	}
 

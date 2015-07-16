@@ -220,6 +220,7 @@ struct GameState
     struct ShaderProgram * Shaders;
     int NumberOfShaders;
     struct TextureContainer * CommonGUITextures;
+    struct TAUIElement * MainGUI;
 };
 
 const int UNIT_TEXTURE_WIDTH=2048;
