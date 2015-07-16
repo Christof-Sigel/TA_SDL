@@ -310,9 +310,44 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	    Container->Background = GetTexture(Name, Textures);
 	}
     }
-	break;
+    break;
+    case TAG_BUTTON:
+    {
+	TAUIButton * Button = PushStruct(Arena, TAUIButton);
+	Element->Details = Button;
+	Button->StartingFrame = GetIntValue(Tree, "status");
+	Button->Stages = GetIntValue(Tree, "Stages");
+	char * Text = GetStringValue(Tree, "text");
+	int len = strlen(Text);
+	Button->Text = PushArray(Arena, len+1, char);
+	if(Button->Text)
+	{
+	    memcpy(Button->Text, Text, len);
+	    Button->Text[len]=0;
+	}
 
+	Button->Disabled = GetIntValue(Tree, "grayedout");
     }
+    break;
+    case TAG_TEXTFIELD:
+    {
+	TAUITextBox * TextBox = PushStruct(Arena,TAUITextBox);
+	Element->Details = TextBox;
+	TextBox->MaximumCharacters = GetIntValue(Tree, "maxchars");
+    }
+    break;
+    case TAG_SCROLLBAR:
+    {
+	TAUIScrollbar * ScrollBar = PushStruct(Arena, TAUIScrollbar);
+	Element->Details = ScrollBar;
+	ScrollBar->Maximum = GetIntValue(Tree, "range");
+	ScrollBar->Position = GetIntValue(Tree, "knobpos");
+	ScrollBar->KnobSize = GetIntValue(Tree, "knobsize");
+    }
+    break;
+    //TODO(Christof): handle all UI elements
+    }
+   
     
 }
 
