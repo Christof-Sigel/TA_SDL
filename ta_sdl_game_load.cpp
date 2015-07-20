@@ -17,8 +17,8 @@ void InitialiseGame(Memory * GameMemory);
 void ReloadShaders(Memory * GameMemory)
 {
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-    UnloadAllShaders(CurrentGameState);
-    CurrentGameState->UnitShader = LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",CurrentGameState);
+    UnloadAllShaders(&CurrentGameState->ShaderGroup);
+    CurrentGameState->UnitShader = LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",&CurrentGameState->ShaderGroup);
     if(CurrentGameState->UnitShader->ProgramID)
     {
 	glUseProgram(CurrentGameState->UnitShader->ProgramID);
@@ -29,7 +29,7 @@ void ReloadShaders(Memory * GameMemory)
 
     }
 
-    CurrentGameState->MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl",CurrentGameState);
+    CurrentGameState->MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl",&CurrentGameState->ShaderGroup);
 
     if(CurrentGameState->MapShader->ProgramID)
     {
@@ -41,7 +41,7 @@ void ReloadShaders(Memory * GameMemory)
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 
-    CurrentGameState->FontShader= LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl",CurrentGameState);
+    CurrentGameState->FontShader= LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl",&CurrentGameState->ShaderGroup);
     if(CurrentGameState->FontShader->ProgramID)
     {
 	glUseProgram(CurrentGameState->FontShader->ProgramID);
@@ -53,7 +53,7 @@ void ReloadShaders(Memory * GameMemory)
     }
 
     
-    CurrentGameState->UIElementShaderProgram = LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl",CurrentGameState);
+    CurrentGameState->UIElementShaderProgram = LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl",&CurrentGameState->ShaderGroup);
     if(CurrentGameState->UIElementShaderProgram->ProgramID)
     {
 	glUseProgram(CurrentGameState->UIElementShaderProgram->ProgramID);
@@ -70,7 +70,7 @@ void ReloadShaders(Memory * GameMemory)
 
 
     FontShaderDetails * FDetails = &CurrentGameState->FontShaderDetails;
-    FDetails->Program = LoadShaderProgram("shaders/TAFont.vs.glsl","shaders/TAFont.fs.glsl",CurrentGameState);
+    FDetails->Program = LoadShaderProgram("shaders/TAFont.vs.glsl","shaders/TAFont.fs.glsl",&CurrentGameState->ShaderGroup);
     if(FDetails->Program->ProgramID)
     {
 	FDetails->ColorLocation=GetUniformLocation(FDetails->Program,"Color");
@@ -84,7 +84,7 @@ void ReloadShaders(Memory * GameMemory)
     }
 
     Texture2DShaderDetails * TDetails = &CurrentGameState->DrawTextureShaderDetails;
-    TDetails->Program = LoadShaderProgram("shaders/2DRender.vs.glsl","shaders/2DRender.fs.glsl",CurrentGameState);
+    TDetails->Program = LoadShaderProgram("shaders/2DRender.vs.glsl","shaders/2DRender.fs.glsl",&CurrentGameState->ShaderGroup);
     if(TDetails->Program->ProgramID)
     {
 	TDetails->ColorLocation=GetUniformLocation(TDetails->Program,"Color");
@@ -114,22 +114,26 @@ extern "C"{
 	QueryPerformanceFrequency(&PerfCountFrequencyResult);
 	PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
 #endif
+	
 	LoadFonts(CurrentGameState);
 	SetupUIElementDrawing(CurrentGameState);
 
 	ReloadShaders(GameMemory);
         
-	LoadHPIFileCollection(CurrentGameState);
+	LoadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->GameArena, &CurrentGameState->TempArena);	
+	LoadPalette(CurrentGameState);
+	
 	SetupTextureContainer(&CurrentGameState->UnitTextures, UNIT_TEXTURE_WIDTH, UNIT_TEXTURE_HEIGHT, UNIT_MAX_TEXTURES, &CurrentGameState->GameArena);
 	LoadCommonUITextures(CurrentGameState);
 	LoadGafFonts(CurrentGameState);
 	
-		
-	LoadAllTextures(CurrentGameState);
 
-	SetupFontRendering(CurrentGameState);	
+	LoadAllUnitTextures(&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->UnitTextures, CurrentGameState->PaletteData);
+
+	SetupFontRendering(&CurrentGameState->Draw2DVertexBuffer);
+	CurrentGameState->DrawTextureShaderDetails.VertexBuffer = CurrentGameState->Draw2DVertexBuffer;
 	
-	HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",CurrentGameState);
+	HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(Map.Name)
 	{
 	    uint8_t * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,uint8_t);
@@ -147,7 +151,7 @@ extern "C"{
     
 	
 
-	HPIEntry Entry=FindEntryInAllFiles("units",CurrentGameState);
+	HPIEntry Entry=FindEntryInAllFiles("units",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(Entry.IsDirectory)
 	{
 	    for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
@@ -176,23 +180,23 @@ extern "C"{
 
 	LoadCurrentModel(CurrentGameState);
 
-	Entry = FindEntryInAllFiles("fonts/ARMFONT.fnt", CurrentGameState);
+	Entry = FindEntryInAllFiles("fonts/ARMFONT.fnt", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(!Entry.IsDirectory)
 	{
 	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);
 	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
 	    {
-		LoadFNTFont(temp, &CurrentGameState->Fonts[0], Entry.File.FileSize, CurrentGameState);
+		LoadFNTFont(temp, &CurrentGameState->Fonts[0], Entry.File.FileSize);
 	    }
 	}
 
-	Entry = FindEntryInAllFiles("guis/mainmenu.gui", CurrentGameState);
+	Entry = FindEntryInAllFiles("guis/mainmenu.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(!Entry.IsDirectory)
 	{
 	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);
 	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
 	    {
-		CurrentGameState->MainGUI = LoadGUIFromBuffer((char*)temp, (char*)temp+Entry.File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,Entry.Name, CurrentGameState);
+		CurrentGameState->MainGUI = LoadGUIFromBuffer((char*)temp, (char*)temp+Entry.File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,Entry.Name, &CurrentGameState->GlobalArchiveCollection, CurrentGameState->PaletteData);
 	    }
 	}
 
@@ -208,7 +212,7 @@ extern "C"{
 	int NumberOfFrames=CurrentGameState->NumberOfFrames;
 	LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
 	UnloadShaderProgram(CurrentGameState->UnitShader);
-	UnloadHPIFileCollection(CurrentGameState);
+	UnloadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection);
 	Unload3DO(&CurrentGameState->temp_model);
     }
 
@@ -221,14 +225,14 @@ extern "C"{
 	//TODO(Christof): Fix shaders unecessarily reloading here (cause of the blue flickering)
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
 	uint8_t Reload =0;
-	for(int i=0;i<CurrentGameState->NumberOfShaders;i++)
+	for(int i=0;i<CurrentGameState->ShaderGroup.NumberOfShaders;i++)
 	{
-	    if(GetFileModifiedTime(CurrentGameState->Shaders[i].VertexFileName) > CurrentGameState->Shaders[i].VertexFileModifiedTime)
+	    if(GetFileModifiedTime(CurrentGameState->ShaderGroup.Shaders[i].VertexFileName) > CurrentGameState->ShaderGroup.Shaders[i].VertexFileModifiedTime)
 	    {
 		Reload=1;
 		break;
 	    }
-	    if(GetFileModifiedTime(CurrentGameState->Shaders[i].PixelFileName) > CurrentGameState->Shaders[i].PixelFileModifiedTime)
+	    if(GetFileModifiedTime(CurrentGameState->ShaderGroup.Shaders[i].PixelFileName) > CurrentGameState->ShaderGroup.Shaders[i].PixelFileModifiedTime)
 	    {
 		Reload=1;
 		break;

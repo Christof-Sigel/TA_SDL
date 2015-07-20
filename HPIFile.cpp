@@ -93,7 +93,6 @@ bool32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena
     memcpy(HPI->Name,FileName,NameLength);
     HPI->Name[NameLength]=0;
 
-    //TODO(Christof): Figure out a memory alloc scheme, just use malloc for now
     uint8_t * DecryptedDirectory = PushArray(TempArena,header->DirectorySize,uint8_t);
     DecryptHPIBuffer(HPI,DecryptedDirectory,header->DirectorySize, 0);
     LoadEntries(&HPI->Root, DecryptedDirectory, header->Offset,HPI,FileArena);
@@ -323,13 +322,14 @@ HPIEntry FindHPIEntry(HPIDirectoryEntry Directory, const char * Path)
     return {0};
 }
 
-HPIEntry FindHPIEntry(HPIFile * File, const char * Path,MemoryArena * FileArena)
+char HPIRootName [] = "Root";
+
+HPIEntry FindHPIEntry(HPIFile * File, const char * Path)
 {
     if(!*Path)
     {
 	HPIEntry Root;
-	Root.Name=PushArray(FileArena,5,char);
-	memcpy(Root.Name,"Root",5);
+	Root.Name=HPIRootName;
 	Root.Directory=File->Root;
 	Root.IsDirectory=1;
 	Root.ContainedInFile = File;
@@ -344,12 +344,12 @@ const char * HPIFileNames[]={"rev31.gp3","btdata.ccx","ccdata.ccx","tactics1.hpi
 
 const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
 
-bool32 LoadHPIFileCollection(GameState * CurrentGameState)
+bool32 LoadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection, MemoryArena * GameArena, MemoryArena * TempArena)
 {
     UFOSearchResult UfoFiles=GetUfoFiles();
-    CurrentGameState->GlobalArchiveCollection.NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
-    CurrentGameState->GlobalArchiveCollection.Files = PushArray(&CurrentGameState->GameArena,CurrentGameState->GlobalArchiveCollection.NumberOfFiles,HPIFile);
-    for(int i=0;i<CurrentGameState->GlobalArchiveCollection.NumberOfFiles;i++)
+    GlobalArchiveCollection->NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
+    GlobalArchiveCollection->Files = PushArray(GameArena,GlobalArchiveCollection->NumberOfFiles,HPIFile);
+    for(int i=0;i<GlobalArchiveCollection->NumberOfFiles;i++)
     {
 	char * FileName=0;
 	if(i>=UfoFiles.NumberOfFiles)
@@ -365,7 +365,7 @@ bool32 LoadHPIFileCollection(GameState * CurrentGameState)
 	STACK_ARRAY(temp,size,char);
 	snprintf(temp,size,"data/%s",FileName);
 	//TODO(Christof): Determine if file memory stuff should go in a seperate arena
-	LoadHPIFile(temp,&CurrentGameState->GlobalArchiveCollection.Files[i],&CurrentGameState->GameArena,&CurrentGameState->TempArena);
+	LoadHPIFile(temp,&GlobalArchiveCollection->Files[i],GameArena,TempArena);
     }
 
     UnloadUFOSearchResult(&UfoFiles);
@@ -383,20 +383,20 @@ int32_t FindEntryInVector(HPIEntry Entry, std::vector<HPIEntry> & Entries)
     return 0;
 }
 
-HPIEntry FindEntryInAllFiles(const char * Path,GameState * CurrentGameState)
+HPIEntry FindEntryInAllFiles(const char * Path, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena)
 {
     HPIEntry Result={0};
     std::vector<HPIEntry> Entries;
-    for(int ArchiveIndex=0;ArchiveIndex<CurrentGameState->GlobalArchiveCollection.NumberOfFiles;ArchiveIndex++)
+    for(int ArchiveIndex=0;ArchiveIndex<GlobalArchiveCollection->NumberOfFiles;ArchiveIndex++)
     {
-	HPIEntry temp=FindHPIEntry(&CurrentGameState->GlobalArchiveCollection.Files[ArchiveIndex],Path,&CurrentGameState->GameArena);
+	HPIEntry temp=FindHPIEntry(&GlobalArchiveCollection->Files[ArchiveIndex],Path);
 	if(temp.Name)
 	{
 	    if(!temp.IsDirectory)
 	    {
 		if(Entries.size())
 		{
-		    LogError("Found file in %s while loading directory %s",CurrentGameState->GlobalArchiveCollection.Files[ArchiveIndex].Name,Path);
+		    LogError("Found file in %s while loading directory %s",GlobalArchiveCollection->Files[ArchiveIndex].Name,Path);
 		    return {0};
 		}
 		else
@@ -427,7 +427,7 @@ HPIEntry FindEntryInAllFiles(const char * Path,GameState * CurrentGameState)
 	return {0};
     }
     Result.Directory.NumberOfEntries=(int)Entries.size();
-    Result.Directory.Entries=PushArray(&CurrentGameState->TempArena,Result.Directory.NumberOfEntries,HPIEntry);
+    Result.Directory.Entries=PushArray(TempArena,Result.Directory.NumberOfEntries,HPIEntry);
     for(int i=0;i<Entries.size();i++)
     {
 	Result.Directory.Entries[i]=Entries[i];
@@ -444,12 +444,12 @@ void UnloadCompositeEntry(HPIEntry * Entry,MemoryArena * TempArena)
 }
 
 
-void UnloadHPIFileCollection(GameState * CurrentGameState)
+void UnloadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection)
 {
-    for(int i=0;i<CurrentGameState->GlobalArchiveCollection.NumberOfFiles;i++)
+    for(int i=0;i<GlobalArchiveCollection->NumberOfFiles;i++)
     {
-	UnloadHPIFile(&CurrentGameState->GlobalArchiveCollection.Files[i]);
+	UnloadHPIFile(&GlobalArchiveCollection->Files[i]);
     }
-    CurrentGameState->GlobalArchiveCollection.NumberOfFiles=0;
-    CurrentGameState->GlobalArchiveCollection.Files=0;
+    GlobalArchiveCollection->NumberOfFiles=0;
+    GlobalArchiveCollection->Files=0;
 }

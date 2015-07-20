@@ -195,3 +195,9 @@ struct Texture2DShaderDetails
     ShaderProgram * Program;
     GLuint VertexBuffer;
 };
+
+struct ShaderGroup
+{
+ ShaderProgram Shaders[MAX_SHADER_NUMBER];
+    int NumberOfShaders;
+};

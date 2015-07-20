@@ -219,7 +219,6 @@ struct GameState
     TextureContainer Font12;
 
     uint8_t PaletteData[1024];
-    bool32 PaletteLoaded;
     uint8_t FontBitmap[FONT_BITMAP_SIZE*FONT_BITMAP_SIZE];
 
     ScreenText NameAndDescText[5*2];
@@ -246,8 +245,7 @@ struct GameState
     Texture2DShaderDetails DrawTextureShaderDetails;
     
 
-    ShaderProgram Shaders[MAX_SHADER_NUMBER];
-    int NumberOfShaders;
+    ShaderGroup ShaderGroup;
     TextureContainer CommonGUITextures;
     TAUIElement MainGUI;
 };

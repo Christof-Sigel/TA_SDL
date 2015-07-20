@@ -229,7 +229,7 @@ void LoadTexturesFromGafBuffer(uint8_t * Buffer,TextureContainer * TextureContai
 void LoadPalette(GameState * CurrentGameState)
 {
 
-    HPIEntry Palette = FindEntryInAllFiles("palettes/PALETTE.PAL",CurrentGameState);
+    HPIEntry Palette = FindEntryInAllFiles("palettes/PALETTE.PAL",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     if(!Palette.Name)
     {
 	LogWarning("No Palette found in data files");
@@ -240,7 +240,6 @@ void LoadPalette(GameState * CurrentGameState)
     }
     else
     {
-	CurrentGameState->PaletteLoaded=1;
 	LoadHPIFileEntryData(Palette,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
     }
 }
@@ -278,14 +277,9 @@ void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * Texture
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureContainer->TextureWidth,TextureContainer->TextureHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureContainer->TextureData);
 }
 
-void LoadAllTextures(GameState * CurrentGameState)
+void LoadAllUnitTextures(HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, TextureContainer * UnitTextures, uint8_t * PaletteData)
 {
-    if(!CurrentGameState->PaletteLoaded)
-    {
-	LoadPalette(CurrentGameState);
-    }   
-    
-    HPIEntry Textures = FindEntryInAllFiles("textures",CurrentGameState);
+    HPIEntry Textures = FindEntryInAllFiles("textures",GlobalArchiveCollection, TempArena);
     if(!Textures.Name)
     {
 	LogWarning("No Textures found in archives");
@@ -293,26 +287,26 @@ void LoadAllTextures(GameState * CurrentGameState)
     }
     else
     {
-	LoadAllTexturesFromHPIEntry(&Textures, &CurrentGameState->UnitTextures, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
+	LoadAllTexturesFromHPIEntry(&Textures, UnitTextures, TempArena, PaletteData);
     }
 
-    UnloadCompositeEntry(&Textures,&CurrentGameState->TempArena);
+    UnloadCompositeEntry(&Textures,TempArena);
 }
 
 
 
 
-Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * FileName, GameState * CurrentGameState)
+Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * FileName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena)
 {
-    HPIEntry PCX = FindEntryInAllFiles(FileName, CurrentGameState);
+    HPIEntry PCX = FindEntryInAllFiles(FileName, GlobalArchiveCollection, TempArena);
     if(PCX.IsDirectory)
     {
 	LogError("Unexpectedly found a directory while trying to load %s", FileName);
     }
     else
     {
-	uint8_t * PCXBuffer = PushArray(&CurrentGameState->TempArena, PCX.File.FileSize,uint8_t);
-	LoadHPIFileEntryData(PCX,PCXBuffer,&CurrentGameState->TempArena);
+	uint8_t * PCXBuffer = PushArray(TempArena, PCX.File.FileSize,uint8_t);
+	LoadHPIFileEntryData(PCX,PCXBuffer,TempArena);
 
 	FILE_PCXHeader * Header = (FILE_PCXHeader*)PCXBuffer;
 	int Width = Header->XMax - Header->XMin +1;
@@ -320,7 +314,7 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	if(Header->BitsPerPlane != 8 || Header->Encoding != 1 || Header->ColorPlanes != 1 || Header->PalletteType != 1 || Header->BytesPerPlaneLine != Width || Header->YMin != 0 || Header->XMin !=0 || Header->Version != 5)
 	{
 	    LogError("Unsupported PCX %s not loaded.", FileName);
-	    PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
 	    return 0;
 	}
 
@@ -328,7 +322,7 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	if(*(PaletteData -1)!=0x0C)
 	{
 	    LogError("Could not find expected palette in PCX %s", FileName);
-	    PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
 	    return 0;
 	}
 
@@ -337,13 +331,13 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	if(PCXPos.X == -1)
 	{
 	    LogError("Could not fit %s into texture (%dx%d)",FileName,Width,Height);
-	    PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
 	    return 0;
 	}
 
 	int X=0, Y=0;
 	uint8_t * ImageBuffer = PCXBuffer + 0x80;
-	uint8_t * TextureData = PushArray(&CurrentGameState->TempArena, Width*Height*4, uint8_t) ;
+	uint8_t * TextureData = PushArray(TempArena, Width*Height*4, uint8_t) ;
 
 	//TODO(Christof): Transparency, might be default TA blue, or the horrible FF00FF pink
 	while(ImageBuffer < PaletteData && Y<Height)
@@ -386,8 +380,8 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	glBindTexture(GL_TEXTURE_2D, Textures->Texture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, PCXPos.X, PCXPos.Y, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
 	
-	PopArray(&CurrentGameState->TempArena, TextureData,  Width*Height*4, uint8_t);
-	PopArray(&CurrentGameState->TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	PopArray(TempArena, TextureData,  Width*Height*4, uint8_t);
+	PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
 
 	int NextTexture = Textures->NumberOfTextures;
 	Textures->Textures[NextTexture].Widths[0]=Width/float( Textures->TextureWidth);

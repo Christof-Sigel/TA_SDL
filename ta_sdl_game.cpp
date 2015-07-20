@@ -40,7 +40,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
     STACK_ARRAY(ModelName,len,char);
     snprintf(ModelName,len,"objects3d/%s.3do",UnitName);
     
-    HPIEntry Entry=FindEntryInAllFiles(ModelName,CurrentGameState); 
+    HPIEntry Entry=FindEntryInAllFiles(ModelName,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     //uint8_t temp[Entry.File.FileSize];
     STACK_ARRAY(temp,Entry.File.FileSize,uint8_t);
     if(LoadHPIFileEntryData(Entry,temp,&CurrentGameState->TempArena))
@@ -49,7 +49,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	//char ScriptName[ScriptLength];
 	STACK_ARRAY(ScriptName,ScriptLength,char);
 	snprintf(ScriptName,ScriptLength,"scripts/%s.cob",UnitName);
-	HPIEntry ScriptEntry=FindEntryInAllFiles(ScriptName,CurrentGameState); 
+	HPIEntry ScriptEntry=FindEntryInAllFiles(ScriptName,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	//uint8_t ScriptBuffer[ScriptEntry.File.FileSize];
 	STACK_ARRAY(ScriptBuffer, ScriptEntry.File.FileSize, uint8_t);
 	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer,&CurrentGameState->TempArena))

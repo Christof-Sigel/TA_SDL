@@ -167,7 +167,7 @@ FILE_UIElement * LoadUIElementsFromBuffer(char ** InBuffer, char * End, MemoryAr
     return First;
 }
 
-void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryArena * Arena, TextureContainer * Textures, GameState * CurrentGameState)
+void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryArena * Arena, TextureContainer * Textures, MemoryArena * TempArena, HPIFileCollection * GlobalArchiveCollection)
 {
     FILE_UIElement * Common = GetSubElement(Tree,"common");
     Element->ElementType = (TagType)GetIntValue(Common, "ID");
@@ -212,7 +212,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	Element->Details = Container;
 	if(CaseInsensitiveMatch(Name, "Mainmenu.gui"))
 	{
-	    Container->Background = AddPCXToTextureContainer(Textures,"bitmaps/FrontEndX.pcx", CurrentGameState);
+	    Container->Background = AddPCXToTextureContainer(Textures,"bitmaps/FrontEndX.pcx", GlobalArchiveCollection, TempArena);
 	}
 	else
 	{
@@ -262,7 +262,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 
 
 
-TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, char * FileName, GameState * CurrentGameState)
+TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, char * FileName, HPIFileCollection * GlobalArchiveCollection, uint8_t * PaletteData)
 {
     TextureContainer * Textures =PushStruct(Arena, TextureContainer);
     SetupTextureContainer(Textures, 1024,1024, 40, Arena);
@@ -275,7 +275,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
     GafFileName[len-3]='a';
     GafFileName[len-2]='f';
     
-    HPIEntry UITextures = FindEntryInAllFiles(GafFileName, CurrentGameState);
+    HPIEntry UITextures = FindEntryInAllFiles(GafFileName, GlobalArchiveCollection, TempArena);
     if(UITextures.IsDirectory)
     {
 	LogError("Unexpectedly found a directory while trying to load %s", GafFileName);
@@ -286,7 +286,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
     }
     else
     {
-	LoadAllTexturesFromHPIEntry(&UITextures, Textures, TempArena, CurrentGameState->PaletteData);
+	LoadAllTexturesFromHPIEntry(&UITextures, Textures, TempArena, PaletteData);
     }
     MemoryArena * UIElementsArena = PushSubArena(TempArena, 16 * 1024);
     FILE_UIElement * First = LoadUIElementsFromBuffer(&Buffer, End, UIElementsArena);
@@ -298,7 +298,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
     }
 
     TAUIElement Container;
-    LoadElementFromTree(&Container, First, Arena, Textures, CurrentGameState);
+    LoadElementFromTree(&Container, First, Arena, Textures, TempArena, GlobalArchiveCollection);
 
     TAUIContainer * ContainerDetails = (TAUIContainer *)Container.Details;
     ContainerDetails->NumberOfElements = CountElements(First)-1;
@@ -307,7 +307,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
 
     for(int i=0;i<ContainerDetails->NumberOfElements;i++)
     {
-	LoadElementFromTree(&ContainerDetails->Elements[i], GetNthElement(First, i+1), Arena, Textures, CurrentGameState);
+	LoadElementFromTree(&ContainerDetails->Elements[i], GetNthElement(First, i+1), Arena, Textures, TempArena, GlobalArchiveCollection);
     }
 
   
@@ -322,11 +322,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
 void LoadCommonUITextures(GameState * CurrentGameState)
 {
     SetupTextureContainer(&CurrentGameState->CommonGUITextures, COMMONUI_TEXTURE_WIDTH, COMMONUI_TEXTURE_HEIGHT, COMMONUI_MAX_TEXTURES, &CurrentGameState->GameArena);
-    if(!CurrentGameState->PaletteLoaded)
-    {
-	LoadPalette(CurrentGameState);
-    }
-    HPIEntry CommonUI = FindEntryInAllFiles("anims/commonGUI.GAF", CurrentGameState);
+    HPIEntry CommonUI = FindEntryInAllFiles("anims/commonGUI.GAF", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     if(CommonUI.IsDirectory)
     {
 	LogError("Unexpectedly found a directory while trying to load hatfont12.gaf");

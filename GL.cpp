@@ -44,24 +44,24 @@ void UnloadShaderProgram(ShaderProgram * Program)
     }
 }
 
-void UnloadAllShaders(GameState * CurrentGameState)
+void UnloadAllShaders(ShaderGroup * ShaderGroup)
 {
-    for(int i=0;i<CurrentGameState->NumberOfShaders;i++)
+    for(int i=0;i<ShaderGroup->NumberOfShaders;i++)
     {
-	UnloadShaderProgram(&CurrentGameState->Shaders[i]);
+	UnloadShaderProgram(&ShaderGroup->Shaders[i]);
     }
-    CurrentGameState->NumberOfShaders=0;
+    ShaderGroup->NumberOfShaders=0;
 }
 
-ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char * PixelShaderFileName, GameState * CurrentGameState)
+ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char * PixelShaderFileName, ShaderGroup * ShaderGroup)
 {
-    ShaderProgram * Shader = &CurrentGameState->Shaders[CurrentGameState->NumberOfShaders++];
+    ShaderProgram * Shader = &ShaderGroup->Shaders[ShaderGroup->NumberOfShaders++];
     *Shader = {};
    
     strncpy(Shader->PixelFileName, PixelShaderFileName, MAX_SHADER_FILENAME);
     strncpy(Shader->VertexFileName, VertexShaderFileName, MAX_SHADER_FILENAME);
    
-    if(CurrentGameState->NumberOfShaders+1>= MAX_SHADER_NUMBER)
+    if(ShaderGroup->NumberOfShaders+1>= MAX_SHADER_NUMBER)
     {
 	LogError("Not enough shaders allocated, failed to load shader program for %s, %s", VertexShaderFileName, PixelShaderFileName);
 	return &NullShader;

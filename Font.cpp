@@ -31,7 +31,7 @@ void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * Text
 }
 
 
-void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size, GameState * CurrentGameState)
+void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size)
 {
     FILE_FNT * Header = (FILE_FNT*)Buffer;
     Font->Height = Header->Height;
@@ -71,11 +71,11 @@ void DrawCharacter(uint8_t Character, Texture2DShaderDetails * ShaderDetails, fl
 }
 
 
-void SetupFontRendering(GameState * CurrentGameState)
+void SetupFontRendering(GLuint * Draw2DVertexBuffer)
 {
     GLfloat RenderData[6*(2+2)];//6 Vert (2 triangles) each 2 position coords and 2 texture coords
     
-    glGenVertexArrays(1,&CurrentGameState->Draw2DVertexBuffer);
+    glGenVertexArrays(1,Draw2DVertexBuffer);
 
     GLfloat Vertices[]={0,0, 1,0, 1,1, 0,1};
 
@@ -102,7 +102,7 @@ void SetupFontRendering(GameState * CurrentGameState)
     }
 		      
     
-    glBindVertexArray(CurrentGameState->Draw2DVertexBuffer);
+    glBindVertexArray(*Draw2DVertexBuffer);
 
     GLuint VertexBuffer;
     glGenBuffers(1,&VertexBuffer);
@@ -117,7 +117,8 @@ void SetupFontRendering(GameState * CurrentGameState)
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
-    CurrentGameState->DrawTextureShaderDetails.VertexBuffer = CurrentGameState->Draw2DVertexBuffer;
+    
+
 }
 
 
@@ -126,11 +127,7 @@ void LoadGafFonts(GameState * CurrentGameState)
     SetupTextureContainer(&CurrentGameState->Font11, 1700, 15, 1, &CurrentGameState->GameArena);
     SetupTextureContainer(&CurrentGameState->Font12, 2200, 18, 1, &CurrentGameState->GameArena);
     
-    if(!CurrentGameState->PaletteLoaded)
-    {
-	LoadPalette(CurrentGameState);
-    }
-    HPIEntry Font = FindEntryInAllFiles("anims/hattfont12.GAF", CurrentGameState);
+    HPIEntry Font = FindEntryInAllFiles("anims/hattfont12.GAF",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     if(Font.IsDirectory)
     {
 	LogError("Unexpectedly found a directory while trying to load hatfont12.gaf");
@@ -140,7 +137,7 @@ void LoadGafFonts(GameState * CurrentGameState)
 	LoadAllTexturesFromHPIEntry(&Font, &CurrentGameState->Font12, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
     }
     
-    Font = FindEntryInAllFiles("anims/hattfont11.GAF", CurrentGameState);
+    Font = FindEntryInAllFiles("anims/hattfont11.GAF", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     if(Font.IsDirectory)
     {
 	LogError("Unexpectedly found a directory while trying to load hatfont11.gaf");
