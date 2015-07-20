@@ -1,3 +1,4 @@
+#include "FILE_structs.h"
 #include "HPIFile.cpp"
 #include "Textures.cpp"
 #include "3do.cpp"

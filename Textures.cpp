@@ -1,83 +1,5 @@
 
 
-const int32_t GAF_IDVERSION=0x00010100;
-#pragma pack(push,1)
-struct FILE_GafHeader
-{
-    int32_t IDVersion;
-    int32_t NumberOfEntries;
-    int32_t Unknown1; //Always 0 apparently?
-};
-
-struct  FILE_GafEntry
-{
-    int16_t NumberOfFrames;
-    int16_t Unknown1;//apparently always 1
-    int32_t Unknown2;//apprently always 0
-    char Name[32];
-};
-
-struct FILE_GafFrameEntry
-{
-    int32_t FrameInfoOffset;
-    int32_t Unknown1;//completely unknown
-};
-
-struct FILE_GafFrameData
-{
-    int16_t Width;
-    int16_t Height;
-    int16_t XPos;
-    int16_t YPos;
-    char Unknown1;//apparently always 9?
-    char Compressed;
-    int16_t NumberOfSubframes;
-    int32_t Unknown2;//always 0
-    int32_t FrameDataOffset;
-    int32_t Unknow3;//completely unknown
-};
-
-struct FILE_PCXHeader
-{
-    uint8_t Manufacturer;//should always be 0x0A
-    uint8_t Version;
-    uint8_t Encoding;
-    uint8_t BitsPerPlane;
-    uint16_t XMin, YMin, XMax, YMax, VerticalDPIOrResolution, HorizontalDPIOrResolution /* this can apparently be ommitted??? */;
-    uint8_t palette[48], reserved, ColorPlanes;
-    uint16_t BytesPerPlaneLine, PalletteType, HorizontalScrSize, VerticalScrSize;
-    uint8_t Pad[54];
-};
-#pragma pack(pop)
-
-
-struct TexturePosition
-{
-    int X;
-    int Y;
-};
-
-#define MAX_NUMBER_OF_TEXTURE_FRAMES 256
-
-struct Texture
-{
-    char Name[32];
-    int NumberOfFrames;
-    float U,V;
-    float Widths[MAX_NUMBER_OF_TEXTURE_FRAMES],Heights[MAX_NUMBER_OF_TEXTURE_FRAMES];
-    int X[MAX_NUMBER_OF_TEXTURE_FRAMES], Y[MAX_NUMBER_OF_TEXTURE_FRAMES];
-};
-
-struct TextureContainer
-{
-    Texture * Textures;
-    int MaximumTextures;
-    int NumberOfTextures;
-    uint8_t * TextureData;
-    int TextureWidth, TextureHeight;
-    GLuint Texture;
-    TexturePosition FirstFreeTexture;
-};
 
 void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int Height, int MaxTextures, MemoryArena * Arena)
 {
@@ -371,7 +293,7 @@ void LoadAllTextures(GameState * CurrentGameState)
     }
     else
     {
-	LoadAllTexturesFromHPIEntry(&Textures, CurrentGameState->UnitTextures, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
+	LoadAllTexturesFromHPIEntry(&Textures, &CurrentGameState->UnitTextures, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
     }
 
     UnloadCompositeEntry(&Textures,&CurrentGameState->TempArena);

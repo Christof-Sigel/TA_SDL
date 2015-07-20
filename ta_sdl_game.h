@@ -10,6 +10,34 @@
 #endif
 #include <stdio.h>
 
+const int UNIT_TEXTURE_WIDTH=2048;
+const int UNIT_TEXTURE_HEIGHT=1024;
+const int UNIT_MAX_TEXTURES=1024;
+
+const int COMMONUI_TEXTURE_WIDTH=4096;
+const int COMMONUI_TEXTURE_HEIGHT=1024;
+const int COMMONUI_MAX_TEXTURES=1024;
+
+
+const float TA_TO_GL_SCALE=1.0f/168340.0f;
+const float PI = 3.14159265358979323846;
+const int FONT_BITMAP_SIZE=256;
+
+const int NUMBER_OF_UNIT_DETAILS=35;
+
+const float COB_LINEAR_CONSTANT = 168340;
+const float COB_LINEAR_FRAME_CONSTANT = COB_LINEAR_CONSTANT *2.0f  ;
+const float COB_ANGULAR_CONSTANT = 182.044444f*180.0f/PI;
+const float COB_ANGULAR_FRAME_CONSTANT = COB_ANGULAR_CONSTANT *2.0f ;
+
+const int MAX_TA_FONT_NUMBER = 32;
+const int MAX_SHADER_NUMBER = 32;
+const int MAX_SHADER_FILENAME = 50;
+#include "platform_code.cpp"
+#include "GL.h"
+#include "UI.h"
+#include "file_formats.h"
+
 
 struct InputState
 {
@@ -143,7 +171,7 @@ void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
 
 struct TempUnitList
 {
-    struct UnitDetails * Details;
+    UnitDetails Details[MAX_UNITS_LOADED];
     int Size;
 };
 
@@ -155,14 +183,15 @@ struct GameState
     bool32 Quit;
 
 
-    struct Matrix * ProjectionMatrix;
-    Matrix * ModelMatrix;
-    Matrix * ViewMatrix;
+    Matrix ProjectionMatrix;
+    Matrix ModelMatrix;
+    Matrix ViewMatrix;
 
-    struct ShaderProgram * UnitShader;
-    struct ShaderProgram * MapShader;
-    struct ShaderProgram * FontShader;
-    struct ShaderProgram * UIElementShaderProgram;    
+    ShaderProgram * UnitShader;
+    ShaderProgram * MapShader;
+    ShaderProgram * FontShader;
+    ShaderProgram * UIElementShaderProgram;
+    
     int64_t StartTime;
     int NumberOfFrames;
     GLuint ProjectionMatrixLocation;
@@ -173,34 +202,34 @@ struct GameState
 
     GLuint UIElementPositionLocation,UIElementSizeLocation,UIElementColorLocation,UIElementBorderColorLocation,UIElementBorderWidthLocation,UIElementAlphaLocation;
 
-    struct UIElement * TestElement;
-    struct Object3d * temp_model;
-    struct TAMap * TestMap;
-    struct Object3dTransformationDetails * UnitTransformationDetails;
+    UIElement TestElement[5];
+    Object3d temp_model;
+    TAMap TestMap;
+    Object3dTransformationDetails UnitTransformationDetails;
     int UnitIndex;
 
     TempUnitList Units;
 
     int ScreenWidth,ScreenHeight;
 
-    struct HPIFileCollection * GlobalArchiveCollection;
+    HPIFileCollection GlobalArchiveCollection;
     
-    struct TextureContainer * UnitTextures;
-    struct TextureContainer * Font11;
-    struct TextureContainer * Font12;
+    TextureContainer UnitTextures;
+    TextureContainer Font11;
+    TextureContainer Font12;
 
-    uint8_t * PaletteData;
+    uint8_t PaletteData[1024];
     bool32 PaletteLoaded;
-    uint8_t * FontBitmap;
+    uint8_t FontBitmap[FONT_BITMAP_SIZE*FONT_BITMAP_SIZE];
 
-    struct ScreenText * NameAndDescText;
-    struct ScreenText * UnitDetailsText;
+    ScreenText NameAndDescText[5*2];
+    ScreenText UnitDetailsText[NUMBER_OF_UNIT_DETAILS];
     
-    struct FontDetails * Times32;
-    struct FontDetails * Times24;
-    struct FontDetails * Times16;
+    FontDetails Times32;
+    FontDetails Times24;
+    FontDetails Times16;
 
-    struct UnitScript * CurrentUnitScript;
+    UnitScript CurrentUnitScript;
     uint64_t PerformanceCounterStart;
     uint64_t PerformanceCounterFrequency;
 
@@ -208,41 +237,18 @@ struct GameState
     float CameraYRotation;
 
     float CameraTranslation[3];
-    struct ScriptStatePool * CurrentScriptPool;
-    struct UIElement * ScriptBackground;
+    ScriptStatePool CurrentScriptPool;
+    UIElement ScriptBackground;
     GLuint DebugAxisBuffer;
-    struct FontShaderDetails * FontShaderDetails;
-    struct FNTFont * Fonts;
+    FontShaderDetails FontShaderDetails;
+    FNTFont Fonts[MAX_TA_FONT_NUMBER];
     GLuint Draw2DVertexBuffer;
-    struct Texture2DShaderDetails * DrawTextureShaderDetails;
+    Texture2DShaderDetails DrawTextureShaderDetails;
     
 
-    struct ShaderProgram * Shaders;
+    ShaderProgram Shaders[MAX_SHADER_NUMBER];
     int NumberOfShaders;
-    struct TextureContainer * CommonGUITextures;
-    struct TAUIElement * MainGUI;
+    TextureContainer CommonGUITextures;
+    TAUIElement MainGUI;
 };
 
-const int UNIT_TEXTURE_WIDTH=2048;
-const int UNIT_TEXTURE_HEIGHT=1024;
-const int UNIT_MAX_TEXTURES=1024;
-
-const int COMMONUI_TEXTURE_WIDTH=4096;
-const int COMMONUI_TEXTURE_HEIGHT=1024;
-const int COMMONUI_MAX_TEXTURES=1024;
-
-
-const float TA_TO_GL_SCALE=1.0f/168340.0f;
-const float PI = 3.14159265358979323846;
-const int FONT_BITMAP_SIZE=256;
-
-const int NUMBER_OF_UNIT_DETAILS=35;
-
-const float COB_LINEAR_CONSTANT = 168340;
-const float COB_LINEAR_FRAME_CONSTANT = COB_LINEAR_CONSTANT *2.0f  ;
-const float COB_ANGULAR_CONSTANT = 182.044444f*180.0f/PI;
-const float COB_ANGULAR_FRAME_CONSTANT = COB_ANGULAR_CONSTANT *2.0f ;
-
-const int MAX_TA_FONT_NUMBER = 32;
-const int MAX_SHADER_NUMBER = 32;
-const int MAX_SHADER_FILENAME = 50;

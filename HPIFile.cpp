@@ -2,104 +2,7 @@
 #include <string.h>
 #include "zlib.h"
 
-enum Compression_Type
-{
-    COMPRESSION_NONE=0,
-    COMPRESSION_LZ77,
-    COMPRESSION_ZLIB
-};
 
-struct HPIFileEntry
-{
-    int Offset;
-    int FileSize;
-    Compression_Type Compression;
-};
-
-struct HPIDirectoryEntry
-{
-    int NumberOfEntries;
-    struct HPIEntry * Entries;
-};
-
-struct HPIEntry
-{
-    char * Name;
-    bool32 IsDirectory;
-    struct HPIFile * ContainedInFile;
-    union
-    {
-	HPIFileEntry File;
-	HPIDirectoryEntry Directory;
-    };
-};
-
-
-struct HPIFile
-{
-    MemoryMappedFile MMFile;
-    HPIDirectoryEntry Root;
-    int32_t DecryptionKey;
-    char * Name;
-};
-
-struct HPIFileCollection
-{
-    //TODO(Christof): track directory(s?) as well
-    int NumberOfFiles;
-    HPIFile * Files;
-};
-
-
-
-
-const int32_t SAVE_MARKER= 'B' << 0 | 'A' <<8 | 'N' << 16 | 'K' <<24;
-const int32_t HPI_MARKER= 'H' << 0 | 'A' <<8 | 'P' <<16 | 'I' << 24;
-const int32_t CHUNK_MARKER = 'S' << 0 | 'Q' <<8 | 'S' <<16 | 'H' << 24;
-const int32_t CHUNK_SIZE = 65536;
-
-#pragma pack(push,1)
-
-struct FILE_HPIHeader
-{
-    int32_t HPIMarker;
-    int32_t SaveMarker;
-    int32_t DirectorySize;
-    int32_t HeaderKey;
-    int32_t Offset;
-};
-
-struct FILE_HPIDirectoryHeader
-{
-    int32_t NumberOfEntries;
-    int32_t Offset;
-};
-
-struct FILE_HPIEntry
-{
-    int32_t NameOffset;
-    int32_t DirDataOffset;
-    char Flag;// 0 -> File,  1 -> Directory
-};
-
-struct FILE_HPIFileData
-{
-    int32_t DataOffset;
-    int32_t FileSize;
-    char Flag;// 0 -> File,  1 -> Directory
-};
-
-struct FILE_HPIChunk
-{
-    int32_t Marker;
-    char Unknown1;
-    char CompressionMethod;
-    char Encrypt;
-    int32_t CompressedSize;
-    int32_t DecompressedSize;
-    int32_t Checksum;
-};
-#pragma pack(pop)
 
 
 void UnloadHPIFile(HPIFile * HPI)
@@ -444,9 +347,9 @@ const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
 bool32 LoadHPIFileCollection(GameState * CurrentGameState)
 {
     UFOSearchResult UfoFiles=GetUfoFiles();
-    CurrentGameState->GlobalArchiveCollection->NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
-    CurrentGameState->GlobalArchiveCollection->Files = PushArray(&CurrentGameState->GameArena,CurrentGameState->GlobalArchiveCollection->NumberOfFiles,HPIFile);
-    for(int i=0;i<CurrentGameState->GlobalArchiveCollection->NumberOfFiles;i++)
+    CurrentGameState->GlobalArchiveCollection.NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
+    CurrentGameState->GlobalArchiveCollection.Files = PushArray(&CurrentGameState->GameArena,CurrentGameState->GlobalArchiveCollection.NumberOfFiles,HPIFile);
+    for(int i=0;i<CurrentGameState->GlobalArchiveCollection.NumberOfFiles;i++)
     {
 	char * FileName=0;
 	if(i>=UfoFiles.NumberOfFiles)
@@ -462,7 +365,7 @@ bool32 LoadHPIFileCollection(GameState * CurrentGameState)
 	STACK_ARRAY(temp,size,char);
 	snprintf(temp,size,"data/%s",FileName);
 	//TODO(Christof): Determine if file memory stuff should go in a seperate arena
-	LoadHPIFile(temp,&CurrentGameState->GlobalArchiveCollection->Files[i],&CurrentGameState->GameArena,&CurrentGameState->TempArena);
+	LoadHPIFile(temp,&CurrentGameState->GlobalArchiveCollection.Files[i],&CurrentGameState->GameArena,&CurrentGameState->TempArena);
     }
 
     UnloadUFOSearchResult(&UfoFiles);
@@ -484,16 +387,16 @@ HPIEntry FindEntryInAllFiles(const char * Path,GameState * CurrentGameState)
 {
     HPIEntry Result={0};
     std::vector<HPIEntry> Entries;
-    for(int ArchiveIndex=0;ArchiveIndex<CurrentGameState->GlobalArchiveCollection->NumberOfFiles;ArchiveIndex++)
+    for(int ArchiveIndex=0;ArchiveIndex<CurrentGameState->GlobalArchiveCollection.NumberOfFiles;ArchiveIndex++)
     {
-	HPIEntry temp=FindHPIEntry(&CurrentGameState->GlobalArchiveCollection->Files[ArchiveIndex],Path,&CurrentGameState->GameArena);
+	HPIEntry temp=FindHPIEntry(&CurrentGameState->GlobalArchiveCollection.Files[ArchiveIndex],Path,&CurrentGameState->GameArena);
 	if(temp.Name)
 	{
 	    if(!temp.IsDirectory)
 	    {
 		if(Entries.size())
 		{
-		    LogError("Found file in %s while loading directory %s",CurrentGameState->GlobalArchiveCollection->Files[ArchiveIndex].Name,Path);
+		    LogError("Found file in %s while loading directory %s",CurrentGameState->GlobalArchiveCollection.Files[ArchiveIndex].Name,Path);
 		    return {0};
 		}
 		else
@@ -543,10 +446,10 @@ void UnloadCompositeEntry(HPIEntry * Entry,MemoryArena * TempArena)
 
 void UnloadHPIFileCollection(GameState * CurrentGameState)
 {
-    for(int i=0;i<CurrentGameState->GlobalArchiveCollection->NumberOfFiles;i++)
+    for(int i=0;i<CurrentGameState->GlobalArchiveCollection.NumberOfFiles;i++)
     {
-	UnloadHPIFile(&CurrentGameState->GlobalArchiveCollection->Files[i]);
+	UnloadHPIFile(&CurrentGameState->GlobalArchiveCollection.Files[i]);
     }
-    CurrentGameState->GlobalArchiveCollection->NumberOfFiles=0;
-    CurrentGameState->GlobalArchiveCollection->Files=0;
+    CurrentGameState->GlobalArchiveCollection.NumberOfFiles=0;
+    CurrentGameState->GlobalArchiveCollection.Files=0;
 }

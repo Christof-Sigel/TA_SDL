@@ -4,7 +4,6 @@
 
 #include "ta_sdl_platform.h"
 #include "ta_sdl_game.h"
-#include "platform_code.cpp"
 
 
 #include "sdl.cpp"

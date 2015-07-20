@@ -1,34 +1,3 @@
-#pragma pack(push,1)
-
-
-struct FILE_FNT
-{
-    uint8_t Height;
-    uint8_t Padding1[3];
-    int16_t CharacterOffset[255];
-};
-
-#pragma pack(pop)
-
-struct FNTGlyph
-{
-    int Width;
-    float U;
-    float TextureWidth;
-};
-
-struct FNTFont
-{
-    int Height;
-    GLuint Texture;
-    FNTGlyph Characters[256];
-};
-
-struct FontShaderDetails
-{
-    GLuint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation;
-    ShaderProgram * Program;
-};
 
 void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
 {
@@ -148,14 +117,14 @@ void SetupFontRendering(GameState * CurrentGameState)
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
-    CurrentGameState->DrawTextureShaderDetails->VertexBuffer = CurrentGameState->Draw2DVertexBuffer;
+    CurrentGameState->DrawTextureShaderDetails.VertexBuffer = CurrentGameState->Draw2DVertexBuffer;
 }
 
 
 void LoadGafFonts(GameState * CurrentGameState)
 {
-    SetupTextureContainer(CurrentGameState->Font11, 1700, 15, 1, &CurrentGameState->GameArena);
-    SetupTextureContainer(CurrentGameState->Font12, 2200, 18, 1, &CurrentGameState->GameArena);
+    SetupTextureContainer(&CurrentGameState->Font11, 1700, 15, 1, &CurrentGameState->GameArena);
+    SetupTextureContainer(&CurrentGameState->Font12, 2200, 18, 1, &CurrentGameState->GameArena);
     
     if(!CurrentGameState->PaletteLoaded)
     {
@@ -168,7 +137,7 @@ void LoadGafFonts(GameState * CurrentGameState)
     }
     else
     {
-	LoadAllTexturesFromHPIEntry(&Font, CurrentGameState->Font12, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
+	LoadAllTexturesFromHPIEntry(&Font, &CurrentGameState->Font12, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
     }
     
     Font = FindEntryInAllFiles("anims/hattfont11.GAF", CurrentGameState);
@@ -178,7 +147,7 @@ void LoadGafFonts(GameState * CurrentGameState)
     }
     else
     {
-	LoadAllTexturesFromHPIEntry(&Font, CurrentGameState->Font11, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
+	LoadAllTexturesFromHPIEntry(&Font, &CurrentGameState->Font11, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
     }
 }
 

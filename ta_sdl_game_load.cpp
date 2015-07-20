@@ -3,9 +3,9 @@
 
 void LoadFonts(GameState * CurrentGameState)
 {
-    LoadFont(CurrentGameState->Times32,"data/times.ttf",32,CurrentGameState->FontBitmap);
-    LoadFont(CurrentGameState->Times24,"data/times.ttf",24,CurrentGameState->FontBitmap);
-    LoadFont(CurrentGameState->Times16,"data/times.ttf",16,CurrentGameState->FontBitmap);
+    LoadFont(&CurrentGameState->Times32,"data/times.ttf",32,CurrentGameState->FontBitmap);
+    LoadFont(&CurrentGameState->Times24,"data/times.ttf",24,CurrentGameState->FontBitmap);
+    LoadFont(&CurrentGameState->Times16,"data/times.ttf",16,CurrentGameState->FontBitmap);
 }
 
 
@@ -18,7 +18,7 @@ void ReloadShaders(Memory * GameMemory)
 {
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     UnloadAllShaders(CurrentGameState);
-    CurrentGameState->UnitShader=LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",CurrentGameState);
+    CurrentGameState->UnitShader = LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",CurrentGameState);
     if(CurrentGameState->UnitShader->ProgramID)
     {
 	glUseProgram(CurrentGameState->UnitShader->ProgramID);
@@ -69,7 +69,7 @@ void ReloadShaders(Memory * GameMemory)
     }
 
 
-    FontShaderDetails * FDetails = CurrentGameState->FontShaderDetails;
+    FontShaderDetails * FDetails = &CurrentGameState->FontShaderDetails;
     FDetails->Program = LoadShaderProgram("shaders/TAFont.vs.glsl","shaders/TAFont.fs.glsl",CurrentGameState);
     if(FDetails->Program->ProgramID)
     {
@@ -83,7 +83,7 @@ void ReloadShaders(Memory * GameMemory)
 	glUniform2iv(GetUniformLocation(FDetails->Program,"Viewport"),1,viewport+2);
     }
 
-    Texture2DShaderDetails * TDetails = CurrentGameState->DrawTextureShaderDetails;
+    Texture2DShaderDetails * TDetails = &CurrentGameState->DrawTextureShaderDetails;
     TDetails->Program = LoadShaderProgram("shaders/2DRender.vs.glsl","shaders/2DRender.fs.glsl",CurrentGameState);
     if(TDetails->Program->ProgramID)
     {
@@ -120,7 +120,7 @@ extern "C"{
 	ReloadShaders(GameMemory);
         
 	LoadHPIFileCollection(CurrentGameState);
-	SetupTextureContainer(CurrentGameState->UnitTextures, UNIT_TEXTURE_WIDTH, UNIT_TEXTURE_HEIGHT, UNIT_MAX_TEXTURES, &CurrentGameState->GameArena);
+	SetupTextureContainer(&CurrentGameState->UnitTextures, UNIT_TEXTURE_WIDTH, UNIT_TEXTURE_HEIGHT, UNIT_MAX_TEXTURES, &CurrentGameState->GameArena);
 	LoadCommonUITextures(CurrentGameState);
 	LoadGafFonts(CurrentGameState);
 	
@@ -136,7 +136,7 @@ extern "C"{
     
 	    if(LoadHPIFileEntryData(Map,temp,&CurrentGameState->TempArena))
 	    {
-		LoadTNTFromBuffer(temp,CurrentGameState->TestMap,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
+		LoadTNTFromBuffer(temp,&CurrentGameState->TestMap,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
 	    }
 	    else
 		LogDebug("failed to load map buffer from hpi");
@@ -209,7 +209,7 @@ extern "C"{
 	LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
 	UnloadShaderProgram(CurrentGameState->UnitShader);
 	UnloadHPIFileCollection(CurrentGameState);
-	Unload3DO(CurrentGameState->temp_model);
+	Unload3DO(&CurrentGameState->temp_model);
     }
 
 
