@@ -533,7 +533,7 @@ extern "C"
 	
 	TextureContainer * Textures = ((TAUIContainer*)CurrentGameState->MainGUI.Details)->Textures;
 	Texture * BackgroundTexture = ((TAUIContainer*)CurrentGameState->MainGUI.Details)->Background;
-	DrawTexture2D(Textures->Texture, 0, 0, 640, 480, {1,1,1}, 1, &CurrentGameState->DrawTextureShaderDetails, BackgroundTexture->U, BackgroundTexture->V, BackgroundTexture->Widths[0], BackgroundTexture->Heights[0]);
+	DrawTexture2D(Textures->Texture, 0, 0, 640, 480, {{1,1,1}}, 1, &CurrentGameState->DrawTextureShaderDetails, BackgroundTexture->U, BackgroundTexture->V, BackgroundTexture->Widths[0], BackgroundTexture->Heights[0]);
 
 	int X=0, bX=0;
 	int Width, Height;
