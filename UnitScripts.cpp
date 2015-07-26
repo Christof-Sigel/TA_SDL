@@ -38,7 +38,7 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, MemoryAre
 	    Script->PieceNames[i][Length]=0;
 	}
     }
-
+    Script->NumberOfStatics = Header->NumberOfStatics;
 
     Script->ScriptDataSize = Header->CodeSize * 4;
     Script->ScriptData = PushArray(GameArena, Script->ScriptDataSize, int32_t);
@@ -213,7 +213,6 @@ void CreateNewScriptState(UnitScript * Script, ScriptState * State, ScriptState 
    
     NewState->TransformationDetails = State->TransformationDetails;
     NewState->NumberOfParameters = NumberOfArguments;
-
 }
 
 void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool)
@@ -222,7 +221,6 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	return;
     if(State->ProgramCounter > Script->ScriptDataSize)
 	return;
-    //TODO(Christof): Limit time in a script
     switch(State->BlockedOn)
     {
     case BLOCK_SCRIPT:
@@ -290,12 +288,12 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
     {
 	State->ProgramCounter = Script->FunctionOffsets[State->ScriptNumber];
     }
-    State->CurrentInstructionCount=0;
+    int CurrentInstructionCount=0;
 
     //NOTE(Christof): in cob instructions doc, top of the stack is at the BOTTOM of the list
     for(;;)
     {
-	if(State->CurrentInstructionCount++ > MAX_INSTRUCTIONS_PER_FRAME)
+	if(CurrentInstructionCount++ > MAX_INSTRUCTIONS_PER_FRAME)
 	{
 	    LogWarning("%s exceeded %d instructions per frame", Script->FunctionNames[State->ScriptNumber], MAX_INSTRUCTIONS_PER_FRAME);
 	    return;
@@ -577,7 +575,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Index = PostData(Script,State);
 	    if(Index>=State->NumberOfLocalVariables)
 	    {
-		LogError("Trying to push the value of local variable %d, but only %d exist, pushoing 0 instead", Index, State->NumberOfLocalVariables);
+		LogError("%s Trying to push the value of local variable %d, but only %d exist, pushoing 0 instead",Script->FunctionNames[State->ScriptNumber], Index, State->NumberOfLocalVariables);
 		PushStack(State,0);
 	    }
 	    else
@@ -591,7 +589,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Index = PostData(Script,State);
 	    if(Index >= State->NumberOfStaticVariables)
 	    {
-	    	LogError("Trying to push the value of static variable %d, but only %d exist, pushoing 0 instead", Index, State->NumberOfStaticVariables);
+	    	LogError("%s Trying to push the value of static variable %d, but only %d exist, pushoing 0 instead",Script->FunctionNames[State->ScriptNumber], Index, State->NumberOfStaticVariables);
 		PushStack(State, 0);
 	    }
 	    else
@@ -605,7 +603,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Index = PostData(Script,State);
 	    if(Index >= State->NumberOfLocalVariables)
 	    {
-		LogError("Trying to set local variable %d to %d, but only %d exists!", Index,	PopStack(State),  State->NumberOfLocalVariables);
+		LogError("%s Trying to set local variable %d to %d, but only %d exists!",Script->FunctionNames[State->ScriptNumber], Index, PopStack(State),  State->NumberOfLocalVariables);
 	    }
 	    else
 	    {
@@ -618,7 +616,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    int32_t Index = PostData(Script,State);
 	    if(Index >= State->NumberOfStaticVariables)
 	    {
-		LogError("Trying to set local variable %d to %d, but only %d exists!", Index,	PopStack(State),  State->NumberOfStaticVariables);
+		LogError("%s Trying to set local variable %d to %d, but only %d exists!", Script->FunctionNames[State->ScriptNumber],Index, PopStack(State), State->NumberOfStaticVariables);
 	    }
 	    else
 	    {
