@@ -1,23 +1,19 @@
-
-
+#define Align(Val, Align) (Val +((Align) -1) & ~((Align)-1))
 
 void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int Height, int MaxTextures, MemoryArena * Arena)
 {
     *TextureContainer = {};
     TextureContainer->MaximumTextures = MaxTextures;
-    TextureContainer->TextureWidth = Width;
-    TextureContainer->TextureHeight = Height;
-    TextureContainer->TextureData = PushArray(Arena, Width*Height*4, uint8_t);
+    TextureContainer->TextureWidth = Align(Width, PIXELS_PER_SQUARE_SIDE);
+    TextureContainer->TextureHeight = Align(Height, PIXELS_PER_SQUARE_SIDE);
+    TextureContainer->TextureData = PushArray(Arena, TextureContainer->TextureWidth*TextureContainer->TextureHeight*4, uint8_t);
     TextureContainer->Textures = PushArray(Arena, MaxTextures, Texture);
-
-    int size=TextureContainer->TextureWidth * TextureContainer->TextureHeight*4/4;
-  
-    int32_t * ClearDataPointer=(int32_t *)TextureContainer->TextureData;
-    for(int i=0;i<size;i++)
-	ClearDataPointer[i]=0xdeadbeef;
+    TextureContainer->WidthInSquares = Align(Width,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
+    TextureContainer->HeightInSquares = Align(Height, PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
+    int FreeSquareSize = TextureContainer->HeightInSquares * TextureContainer->WidthInSquares / 8;
+    TextureContainer->FreeSquares = PushArray(Arena, FreeSquareSize , uint8_t);
+    memset(TextureContainer->FreeSquares, 0, FreeSquareSize);
 }
-
-
 
 Texture * GetTexture(const char * Name,TextureContainer * TextureContainer)
 {
@@ -30,39 +26,56 @@ Texture * GetTexture(const char * Name,TextureContainer * TextureContainer)
     return 0;
 }
 
-inline bool32 TexturePixelFree(int X, int Y,TextureContainer * TextureContainer)
+bool32 SquareIsFree(TextureContainer * TextureContainer, int x, int y)
 {
-    return *(int32_t *)&TextureContainer->TextureData[(X+Y*TextureContainer->TextureWidth)*4]==0xdeadbeef;
+     int Offset = y*TextureContainer->WidthInSquares + x;
+     int Index = Offset / 8;
+     int BitOffset = Offset % 8;
+     return !((TextureContainer->FreeSquares[Index]>>BitOffset)&1);
 }
 
 TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContainer * TextureContainer)
 {
-    int StartX=TextureContainer->FirstFreeTexture.X;
-    for(int Y=TextureContainer->FirstFreeTexture.Y;Y<TextureContainer->TextureHeight;Y++)
+    int WidthInSquares = Align(Width,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
+    int HeightInSquares = Align(Height,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
+
+    int StartX = TextureContainer->FirstFreeTexture.X;
+    for(int Y=TextureContainer->FirstFreeTexture.Y;Y<TextureContainer->HeightInSquares;Y++)
     {
-	for(int X=StartX;X<TextureContainer->TextureWidth;X++)
+	for(int X=StartX;X<TextureContainer->WidthInSquares;X++)
 	{
-	    if(Y+Height>=TextureContainer->TextureHeight || X+ Width >= TextureContainer->TextureWidth)
+	    if(Y+HeightInSquares>TextureContainer->HeightInSquares || X+ WidthInSquares > TextureContainer->WidthInSquares)
 		continue;
-	    //TODO(Christof): figure out a better way to do this without goto
-	    for(int TexY=0;TexY<Height;TexY++)
+
+		    
+	    for(int TexY=0;TexY<HeightInSquares;TexY++)
 	    {
-		for(int TexX=0;TexX<Width;TexX++)
+		for(int TexX=0;TexX<WidthInSquares;TexX++)
 		{
-		    if(!TexturePixelFree(X+TexX,Y+TexY,TextureContainer))
+		    if(!SquareIsFree(TextureContainer, X+TexX, Y+TexY))
 		    {
 			goto next;
 		    }
 		}
 	    }
-	    //NOTE: if texure search has to loop (total textures size -> big texture size) this will get quite slow, should be ok for now though
-	    TextureContainer->FirstFreeTexture.Y=Y;
-	    TextureContainer->FirstFreeTexture.X=X;
-	    return {X,Y};
+
+	    for(int TexY=0;TexY<HeightInSquares;TexY++)
+	    {
+		for(int TexX=0;TexX<WidthInSquares;TexX++)
+		{
+		    int Offset = (Y+TexY)*TextureContainer->WidthInSquares + (X+TexX);
+		    int Index = Offset / 8;
+		    int BitOffset = Offset % 8;
+		    TextureContainer->FreeSquares[Index] |= 1<<BitOffset;
+		}
+	    }
+	    TextureContainer->FirstFreeTexture.X = X;
+	    TextureContainer->FirstFreeTexture.Y = Y;
+	    return {X*PIXELS_PER_SQUARE_SIDE,Y*PIXELS_PER_SQUARE_SIDE};
 	next:
+	    StartX =0;
 	    continue;
 	}
-	StartX=0;
     }
     return {-1,-1};
 }
@@ -170,7 +183,7 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset, TextureContainer * TextureC
     TexturePosition PositionToStore = GetAvailableTextureLocation(TotalWidth,MaxHeight, TextureContainer);
     if(PositionToStore.X==-1)
     {
-	LogError("Unable to get storage location for texture: %s (%dx%d)",Entry->Name,TotalWidth,MaxHeight);
+	LogError("Unable to get storage location for texture: %s (%dx%d), Texture: %dx%d",Entry->Name,TotalWidth,MaxHeight, TextureContainer->TextureWidth, TextureContainer->TextureHeight);
 	return;
     }
     for(int y=0;y<MaxHeight;y++)
@@ -292,9 +305,6 @@ void LoadAllUnitTextures(HPIFileCollection * GlobalArchiveCollection, MemoryAren
 
     UnloadCompositeEntry(&Textures,TempArena);
 }
-
-
-
 
 Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * FileName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena)
 {

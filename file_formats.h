@@ -2,6 +2,7 @@
 //Textures
 const int32_t GAF_IDVERSION=0x00010100;
 const int32_t MAX_NUMBER_OF_TEXTURE_FRAMES=256;
+const int PIXELS_PER_SQUARE_SIDE = 8;
 
 //3DO
 const int32_t TranslationXAxisModModel = 1;
@@ -162,7 +163,8 @@ struct TextureContainer
     int MaximumTextures;
     int NumberOfTextures;
     uint8_t * TextureData;
-    int TextureWidth, TextureHeight;
+    uint8_t * FreeSquares;
+    int TextureWidth, TextureHeight, HeightInSquares, WidthInSquares;
     GLuint Texture;
     TexturePosition FirstFreeTexture;
 };
@@ -394,6 +396,8 @@ struct UnitScript
     int32_t * ScriptData;
     int32_t * FunctionOffsets;
     int32_t NumberOfStatics;
+    //TODO(Christof): Make this part of the unit struct?
+    int32_t StaticVariables[UNIT_SCRIPT_MAX_STACK_SIZE];
 };
 
 struct ScriptState
@@ -440,6 +444,6 @@ struct TAMap
 
     void RenderMiniMap()
     {
-	//TODO(Christof): Update UIElements to have background (will use this here)
+	//TODO(Christof): Render into TAUI elements
     }
 };
