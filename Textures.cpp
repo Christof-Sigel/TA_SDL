@@ -42,7 +42,7 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContai
     int StartX = TextureContainer->FirstFreeTexture.X;
     for(int Y=TextureContainer->FirstFreeTexture.Y;Y<TextureContainer->HeightInSquares;Y++)
     {
-	for(int X=StartX;X<TextureContainer->WidthInSquares;X++)
+	for(int X=0;X<TextureContainer->WidthInSquares;X++)
 	{
 	    if(Y+HeightInSquares>TextureContainer->HeightInSquares || X+ WidthInSquares > TextureContainer->WidthInSquares)
 		continue;
@@ -185,10 +185,6 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset, TextureContainer * TextureC
     {
 	LogError("Unable to get storage location for texture: %s (%dx%d), Texture: %dx%d",Entry->Name,TotalWidth,MaxHeight, TextureContainer->TextureWidth, TextureContainer->TextureHeight);
 	return;
-    }
-    for(int y=0;y<MaxHeight;y++)
-    {
-	memset(TextureContainer->TextureData + ((y+PositionToStore.Y)*TextureContainer->TextureWidth *4) +PositionToStore.X*4, 0, TotalWidth *4); 
     }
     Textures[NextTexture].U=PositionToStore.X/float(TextureContainer->TextureWidth);
     Textures[NextTexture].V=PositionToStore.Y/float(TextureContainer->TextureHeight);
