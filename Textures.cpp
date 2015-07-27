@@ -6,12 +6,12 @@ void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int He
     TextureContainer->MaximumTextures = MaxTextures;
     TextureContainer->TextureWidth = Align(Width, PIXELS_PER_SQUARE_SIDE);
     TextureContainer->TextureHeight = Align(Height, PIXELS_PER_SQUARE_SIDE);
-    TextureContainer->TextureData = PushArray(Arena, TextureContainer->TextureWidth*TextureContainer->TextureHeight*4, uint8_t);
+    TextureContainer->TextureData = PushArray(Arena, TextureContainer->TextureWidth*TextureContainer->TextureHeight*4, u8 );
     TextureContainer->Textures = PushArray(Arena, MaxTextures, Texture);
     TextureContainer->WidthInSquares = Align(Width,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
     TextureContainer->HeightInSquares = Align(Height, PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
     int FreeSquareSize = TextureContainer->HeightInSquares * TextureContainer->WidthInSquares / 8;
-    TextureContainer->FreeSquares = PushArray(Arena, FreeSquareSize , uint8_t);
+    TextureContainer->FreeSquares = PushArray(Arena, FreeSquareSize , u8 );
     memset(TextureContainer->FreeSquares, 0, FreeSquareSize);
 }
 
@@ -26,7 +26,7 @@ Texture * GetTexture(const char * Name,TextureContainer * TextureContainer)
     return 0;
 }
 
-bool32 SquareIsFree(TextureContainer * TextureContainer, int x, int y)
+ b32 SquareIsFree(TextureContainer * TextureContainer, int x, int y)
 {
      int Offset = y*TextureContainer->WidthInSquares + x;
      int Index = Offset / 8;
@@ -80,20 +80,20 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContai
     return {-1,-1};
 }
 
-void LoadGafTextureData(uint8_t * Buffer, FILE_GafFrameData * Frame, TexturePosition OriginalPosition, TexturePosition PositionToStore, TextureContainer * TextureContainer, uint8_t * PaletteData)
+void LoadGafTextureData(u8 * Buffer, FILE_GafFrameData * Frame, TexturePosition OriginalPosition, TexturePosition PositionToStore, TextureContainer * TextureContainer, u8 * PaletteData)
 {
-    uint8_t * TextureData = TextureContainer->TextureData;
-    uint8_t * FrameData= (uint8_t*)(Buffer + Frame->FrameDataOffset);
+    u8 * TextureData = TextureContainer->TextureData;
+    u8 * FrameData= (u8 *)(Buffer + Frame->FrameDataOffset);
     if(Frame->Compressed)
     {
 	for(int y=0;y<Frame->Height;y++)
 	{
-	    int LineBytes = *(int16_t*)FrameData;
+	    int LineBytes = *(s16 *)FrameData;
 	    FrameData +=2;
 	    int x=0;
 	    while(LineBytes>0)
 	    {
-		uint8_t mask = *FrameData++;
+		u8 mask = *FrameData++;
 		LineBytes--;
 		if(mask & 0x01)
 		{
@@ -158,7 +158,7 @@ void LoadGafTextureData(uint8_t * Buffer, FILE_GafFrameData * Frame, TexturePosi
 
 }
 
-void LoadGafFrameEntry(uint8_t * Buffer, int Offset, TextureContainer * TextureContainer, uint8_t * PaletteData)
+void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContainer, u8 * PaletteData)
 {
     FILE_GafEntry * Entry = (FILE_GafEntry*)(Buffer +Offset);
     FILE_GafFrameEntry * FrameEntries=(FILE_GafFrameEntry *)(Buffer + Offset + sizeof(*Entry));
@@ -196,7 +196,7 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset, TextureContainer * TextureC
 	FILE_GafFrameData * Frame = (FILE_GafFrameData *)(Buffer + FrameEntries[i].FrameInfoOffset);
 	if(Frame->NumberOfSubframes!=0)
 	{
-	    int32_t * SubFrameOffsets = (int32_t *)(Buffer + Frame->FrameDataOffset);
+	    s32 * SubFrameOffsets = (s32  *)(Buffer + Frame->FrameDataOffset);
 	    for(int x=0;x<Frame->NumberOfSubframes;x++)
 	    {
 		FILE_GafFrameData * SubFrame = (FILE_GafFrameData*)(Buffer + SubFrameOffsets[x]);
@@ -218,7 +218,7 @@ void LoadGafFrameEntry(uint8_t * Buffer, int Offset, TextureContainer * TextureC
     TextureContainer->NumberOfTextures++;
 }
 
-void LoadTexturesFromGafBuffer(uint8_t * Buffer,TextureContainer * TextureContainer, uint8_t * PalletteData)
+void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureContainer, u8 * PalletteData)
 {
     FILE_GafHeader * header= (FILE_GafHeader *)Buffer;
     if(header->IDVersion != GAF_IDVERSION)
@@ -226,7 +226,7 @@ void LoadTexturesFromGafBuffer(uint8_t * Buffer,TextureContainer * TextureContai
 	LogError("Unknown Gaf IDVersion detected: %d",header->IDVersion);
 	return;
     }
-    int32_t * EntryOffsets = (int32_t *)(Buffer + sizeof(*header));
+    s32 * EntryOffsets = (s32  *)(Buffer + sizeof(*header));
     for(int i=0;i<header->NumberOfEntries;i++)
     {
 	LoadGafFrameEntry(Buffer, EntryOffsets[i], TextureContainer, PalletteData);
@@ -253,14 +253,14 @@ void LoadPalette(GameState * CurrentGameState)
     }
 }
 
-void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * TextureContainer, MemoryArena * TempArena,uint8_t * PaletteData)
+void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * TextureContainer, MemoryArena * TempArena,u8 * PaletteData)
 {
     if(!Textures->IsDirectory)
     {
-	uint8_t * GafBuffer = PushArray(TempArena, Textures->File.FileSize,uint8_t);
+	u8 * GafBuffer = PushArray(TempArena, Textures->File.FileSize,u8 );
 	LoadHPIFileEntryData(*Textures,GafBuffer,TempArena);
 	LoadTexturesFromGafBuffer(GafBuffer,TextureContainer,PaletteData);
-	PopArray(TempArena, GafBuffer,  Textures->File.FileSize, uint8_t);
+	PopArray(TempArena, GafBuffer,  Textures->File.FileSize, u8 );
     }
     else
     {
@@ -270,12 +270,12 @@ void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * Texture
 	    {
 		LogWarning("Unexpectedly found directory %s inside textures directory of %s",Textures->Directory.Entries[i].Name, Textures->Directory.Entries[i].ContainedInFile->Name);
 	    }
-	    //uint8_t GafBuffer[Textures->Directory.Entries[i].File.FileSize];
-	    //STACK_ARRAY(GafBuffer,Textures->Directory.Entries[i].File.FileSize,uint8_t);
-	    uint8_t * GafBuffer = PushArray(TempArena, Textures->Directory.Entries[i].File.FileSize,uint8_t);
+	    //u8 GafBuffer[Textures->Directory.Entries[i].File.FileSize];
+	    //STACK_ARRAY(GafBuffer,Textures->Directory.Entries[i].File.FileSize,u8 );
+	    u8 * GafBuffer = PushArray(TempArena, Textures->Directory.Entries[i].File.FileSize,u8 );
 	    LoadHPIFileEntryData(Textures->Directory.Entries[i],GafBuffer,TempArena);
 	    LoadTexturesFromGafBuffer(GafBuffer,TextureContainer, PaletteData);
-	    PopArray(TempArena, GafBuffer,Textures->Directory.Entries[i].File.FileSize,uint8_t);
+	    PopArray(TempArena, GafBuffer,Textures->Directory.Entries[i].File.FileSize,u8 );
 	}    
     }
 
@@ -286,7 +286,7 @@ void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * Texture
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureContainer->TextureWidth,TextureContainer->TextureHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureContainer->TextureData);
 }
 
-void LoadAllUnitTextures(HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, TextureContainer * UnitTextures, uint8_t * PaletteData)
+void LoadAllUnitTextures(HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, TextureContainer * UnitTextures, u8 * PaletteData)
 {
     HPIEntry Textures = FindEntryInAllFiles("textures",GlobalArchiveCollection, TempArena);
     if(!Textures.Name)
@@ -311,7 +311,7 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
     }
     else
     {
-	uint8_t * PCXBuffer = PushArray(TempArena, PCX.File.FileSize,uint8_t);
+	u8 * PCXBuffer = PushArray(TempArena, PCX.File.FileSize,u8 );
 	LoadHPIFileEntryData(PCX,PCXBuffer,TempArena);
 
 	FILE_PCXHeader * Header = (FILE_PCXHeader*)PCXBuffer;
@@ -320,15 +320,15 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	if(Header->BitsPerPlane != 8 || Header->Encoding != 1 || Header->ColorPlanes != 1 || Header->PalletteType != 1 || Header->BytesPerPlaneLine != Width || Header->YMin != 0 || Header->XMin !=0 || Header->Version != 5)
 	{
 	    LogError("Unsupported PCX %s not loaded.", FileName);
-	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, u8 );
 	    return 0;
 	}
 
-	uint8_t * PaletteData = PCXBuffer + (PCX.File.FileSize - (256*3));
+	u8 * PaletteData = PCXBuffer + (PCX.File.FileSize - (256*3));
 	if(*(PaletteData -1)!=0x0C)
 	{
 	    LogError("Could not find expected palette in PCX %s", FileName);
-	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, u8 );
 	    return 0;
 	}
 
@@ -337,18 +337,18 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	if(PCXPos.X == -1)
 	{
 	    LogError("Could not fit %s into texture (%dx%d)",FileName,Width,Height);
-	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, u8 );
 	    return 0;
 	}
 
 	int X=0, Y=0;
-	uint8_t * ImageBuffer = PCXBuffer + 0x80;
-	uint8_t * TextureData = PushArray(TempArena, Width*Height*4, uint8_t) ;
+	u8 * ImageBuffer = PCXBuffer + 0x80;
+	u8 * TextureData = PushArray(TempArena, Width*Height*4, u8 ) ;
 
 	//TODO(Christof): Transparency, might be default TA blue, or the horrible FF00FF pink
 	while(ImageBuffer < PaletteData && Y<Height)
 	{
-	    uint8_t ColorOrCount = *ImageBuffer++;
+	    u8 ColorOrCount = *ImageBuffer++;
 	    if((ColorOrCount & 0xC0) == 0xC0)
 	    {
 		int count = ColorOrCount & 0x3F;
@@ -386,8 +386,8 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	glBindTexture(GL_TEXTURE_2D, Textures->Texture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, PCXPos.X, PCXPos.Y, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
 	
-	PopArray(TempArena, TextureData,  Width*Height*4, uint8_t);
-	PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, uint8_t);
+	PopArray(TempArena, TextureData,  Width*Height*4, u8 );
+	PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, u8 );
 
 	int NextTexture = Textures->NumberOfTextures;
 	Textures->Textures[NextTexture].Widths[0]=Width/float( Textures->TextureWidth);

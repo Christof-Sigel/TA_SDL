@@ -1,27 +1,27 @@
 ////////// Defines ////////
 //Textures
-const int32_t GAF_IDVERSION=0x00010100;
-const int32_t MAX_NUMBER_OF_TEXTURE_FRAMES=256;
+const s32 GAF_IDVERSION=0x00010100;
+const s32 MAX_NUMBER_OF_TEXTURE_FRAMES=256;
 const int PIXELS_PER_SQUARE_SIDE = 8;
 
 //3DO
-const int32_t TranslationXAxisModModel = 1;
-const int32_t TranslationYAxisModModel = 1;
-const int32_t TranslationZAxisModModel = -1;
+const s32 TranslationXAxisModModel = 1;
+const s32 TranslationYAxisModModel = 1;
+const s32 TranslationZAxisModModel = -1;
 
-const int32_t TranslationXAxisModScript = -1;
-const int32_t TranslationYAxisModScript = 1;
-const int32_t TranslationZAxisModScript = 1;
+const s32 TranslationXAxisModScript = -1;
+const s32 TranslationYAxisModScript = 1;
+const s32 TranslationZAxisModScript = 1;
 
-const int32_t RotationXAxisMod = 1;
-const int32_t RotationYAxisMod = 1;
-const int32_t RotationZAxisMod = -1;
+const s32 RotationXAxisMod = 1;
+const s32 RotationYAxisMod = 1;
+const s32 RotationZAxisMod = -1;
 
-const uint32_t OBJECT3D_FLAG_HIDE = 1;
-const uint32_t OBJECT3D_FLAG_DONT_CACHE = 2;
-const uint32_t OBJECT3D_FLAG_DONT_SHADE = 4;
+const u32 OBJECT3D_FLAG_HIDE = 1;
+const u32 OBJECT3D_FLAG_DONT_CACHE = 2;
+const u32 OBJECT3D_FLAG_DONT_SHADE = 4;
 
-const int32_t MAX_3DO_NAME_LENGTH = 32;
+const s32 MAX_3DO_NAME_LENGTH = 32;
 
 enum
 {
@@ -32,7 +32,7 @@ enum
 };
 
 //FBI
-const int32_t MAX_UNIT_DETAILS = 128;
+const s32 MAX_UNIT_DETAILS = 128;
 
 enum UnitSide
 {
@@ -86,10 +86,10 @@ enum
 };
 
 //HPI
-const int32_t SAVE_MARKER= 'B' << 0 | 'A' <<8 | 'N' << 16 | 'K' <<24;
-const int32_t HPI_MARKER= 'H' << 0 | 'A' <<8 | 'P' <<16 | 'I' << 24;
-const int32_t CHUNK_MARKER = 'S' << 0 | 'Q' <<8 | 'S' <<16 | 'H' << 24;
-const int32_t CHUNK_SIZE = 65536;
+const s32 SAVE_MARKER= 'B' << 0 | 'A' <<8 | 'N' << 16 | 'K' <<24;
+const s32 HPI_MARKER= 'H' << 0 | 'A' <<8 | 'P' <<16 | 'I' << 24;
+const s32 CHUNK_MARKER = 'S' << 0 | 'Q' <<8 | 'S' <<16 | 'H' << 24;
+const s32 CHUNK_SIZE = 65536;
 
 enum Compression_Type
 {
@@ -162,8 +162,8 @@ struct TextureContainer
     Texture * Textures;
     int MaximumTextures;
     int NumberOfTextures;
-    uint8_t * TextureData;
-    uint8_t * FreeSquares;
+    u8 * TextureData;
+    u8 * FreeSquares;
     int TextureWidth, TextureHeight, HeightInSquares, WidthInSquares;
     GLuint Texture;
     TexturePosition FirstFreeTexture;
@@ -230,7 +230,7 @@ struct Object3dTransformationDetails
     float Spin[TA_AXIS_NUM];
 
     Object3dTransformationDetails * Children;
-    uint32_t Flags;
+    u32 Flags;
 };
 
 //FBI
@@ -247,7 +247,7 @@ struct UnitDetails
     
     float GetFloat(const char * Name);
     char * GetString(const char * Name);
-    int64_t GetUnitCategories();
+    s64  GetUnitCategories();
     UnitSide GetSide();
 };
 
@@ -268,7 +268,7 @@ struct HPIDirectoryEntry
 struct HPIEntry
 {
     char * Name;
-    bool32 IsDirectory;
+     b32 IsDirectory;
     struct HPIFile * ContainedInFile;
     union
     {
@@ -281,7 +281,7 @@ struct HPIFile
 {
     MemoryMappedFile MMFile;
     HPIDirectoryEntry Root;
-    int32_t DecryptionKey;
+    s32 DecryptionKey;
     char * Name;
 };
 
@@ -321,7 +321,7 @@ struct TAUIElement
     int Association,X,Y,Width,Height,ColorFore,ColorBack,TextureNumber,FontNumber;
     int Attributes, CommonAttributes;
     char * Help;
-    uint8_t Visible;//Pulls from active
+    u8 Visible;//Pulls from active
     void * Details;
 };
 
@@ -339,7 +339,7 @@ struct TAUIButton
     int StartingFrame;//pulls from status
     int Stages;
     char * Text;// | seperator for multistage buttons, center aligned for simple (single stage) buttons, right aligned otherwise
-    uint8_t Disabled;//pulls from grayedout
+    u8 Disabled;//pulls from grayedout
 };
 
 struct TAUITextBox
@@ -362,7 +362,7 @@ struct TAUILabel
 
 struct TAUIDynamicImage
 {
-    uint8_t DisaplySelectionRectangle;//Puller from hotornot
+    u8 DisaplySelectionRectangle;//Puller from hotornot
 };
 
 struct TAULabelFont
@@ -393,28 +393,28 @@ struct UnitScript
     char ** FunctionNames;
     char ** PieceNames;
     int ScriptDataSize;
-    int32_t * ScriptData;
-    int32_t * FunctionOffsets;
-    int32_t NumberOfStatics;
+    s32 * ScriptData;
+    s32 * FunctionOffsets;
+    s32 NumberOfStatics;
     //TODO(Christof): Make this part of the unit struct?
-    int32_t StaticVariables[UNIT_SCRIPT_MAX_STACK_SIZE];
+    s32 StaticVariables[UNIT_SCRIPT_MAX_STACK_SIZE];
 };
 
 struct ScriptState
 {
     //TODO(Christof): determine if stack can contain floats? some docs seem to indicate they should?
     int StackSize;
-    int32_t Stack[UNIT_SCRIPT_MAX_STACK_SIZE];
+    s32 Stack[UNIT_SCRIPT_MAX_STACK_SIZE];
     int NumberOfLocalVariables;
-    int32_t LocalVariables[UNIT_SCRIPT_MAX_STACK_SIZE];//NOTE(Christof): function parameters go at the beginning
+    s32 LocalVariables[UNIT_SCRIPT_MAX_STACK_SIZE];//NOTE(Christof): function parameters go at the beginning
     int NumberOfStaticVariables;
-    int32_t * StaticVariables;
+    s32 * StaticVariables;
     int ProgramCounter;
     Block BlockedOn;
     int BlockTime;//NOTE(Christof): this is in milliseconds
     int BlockedOnPiece;
     int BlockedOnAxis;
-    uint32_t SignalMask;
+    u32 SignalMask;
     ScriptState * ReturnTo;
     int ScriptNumber;
     int NumberOfParameters;

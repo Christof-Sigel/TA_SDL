@@ -5,10 +5,10 @@
 
 
 #ifdef __WINDOWS__
-int64_t PerformaceCounterFrequency;
+s64  PerformaceCounterFrequency;
 #endif
 
-int64_t GetTimeMillis(uint64_t PerformaceCounterFrequency)
+s64  GetTimeMillis(u64  PerformaceCounterFrequency)
 {
     return SDL_GetPerformanceCounter()/(PerformaceCounterFrequency/1000);
 }
@@ -23,10 +23,10 @@ struct MemoryMappedFile
     int File;
 #endif
     unsigned char * MMapBuffer;
-    int64_t FileSize;
-    uint64_t ModifiedTime;
+    s64  FileSize;
+    u64  ModifiedTime;
 };
-inline uint64_t GetFileModifiedTime(const char * FileName);
+inline u64  GetFileModifiedTime(const char * FileName);
 
 MemoryMappedFile MemoryMapFile(const char * FileName)
 {
@@ -56,7 +56,7 @@ MemoryMappedFile MemoryMapFile(const char * FileName)
 
     DWORD high=0;
     DWORD low=GetFileSize(MMFile.File,&high);
-    MMFile.FileSize = low | (((int64_t)high) << 32);
+    MMFile.FileSize = low | (((s64 )high) << 32);
     MMFile.ModifiedTime = GetFileModifiedTime(FileName);
     MMFile.MMFile=CreateFileMapping(MMFile.File,NULL,PAGE_READONLY,0,0,NULL);
     if(!MMFile.MMFile)
@@ -231,7 +231,7 @@ void UnloadUFOSearchResult(UFOSearchResult * Result)
     }
 }
 
-inline bool32 CaseInsensitiveMatch(const char * String1, const char * String2)
+inline b32 CaseInsensitiveMatch(const char * String1, const char * String2)
 {
     while(*String1 && *String2)
     {
@@ -249,7 +249,7 @@ inline bool32 CaseInsensitiveMatch(const char * String1, const char * String2)
     return *String1 == *String2;
 }
 
-inline uint64_t GetCurrentFileTime()
+inline u64  GetCurrentFileTime()
 {
 #ifdef __WINDOWS__
     FILETIME CurrentFileTime;
@@ -267,7 +267,7 @@ inline uint64_t GetCurrentFileTime()
 }
 
 
-inline uint64_t GetFileModifiedTime(const char * FileName)
+inline u64  GetFileModifiedTime(const char * FileName)
 {
 #ifdef __WINDOWS__
 

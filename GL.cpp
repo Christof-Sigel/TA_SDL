@@ -166,7 +166,7 @@ void DrawTexture2D(GLuint Texture, float X, float Y, float Width, float Height, 
     }
     else
     {
-	static uint8_t Once = 1;
+	static u8 Once = 1;
 	if(Once)
 	{
 	    Once=0;

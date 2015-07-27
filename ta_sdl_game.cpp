@@ -11,7 +11,6 @@
 #include "windows.h"
 #endif
 
-typedef int32_t bool32;
 #include <GL/glew.h>
 #include "ta_sdl_game.h"
 
@@ -41,8 +40,8 @@ void LoadCurrentModel(GameState * CurrentGameState)
     snprintf(ModelName,len,"objects3d/%s.3do",UnitName);
     
     HPIEntry Entry=FindEntryInAllFiles(ModelName,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-    //uint8_t temp[Entry.File.FileSize];
-    STACK_ARRAY(temp,Entry.File.FileSize,uint8_t);
+    //u8 temp[Entry.File.FileSize];
+    STACK_ARRAY(temp,Entry.File.FileSize,u8 );
     if(LoadHPIFileEntryData(Entry,temp,&CurrentGameState->TempArena))
     {
 	int ScriptLength=snprintf(0,0,"scripts/%s.cob",UnitName)+1;
@@ -50,8 +49,8 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	STACK_ARRAY(ScriptName,ScriptLength,char);
 	snprintf(ScriptName,ScriptLength,"scripts/%s.cob",UnitName);
 	HPIEntry ScriptEntry=FindEntryInAllFiles(ScriptName,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-	//uint8_t ScriptBuffer[ScriptEntry.File.FileSize];
-	STACK_ARRAY(ScriptBuffer, ScriptEntry.File.FileSize, uint8_t);
+	//u8 ScriptBuffer[ScriptEntry.File.FileSize];
+	STACK_ARRAY(ScriptBuffer, ScriptEntry.File.FileSize, u8 );
 	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer,&CurrentGameState->TempArena))
 	{
 	    LoadUnitScriptFromBuffer(&CurrentGameState->CurrentUnitScript, ScriptBuffer,&CurrentGameState->GameArena);
@@ -75,7 +74,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		CurrentGameState->CurrentScriptPool.NumberOfScripts = 1;
 		CurrentGameState->CurrentScriptPool.Scripts[0].ScriptNumber = ScriptNum;
 		CurrentGameState->CurrentScriptPool.Scripts[0].TransformationDetails = &CurrentGameState->UnitTransformationDetails;
-		CurrentGameState->CurrentScriptPool.Scripts[0].StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript.NumberOfStatics, int32_t);
+		CurrentGameState->CurrentScriptPool.Scripts[0].StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript.NumberOfStatics, s32);
 		CurrentGameState->CurrentScriptPool.Scripts[0].NumberOfStaticVariables = CurrentGameState->CurrentUnitScript.NumberOfStatics;
 	    }
 
@@ -131,7 +130,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
     }
 }
 
-static int32_t Side=0;
+static s32 Side=0;
 
 Matrix FPSViewMatrix(float * eye, float pitch, float yaw);
 void HandleInput(InputState * Input, GameState * CurrentGameState)
@@ -162,7 +161,7 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 
 		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].ScriptNumber = ScriptNumber;
 		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].TransformationDetails = &CurrentGameState->UnitTransformationDetails;
-		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript.NumberOfStatics, int32_t);
+		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript.NumberOfStatics, s32 );
 		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].NumberOfStaticVariables = CurrentGameState->CurrentUnitScript.NumberOfStatics;
 		CurrentGameState->CurrentScriptPool.NumberOfScripts++;
 	    }
@@ -249,7 +248,7 @@ void SetupDebugAxisBuffer(GLuint * DebugAxisBuffer)
 {
         //Setup Debug axis buffer details:
     GLfloat LineData[3*2 * (3+2+3)];
-    int32_t CurrentLine =0;
+    int CurrentLine =0;
     LineData[CurrentLine*2*8 + 0] = 0;
     LineData[CurrentLine*2*8 + 1]= 0;
     LineData[CurrentLine*2*8 + 2]= 0;
@@ -487,8 +486,8 @@ extern "C"
 
 	    }
 	}
-	int32_t Animate = CurrentGameState->NumberOfFrames%30==0;
-//	int32_t Animate =0;
+	b32 Animate = CurrentGameState->NumberOfFrames%30==0;
+//	s32  Animate =0;
 
 
 	UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f);

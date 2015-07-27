@@ -1,12 +1,12 @@
 
-void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
+void LoadCharacter(s16  CharacterOffset, u8 * FileBuffer, u8 * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
 {
     if(CharacterOffset ==0)
 	return;
     int Width = * (FileBuffer + CharacterOffset );
     if(Width == 0) 
 	return;
-    uint8_t * ImageData = (FileBuffer + CharacterOffset + 1);
+    u8 * ImageData = (FileBuffer + CharacterOffset + 1);
     int ByteOffset = 0, X =0, Y=0;
     while(Y< Height)
     {
@@ -31,7 +31,7 @@ void LoadCharacter(int16_t CharacterOffset, uint8_t * FileBuffer, uint8_t * Text
 }
 
 
-void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size)
+void LoadFNTFont(u8 * Buffer, FNTFont * Font, int Size)
 {
     FILE_FNT * Header = (FILE_FNT*)Buffer;
     Font->Height = Header->Height;
@@ -47,7 +47,7 @@ void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size)
 	}
     }
 
-    STACK_ARRAY(TextureData, TextureWidth*Font->Height*4, uint8_t);
+    STACK_ARRAY(TextureData, TextureWidth*Font->Height*4, u8 );
     int XOffset = 0;
     for(int i=0;i<254;i++)
     {
@@ -65,7 +65,7 @@ void LoadFNTFont(uint8_t * Buffer, FNTFont * Font, int Size)
 }
 
 
-void DrawCharacter(uint8_t Character, Texture2DShaderDetails * ShaderDetails, float X, float Y, Color Color, float Alpha, FNTFont * Font )
+void DrawCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, float X, float Y, Color Color, float Alpha, FNTFont * Font )
 {
     DrawTexture2D(Font->Texture, X,Y, Font->Characters[Character].Width, Font->Height, Color, Alpha, ShaderDetails, Font->Characters[Character].U, 0.0f,  Font->Characters[Character].TextureWidth, 1.0f);
 }
@@ -149,7 +149,7 @@ void LoadGafFonts(GameState * CurrentGameState)
 }
 
 
-void DrawBitmapCharacter(uint8_t Character, Texture2DShaderDetails * ShaderDetails, TextureContainer * TextureContainer, float X, float Y, Color Color, float Alpha, int * oWidth, int *oHeight)
+void DrawBitmapCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, TextureContainer * TextureContainer, float X, float Y, Color Color, float Alpha, int * oWidth, int *oHeight)
 {
     Texture tex = TextureContainer->Textures[0];
     float Width = tex.Widths[Character] * TextureContainer->TextureWidth;

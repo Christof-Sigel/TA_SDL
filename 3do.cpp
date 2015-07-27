@@ -1,5 +1,5 @@
 
-void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,uint8_t * PaletteData,int TextureOffset, GLfloat * TextureData)
+void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,u8 * PaletteData,int TextureOffset, GLfloat * TextureData)
 {
     int Offset=CurrentTriangle*(3+3)*3;
     Data+=Offset;
@@ -20,9 +20,9 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
 
 	
 
-	Data[i*6+3]=(uint8_t)PaletteData[Primitive->ColorIndex*4+0]/255.0f;
-	Data[i*6+4]=(uint8_t)PaletteData[Primitive->ColorIndex*4+1]/255.0f;
-	Data[i*6+5]=(uint8_t)PaletteData[Primitive->ColorIndex*4+2]/255.0f;
+	Data[i*6+3]=(u8 )PaletteData[Primitive->ColorIndex*4+0]/255.0f;
+	Data[i*6+4]=(u8 )PaletteData[Primitive->ColorIndex*4+1]/255.0f;
+	Data[i*6+5]=(u8 )PaletteData[Primitive->ColorIndex*4+2]/255.0f;
 
 	TextureData[i*4+0]=(U+Width*UV[i*3+0])*UV[i*3+2];
 	TextureData[i*4+1]=(V+Height*UV[i*3+1])*UV[i*3+2];
@@ -33,7 +33,7 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
 }
 
 Texture NoTexture={"",1,-2,-2,{0},{0}};
-bool32 TextureIsSideTexture(Texture * Texture)
+ b32 TextureIsSideTexture(Texture * Texture)
 {
     //NOTE(Christof): only the side textures seem to have 10 frames?
     //                makes sense, there are up to 10 players per game afaict
@@ -43,10 +43,10 @@ bool32 TextureIsSideTexture(Texture * Texture)
 #define TEXTURE_DEBUG 0
 
 #if TEXTURE_DEBUG
-int32_t DEBUG_done = 0;
+s32 DEBUG_done = 0;
 #endif
 
-bool32 IsAirPadTexture(Texture * Texture)
+ b32 IsAirPadTexture(Texture * Texture)
 {
 #if TEXTURE_DEBUG
     if(!DEBUG_done)
@@ -130,7 +130,7 @@ float length(v3 v)
     return sqrt(v.x*v.x+ v.y*v.y + v.z*v.z);
 }
 
-bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Side)
+b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side)
 {
     if(!Object->NumTriangles)
     {
@@ -155,7 +155,7 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	Texture * Texture=CurrentPrimitive->Texture;
 	if(!Texture)
 	    Texture=&NoTexture;
-	int32_t TextureOffset = Object->TextureOffset%Texture->NumberOfFrames;
+	s32 TextureOffset = Object->TextureOffset%Texture->NumberOfFrames;
 	if(TextureIsSideTexture(Texture))
 	{
 	    TextureOffset = Side;
@@ -173,9 +173,9 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	    LineData[CurrentLine*2*10 + 5]= 0;
 	    LineData[CurrentLine*2*10 + 6]= 1;
 	    
-	    LineData[CurrentLine*2*10 + 7]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
-	    LineData[CurrentLine*2*10 + 8]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
-	    LineData[CurrentLine*2*10 + 9]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
+	    LineData[CurrentLine*2*10 + 7]= (u8 )PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
+	    LineData[CurrentLine*2*10 + 8]= (u8 )PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
+	    LineData[CurrentLine*2*10 + 9]= (u8 )PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
 
 	    
 	    LineData[CurrentLine*2*10 + 10] = Object->Vertices[CurrentPrimitive->VertexIndexes[1]*3+0];
@@ -188,9 +188,9 @@ bool32 Object3dRenderingPrep(Object3d * Object,uint8_t * PaletteData,int32_t Sid
 	    LineData[CurrentLine*2*10 + 16]= 1;
 	    
 	    
-	    LineData[CurrentLine*2*10 + 17]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
-	    LineData[CurrentLine*2*10 + 18]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
-	    LineData[CurrentLine*2*10 + 19]= (uint8_t)PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
+	    LineData[CurrentLine*2*10 + 17]= (u8 )PaletteData[CurrentPrimitive->ColorIndex*4+0]/255.0f;
+	    LineData[CurrentLine*2*10 + 18]= (u8 )PaletteData[CurrentPrimitive->ColorIndex*4+1]/255.0f;
+	    LineData[CurrentLine*2*10 + 19]= (u8 )PaletteData[CurrentPrimitive->ColorIndex*4+2]/255.0f;
 	    CurrentLine++;
 	    break;
 	case 3:
@@ -478,7 +478,7 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
     }
 }
 
-void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, uint8_t * PaletteData, GLuint DebugAxisBuffer, int32_t Animate,int32_t Side,Matrix ParentMatrix=Matrix())
+void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, u8 * PaletteData, GLuint DebugAxisBuffer, b32 Animate, s32 Side,Matrix ParentMatrix=Matrix())
 {
     if((TransformationDetails->Flags & OBJECT3D_FLAG_HIDE))
 	return;
@@ -553,7 +553,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 /*TODO(Christof): Figure out if we can/need to use bindless textures or something similar for rendering, for now lets just go with the simple solution
  Probably just load all the textures into one big (1024x1024 or 2048x2048 - will need to check what size we need) texture and use offsets, since the textures are all quite small*/
 
-int Count3DOChildren(uint8_t * Buffer,FILE_Object3dHeader * header)
+int Count3DOChildren(u8 * Buffer,FILE_Object3dHeader * header)
 {
     int NumChildren = 0;
     if(header->OffsetToChildObject)
@@ -572,7 +572,7 @@ int Count3DOChildren(uint8_t * Buffer,FILE_Object3dHeader * header)
 
 
 
-bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object, TextureContainer * TextureContainer, MemoryArena * GameArena, int Offset=0)
+ b32 Load3DOFromBuffer(u8 * Buffer, Object3d * Object, TextureContainer * TextureContainer, MemoryArena * GameArena, int Offset=0)
 {
     FILE_Object3dHeader * header = (FILE_Object3dHeader *)(Buffer+Offset);
     if(header->Version != 1)
@@ -617,7 +617,7 @@ bool32 Load3DOFromBuffer(uint8_t * Buffer, Object3d * Object, TextureContainer *
 	}
 	Object->Primitives[i].NumberOfVertices = CurrentPrimitive->NumberOfVertexIndexes;
 	Object->Primitives[i].VertexIndexes = PushArray(GameArena,Object->Primitives[i].NumberOfVertices,int);
-	int16_t * VertexIndexes = (int16_t *)(Buffer + CurrentPrimitive->OffsetToVertexIndexArray);
+	s16  * VertexIndexes = (s16  *)(Buffer + CurrentPrimitive->OffsetToVertexIndexArray);
 	for(int j=0;j<Object->Primitives[i].NumberOfVertices;j++)
 	    Object->Primitives[i].VertexIndexes[j]=VertexIndexes[j];
 	

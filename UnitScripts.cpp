@@ -1,5 +1,5 @@
 
-bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, MemoryArena * GameArena)
+ b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryArena * GameArena)
 {
     FILE_CobHeader * Header = (FILE_CobHeader *)Buffer;
     Script->NumberOfPieces = Header->NumberOfPieces;
@@ -12,7 +12,7 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, MemoryAre
     {
 	Script->FunctionNames[i] = Script->FunctionNames[0] + SCRIPT_NAME_STORAGE_SIZE*i;
     }
-    int32_t * NameOffsetArray = (int32_t *)(Buffer + Header->OffsetToScriptNameOffsetArray);
+    s32 * NameOffsetArray = (s32  *)(Buffer + Header->OffsetToScriptNameOffsetArray);
     for(int i=0;i<Script->NumberOfFunctions;i++)
     {
 	int Length = (int)strlen((char*)Buffer + NameOffsetArray[i]);
@@ -29,7 +29,7 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, MemoryAre
 	{
 	    Script->PieceNames[i] = Script->PieceNames[0] + SCRIPT_NAME_STORAGE_SIZE*i; 
 	}
-	NameOffsetArray = (int32_t *)(Buffer + Header->OffsetToPieceNameOffsetArray);
+	NameOffsetArray = (s32  *)(Buffer + Header->OffsetToPieceNameOffsetArray);
 	for(int i=0;i<Script->NumberOfPieces;i++)
 	{
 	    int Length = (int)strlen((char*)Buffer + NameOffsetArray[i]);
@@ -41,9 +41,9 @@ bool32 LoadUnitScriptFromBuffer(UnitScript * Script, uint8_t * Buffer, MemoryAre
     Script->NumberOfStatics = Header->NumberOfStatics;
 
     Script->ScriptDataSize = Header->CodeSize * 4;
-    Script->ScriptData = PushArray(GameArena, Script->ScriptDataSize, int32_t);
-    Script->FunctionOffsets = PushArray(GameArena, Script->NumberOfFunctions, int32_t);
-    int32_t * ScriptOffsetArray = (int32_t *)(Buffer + Header->OffsetToScriptCodeIndexArray);
+    Script->ScriptData = PushArray(GameArena, Script->ScriptDataSize, s32 );
+    Script->FunctionOffsets = PushArray(GameArena, Script->NumberOfFunctions, s32 );
+    s32 * ScriptOffsetArray = (s32  *)(Buffer + Header->OffsetToScriptCodeIndexArray);
     for(int i=0;i<Script->NumberOfFunctions;i++)
     {
 	Script->FunctionOffsets[i] = ScriptOffsetArray[i];
@@ -141,7 +141,7 @@ enum CobCommands
 
 
 
-inline void PushStack(ScriptState * State, int32_t Value)
+inline void PushStack(ScriptState * State, s32 Value)
 {
     if(State->StackSize >= UNIT_SCRIPT_MAX_STACK_SIZE)
     {
@@ -151,7 +151,7 @@ inline void PushStack(ScriptState * State, int32_t Value)
     State->Stack[State->StackSize++] = Value;
 }
 
-inline int32_t PopStack(ScriptState * State)
+inline s32 PopStack(ScriptState * State)
 {
     if(State->StackSize <= 0)
     {
@@ -161,7 +161,7 @@ inline int32_t PopStack(ScriptState * State)
     return State->Stack[--State->StackSize];
 }
 
-int32_t MILLISECONDS_PER_FRAME = 1000/60;
+int MILLISECONDS_PER_FRAME = 1000/60;
 
 Object3dTransformationDetails * FindTransformationForPiece(Object3d * Object, Object3dTransformationDetails * TransformationDetails, char * PieceName)
 {
@@ -178,7 +178,7 @@ Object3dTransformationDetails * FindTransformationForPiece(Object3d * Object, Ob
     return 0;
 }
 
-inline int32_t PostData(UnitScript * Script,ScriptState * State)
+inline s32 PostData(UnitScript * Script,ScriptState * State)
 {
     return Script->ScriptData[State->ProgramCounter++];
 }
@@ -198,8 +198,8 @@ int GetScriptNumberForFunction(UnitScript * Script, const char * FunctionName)
 
 void CreateNewScriptState(UnitScript * Script, ScriptState * State, ScriptState * NewState)
 {
-    int32_t FunctionNumber = PostData(Script,State);
-    int32_t NumberOfArguments = PostData(Script,State);
+    s32 FunctionNumber = PostData(Script,State);
+    s32 NumberOfArguments = PostData(Script,State);
     memset(NewState, 0, sizeof(ScriptState));
     for(int i=NumberOfArguments-1;i>=0;i--)
     {
@@ -302,10 +302,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	{
 	case COB_MOVE:
 	{
-	    int32_t Target = PopStack(State);
-	    int32_t Speed = PopStack(State);
-	    int32_t PieceNumber = PostData(Script,State);
-	    int32_t Axis = PostData(Script,State);
+	    s32 Target = PopStack(State);
+	    s32 Speed = PopStack(State);
+	    s32 PieceNumber = PostData(Script,State);
+	    s32 Axis = PostData(Script,State);
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    switch(Axis)
 	    {
@@ -329,10 +329,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_TURN:
 	{
-	    int32_t Target = PopStack(State);
-	    int32_t Speed = PopStack(State);
-	    int32_t PieceNumber = PostData(Script,State);
-	    int32_t Axis = PostData(Script,State);
+	    s32 Target = PopStack(State);
+	    s32 Speed = PopStack(State);
+	    s32 PieceNumber = PostData(Script,State);
+	    s32 Axis = PostData(Script,State);
 	    switch(Axis)
 	    {
 	    case TA_AXIS_X:
@@ -355,10 +355,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_SPIN:
 	{
-	    int32_t Speed = PopStack(State);
-	    int32_t Acceleration = PopStack(State);
-	    int32_t PieceNumber = PostData(Script,State);
-	    int32_t Axis = PostData(Script,State);
+	    s32 Speed = PopStack(State);
+	    s32 Acceleration = PopStack(State);
+	    s32 PieceNumber = PostData(Script,State);
+	    s32 Axis = PostData(Script,State);
 	    //NOTE(Christof): if Acceleration is 0 Spin change is immediate
 	    switch(Axis)
 	    {
@@ -390,10 +390,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_SPIN_STOP:
 	{
-	    int32_t Speed = PopStack(State);
-	    int32_t Acceleration = PopStack(State);
-	    int32_t PieceNumber = PostData(Script,State);
-	    int32_t Axis = PostData(Script,State);
+	    s32 Speed = PopStack(State);
+	    s32 Acceleration = PopStack(State);
+	    s32 PieceNumber = PostData(Script,State);
+	    s32 Axis = PostData(Script,State);
 	    switch(Axis)
 	    {
 	    case TA_AXIS_X:
@@ -430,7 +430,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_SHOW:
 	{
-	    int32_t Piece = PostData(Script,State);
+	    s32 Piece = PostData(Script,State);
 	    char * PieceName = Script->PieceNames[Piece];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
@@ -439,7 +439,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_HIDE:
 	{
-	    int32_t Piece = PostData(Script,State);
+	    s32 Piece = PostData(Script,State);
 	    char * PieceName = Script->PieceNames[Piece];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
@@ -448,7 +448,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_CACHE:
 	{
-	    int32_t Piece = PostData(Script,State);
+	    s32 Piece = PostData(Script,State);
 	    char * PieceName = Script->PieceNames[Piece];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
@@ -457,7 +457,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_DONT_CACHE:
 	{
-	    int32_t Piece = PostData(Script,State);
+	    s32 Piece = PostData(Script,State);
 	    char * PieceName = Script->PieceNames[Piece];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
@@ -466,9 +466,9 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_MOVE_NOW:
 	{
-	    int32_t Target = PopStack(State);
-	    int32_t PieceNumber = PostData(Script,State);
-	    int32_t Axis = PostData(Script,State);
+	    s32 Target = PopStack(State);
+	    s32 PieceNumber = PostData(Script,State);
+	    s32 Axis = PostData(Script,State);
 	    switch(Axis)
 	    {
 	    case TA_AXIS_X:
@@ -490,9 +490,9 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_TURN_NOW:
 	{
-	    int32_t Target = PopStack(State);
-	    int32_t PieceNumber = PostData(Script,State);
-	    int32_t Axis = PostData(Script,State);
+	    s32 Target = PopStack(State);
+	    s32 PieceNumber = PostData(Script,State);
+	    s32 Axis = PostData(Script,State);
 
 	    switch(Axis)
 	    {
@@ -517,7 +517,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_SHADE:
 	{
-	    int32_t Piece = PostData(Script,State);
+	    s32 Piece = PostData(Script,State);
 	    char * PieceName = Script->PieceNames[Piece];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
@@ -526,7 +526,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_DONT_SHADE:
 	{
-	    int32_t Piece = PostData(Script,State);
+	    s32 Piece = PostData(Script,State);
 	    char * PieceName = Script->PieceNames[Piece];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
@@ -535,8 +535,8 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_EMIT_SPECIAL_EFFECTS:
 	{
-	    int32_t EffectType = PopStack(State);
-	    int32_t Piece = PostData(Script,State);
+	    s32 EffectType = PopStack(State);
+	    s32 Piece = PostData(Script,State);
 	    LogWarning("Ignoring Special effect %d for %s",EffectType,Script->PieceNames[Piece]);
 	}
 	break;
@@ -572,7 +572,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    //TODO(Christof): bounds checks on local/static vars
 	case COB_PUSH_LOCAL_VARIABLE:
 	{
-	    int32_t Index = PostData(Script,State);
+	    s32 Index = PostData(Script,State);
 	    if(Index>=State->NumberOfLocalVariables)
 	    {
 		LogError("%s Trying to push the value of local variable %d, but only %d exist, pushoing 0 instead",Script->FunctionNames[State->ScriptNumber], Index, State->NumberOfLocalVariables);
@@ -586,7 +586,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_PUSH_STATIC_VARIABLE:
 	{
-	    int32_t Index = PostData(Script,State);
+	    s32 Index = PostData(Script,State);
 	    if(Index >= State->NumberOfStaticVariables)
 	    {
 	    	LogError("%s Trying to push the value of static variable %d, but only %d exist, pushoing 0 instead",Script->FunctionNames[State->ScriptNumber], Index, State->NumberOfStaticVariables);
@@ -600,7 +600,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    break;
 	case COB_POP_LOCAL_VARIABLE:
 	{
-	    int32_t Index = PostData(Script,State);
+	    s32 Index = PostData(Script,State);
 	    if(Index >= State->NumberOfLocalVariables)
 	    {
 		LogError("%s Trying to set local variable %d to %d, but only %d exists!",Script->FunctionNames[State->ScriptNumber], Index, PopStack(State),  State->NumberOfLocalVariables);
@@ -613,7 +613,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    break;
 	case COB_POP_STATIC_VARIABLE:
 	    	{
-	    int32_t Index = PostData(Script,State);
+	    s32 Index = PostData(Script,State);
 	    if(Index >= State->NumberOfStaticVariables)
 	    {
 		LogError("%s Trying to set local variable %d to %d, but only %d exists!", Script->FunctionNames[State->ScriptNumber],Index, PopStack(State), State->NumberOfStaticVariables);
@@ -652,17 +652,17 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	case COB_RANDOM:
 	{
 	    //TODO(Christof): Better random numbers
-	    int32_t LowerBound = PopStack(State);
-	    int32_t UpperBound = PopStack(State);
-	    int32_t Result = (UpperBound - LowerBound)/2;
+	    s32 LowerBound = PopStack(State);
+	    s32 UpperBound = PopStack(State);
+	    s32 Result = (UpperBound - LowerBound)/2;
 	    Result = (rand()%(UpperBound-LowerBound))+LowerBound;
 	    PushStack(State, Result);
 	}
 	break;
 	case COB_GET_UNIT_VALUE:
 	{
-	    int32_t GetValue = PopStack(State);
-	    int32_t Value = 1;
+	    s32 GetValue = PopStack(State);
+	    s32 Value = 1;
 	    switch(GetValue)
 	    {
 	    case 17:
@@ -686,8 +686,8 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_GET_VALUE:
 	{
-	    int32_t GetValue = PopStack(State);
-	    int32_t Value = 1;
+	    s32 GetValue = PopStack(State);
+	    s32 Value = 1;
 	    switch(GetValue)
 	    {
 	    case 0:
@@ -724,22 +724,22 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    break;
 	case COB_AND:
 	{
-	    int32_t Val1 = PopStack(State);
-	    int32_t Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    s32 Val2 = PopStack(State);
 	    PushStack(State, Val1 && Val2);
 	}
 	break;
 	case COB_OR:
 	{
-	    int32_t Val1 = PopStack(State);
-	    int32_t Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    s32 Val2 = PopStack(State);
 	    PushStack(State, Val1 || Val2);
 	}
 	break;
 	case COB_XOR:
 	{
-	    int32_t Val1 = PopStack(State);
-	    int32_t Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    s32 Val2 = PopStack(State);
 	    PushStack(State, (Val2 || Val1) && (!(Val2 && Val1)));
 	}
 	break;
@@ -753,7 +753,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    if(ScriptIndex >= SCRIPT_POOL_SIZE)
 	    {
 		Pool->NumberOfScripts--;
-		int32_t FunctionNumber = PostData(Script,State);
+		s32  FunctionNumber = PostData(Script,State);
 		PostData(Script,State);
 
 		LogError("Too many scripts, failed to start new script %s", Script->FunctionNames[FunctionNumber]);
@@ -775,7 +775,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    if(ScriptIndex >= SCRIPT_POOL_SIZE)
 	    {
 		Pool->NumberOfScripts--;
-		int32_t FunctionNumber = PostData(Script,State);
+		s32  FunctionNumber = PostData(Script,State);
 		PostData(Script,State);
 
 		LogError("Too many scripts, failed to call new script %s", Script->FunctionNames[FunctionNumber]);
@@ -809,7 +809,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	}
 	case COB_JUMP_IF_FALSE:
 	{
-	    int32_t NewProgramCounter = PostData(Script,State);
+	    s32 NewProgramCounter = PostData(Script,State);
 	    if(PopStack(State) == 0 )
 	    {
 		State->ProgramCounter = NewProgramCounter;
@@ -818,7 +818,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	}
 	case COB_SIGNAL:
 	{
-	    int32_t Signal = PopStack(State);
+	    s32 Signal = PopStack(State);
 	    LogError("We do not currently handle signals %d",Signal);
 	}
 	break;
@@ -830,29 +830,29 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_EXPLODE:
 	{
-	    int32_t ExplodeType = PopStack(State);
-	    int32_t Piece = PostData(Script,State);
+	    s32 ExplodeType = PopStack(State);
+	    s32 Piece = PostData(Script,State);
 	    LogWarning("Ignoring Explosion %d directive for %s",ExplodeType,Script->PieceNames[Piece]);
 	}
 	break;
 	case COB_SET_UNIT_VALUE:
 	{
-	    int32_t Value = PopStack(State);
-	    int32_t UnitVariableNumber = PopStack(State);
+	    s32 Value = PopStack(State);
+	    s32 UnitVariableNumber = PopStack(State);
 	    LogWarning("Not setting Value %d to %d", UnitVariableNumber, Value);
 	}
 	break;
 	case COB_ATTACH_UNIT:
 	{
-	    int32_t UnitID = PopStack(State);
-	    int32_t Piece = PopStack(State);
-	    int32_t Unknown = PopStack(State);
+	    s32 UnitID = PopStack(State);
+	    s32 Piece = PopStack(State);
+	    s32 Unknown = PopStack(State);
 	    LogWarning("Not attaching Unit %d to %s (Unknown: %d)",UnitID,Script->PieceNames[Piece], Unknown);
 	}
 	break;
 	case COB_DROP_UNIT:
 	{
-	    int32_t UnitID = PopStack(State);
+	    s32 UnitID = PopStack(State);
 	    LogWarning("Not Dropping UnitID %d", UnitID);
 	}
 	break;

@@ -262,7 +262,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 
 
 
-TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, char * FileName, HPIFileCollection * GlobalArchiveCollection, uint8_t * PaletteData)
+TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, char * FileName, HPIFileCollection * GlobalArchiveCollection, u8 * PaletteData)
 {
     TextureContainer * Textures =PushStruct(Arena, TextureContainer);
     SetupTextureContainer(Textures, 1024,1024, 40, Arena);

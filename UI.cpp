@@ -2,7 +2,7 @@
 
 
 
-bool32 LoadFont(FontDetails * Font,const char * File, float Height,uint8_t * FontBitmap)
+ b32 LoadFont(FontDetails * Font,const char * File, float Height,u8 * FontBitmap)
 {
     MemoryMappedFile FontFile = MemoryMapFile(File);
     if(!FontFile.MMapBuffer)

@@ -9,4 +9,3 @@
 #include "windows.h"
 #endif
 
-typedef int32_t bool32;

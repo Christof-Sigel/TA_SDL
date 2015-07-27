@@ -184,7 +184,7 @@ struct Matrix
 struct ShaderProgram
 {
     GLuint ProgramID, VertexID, PixelID;
-    uint64_t VertexFileModifiedTime, PixelFileModifiedTime;
+    u64  VertexFileModifiedTime, PixelFileModifiedTime;
     char PixelFileName[MAX_SHADER_FILENAME];
     char VertexFileName[MAX_SHADER_FILENAME];
 };

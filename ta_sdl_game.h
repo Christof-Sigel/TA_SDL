@@ -10,6 +10,25 @@
 #endif
 #include <stdio.h>
 
+typedef int64_t s64;
+typedef int32_t s32;
+typedef int16_t  s16;
+typedef int8_t  s8;
+
+
+typedef uint64_t  u64;
+typedef uint32_t  u32;
+typedef uint16_t  u16;
+typedef uint8_t  u8;
+
+typedef s64 b64;
+typedef s32 b32;
+typedef s16 b16;
+typedef s8 b8;
+
+typedef float r32;
+typedef double r64;
+
 const int UNIT_TEXTURE_WIDTH=2048;
 const int UNIT_TEXTURE_HEIGHT=1024;
 const int UNIT_MAX_TEXTURES=1024;
@@ -41,27 +60,27 @@ const int MAX_SHADER_FILENAME = 50;
 
 struct InputState
 {
-    uint32_t KeyIsDown[256];
-    uint32_t KeyWasDown[256];
+    u32 KeyIsDown[256];
+    u32 KeyWasDown[256];
 };
 
 struct Memory
 {
-    uint64_t PermanentStoreSize;
-    uint8_t * PermanentStore;
-    uint64_t TransientStoreSize;
-    uint8_t * TransientStore;
+    u64  PermanentStoreSize;
+    u8 * PermanentStore;
+    u64  TransientStoreSize;
+    u8 * TransientStore;
 };
 
-typedef uint64_t memory_index;
+typedef u64  memory_index;
 
 struct MemoryArena
 {
     memory_index Size;
-    uint8_t *Base;
+    u8 *Base;
     memory_index Used;
 
-    int32_t TempCount;
+    s32 TempCount;
 };
 
 
@@ -69,7 +88,7 @@ inline void
 InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 {
     Arena->Size = Size;
-    Arena->Base = (uint8_t *)Base;
+    Arena->Base = (u8 *)Base;
     Arena->Used = 0;
     Arena->TempCount = 0;
 }
@@ -110,7 +129,7 @@ MemoryArena * PushSubArena_(MemoryArena * Arena, memory_index Size, const char *
 inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, const char * caller, int line, const char * file)
 {
     printf("Popping %d from %s in %s:%d\n",Size,caller, file,line);
-    if((uint64_t)Memory + Size != Arena->Used + (uint64_t)Arena->Base)
+    if((u64 )Memory + Size != Arena->Used + (us64 )Arena->Base)
     {
 	printf("NOPE, NOT ALLOWED TO POP THIS!");
 	return;
@@ -152,7 +171,7 @@ MemoryArena * PushSubArena(MemoryArena * Arena, memory_index Size)
 
 inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
 {
-    if((uint64_t)Memory + Size != Arena->Used + (uint64_t)Arena->Base)
+    if((u64 )Memory + Size != Arena->Used + (u64 )Arena->Base)
     {
 	printf("NOPE, NOT ALLOWED TO POP THIS!");
 	return;
@@ -177,10 +196,10 @@ struct TempUnitList
 
 struct GameState
 {
-    bool32 IsInitialised;
+     b32 IsInitialised;
     MemoryArena GameArena;
     MemoryArena TempArena;
-    bool32 Quit;
+     b32 Quit;
 
 
     Matrix ProjectionMatrix;
@@ -192,7 +211,7 @@ struct GameState
     ShaderProgram * FontShader;
     ShaderProgram * UIElementShaderProgram;
     
-    int64_t StartTime;
+    s64  StartTime;
     int NumberOfFrames;
     GLuint ProjectionMatrixLocation;
     GLuint ModelMatrixLocation;
@@ -218,8 +237,8 @@ struct GameState
     TextureContainer Font11;
     TextureContainer Font12;
 
-    uint8_t PaletteData[1024];
-    uint8_t FontBitmap[FONT_BITMAP_SIZE*FONT_BITMAP_SIZE];
+    u8 PaletteData[1024];
+    u8 FontBitmap[FONT_BITMAP_SIZE*FONT_BITMAP_SIZE];
 
     ScreenText NameAndDescText[5*2];
     ScreenText UnitDetailsText[NUMBER_OF_UNIT_DETAILS];
@@ -229,8 +248,8 @@ struct GameState
     FontDetails Times16;
 
     UnitScript CurrentUnitScript;
-    uint64_t PerformanceCounterStart;
-    uint64_t PerformanceCounterFrequency;
+    u64  PerformanceCounterStart;
+    u64  PerformanceCounterFrequency;
 
     float CameraXRotation;
     float CameraYRotation;

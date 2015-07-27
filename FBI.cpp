@@ -24,13 +24,13 @@ char * UnitDetails::GetString(const char * Name)
     return 0;
 }
     
-int64_t UnitDetails::GetUnitCategories()
+s64  UnitDetails::GetUnitCategories()
 {
     char * Value=GetString("Category");
     if(!Value)
 	return 0;
 	
-    int64_t Categories=0;
+    s64  Categories=0;
     int done=0;
     while(!done)
     {
@@ -72,15 +72,15 @@ int64_t UnitDetails::GetUnitCategories()
 	else if(CaseInsensitiveMatch(Cat,"CTRL_V")){Categories |= 1<<UNIT_CATEGORY_CTRL_V;}
 	else if(CaseInsensitiveMatch(Cat,"VTOL")){Categories |= 1<<UNIT_CATEGORY_VTOL;}
 	else if(CaseInsensitiveMatch(Cat,"STRATEGIC")){Categories |= 1<<UNIT_CATEGORY_STRATEGIC;}
-	else if(CaseInsensitiveMatch(Cat,"REPAIRPAD")){Categories |= (int64_t)1<<UNIT_CATEGORY_REPAIR_PAD;}
-	else if(CaseInsensitiveMatch(Cat,"JAM")){Categories |= (int64_t)1<<UNIT_CATEGORY_JAM;}
-	else if(CaseInsensitiveMatch(Cat,"DEFENSIVE")){Categories |= (int64_t)1<<UNIT_CATEGORY_DEFENSIVE;}
-	else if(CaseInsensitiveMatch(Cat,"ANTISUB")){Categories |= (int64_t)1<<UNIT_CATEGORY_ANTI_SUB;}
-	else if(CaseInsensitiveMatch(Cat,"STEALTH")){Categories |= (int64_t)1<<UNIT_CATEGORY_STEALTH;}
-	else if(CaseInsensitiveMatch(Cat,"BOMB")){Categories |= (int64_t)1<<UNIT_CATEGORY_BOMB;}
-	else if(CaseInsensitiveMatch(Cat,"PHIB")){Categories |= (int64_t)1<<UNIT_CATEGORY_PHIB;}
-	else if(CaseInsensitiveMatch(Cat,"UNDERWATER")){Categories |= (int64_t)1<<UNIT_CATEGORY_UNDERWATER;}
-	else if(CaseInsensitiveMatch(Cat,"KAMIKAZE")){Categories |= (int64_t)1<<UNIT_CATEGORY_KAMIKAZE;}		
+	else if(CaseInsensitiveMatch(Cat,"REPAIRPAD")){Categories |= (s64 )1<<UNIT_CATEGORY_REPAIR_PAD;}
+	else if(CaseInsensitiveMatch(Cat,"JAM")){Categories |= (s64 )1<<UNIT_CATEGORY_JAM;}
+	else if(CaseInsensitiveMatch(Cat,"DEFENSIVE")){Categories |= (s64 )1<<UNIT_CATEGORY_DEFENSIVE;}
+	else if(CaseInsensitiveMatch(Cat,"ANTISUB")){Categories |= (s64 )1<<UNIT_CATEGORY_ANTI_SUB;}
+	else if(CaseInsensitiveMatch(Cat,"STEALTH")){Categories |= (s64 )1<<UNIT_CATEGORY_STEALTH;}
+	else if(CaseInsensitiveMatch(Cat,"BOMB")){Categories |= (s64 )1<<UNIT_CATEGORY_BOMB;}
+	else if(CaseInsensitiveMatch(Cat,"PHIB")){Categories |= (s64 )1<<UNIT_CATEGORY_PHIB;}
+	else if(CaseInsensitiveMatch(Cat,"UNDERWATER")){Categories |= (s64 )1<<UNIT_CATEGORY_UNDERWATER;}
+	else if(CaseInsensitiveMatch(Cat,"KAMIKAZE")){Categories |= (s64 )1<<UNIT_CATEGORY_KAMIKAZE;}		
 	else
 	{
 	    LogDebug("Unknown category %s encountered while parsing unit info file Category",Cat);

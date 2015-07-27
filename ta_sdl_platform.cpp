@@ -17,7 +17,7 @@ void (*CheckResources)(Memory * GameMemory) = NULL;
 void (*GameUpdateAndRender)(InputState * Input, Memory* GameMemory) = NULL;
 void (*GameTeardown)(Memory * GameMemory) = NULL;
 void * GameLibraryObject=NULL;
-int64_t GameLibraryObjectModifyTime=0;
+s64  GameLibraryObjectModifyTime=0;
 
 #ifdef __WINDOWS__
 #include <windows.h>
@@ -74,14 +74,14 @@ void UnloadGameLibrary()
     SDL_UnloadObject(GameLibraryObject);
 }
 
-inline bool32 HasGameLibraryBeenUpdated()
+inline b32 HasGameLibraryBeenUpdated()
 {
 #ifdef __WINDOWS__
     WIN32_FILE_ATTRIBUTE_DATA Ignored;
     if(GetFileAttributesEx("lock.tmp", GetFileExInfoStandard, &Ignored))
 	return 0;
 #endif
-    int64_t CurrentModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
+    s64  CurrentModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
     return CurrentModifyTime > GameLibraryObjectModifyTime;
 }
 
@@ -101,8 +101,8 @@ int main(int argc, char * argv[])
     GameMemory.PermanentStoreSize = 256 * 1024 * 1024;//TODO(Christof): convenience macros for size
     GameMemory.TransientStoreSize = 256 * 1024 * 1024;
 
-    uint64_t TotalSize = GameMemory.PermanentStoreSize + GameMemory.TransientStoreSize;
-    GameMemory.PermanentStore = (uint8_t*)calloc(1,TotalSize);
+    u64  TotalSize = GameMemory.PermanentStoreSize + GameMemory.TransientStoreSize;
+    GameMemory.PermanentStore = (u8 *)calloc(1,TotalSize);
     GameMemory.TransientStore = GameMemory.PermanentStore+GameMemory.PermanentStoreSize;
 
     GameState * CurrentGameState=(GameState *)GameMemory.PermanentStore;

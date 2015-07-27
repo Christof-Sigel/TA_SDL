@@ -10,7 +10,7 @@ void UnloadHPIFile(HPIFile * HPI)
     UnMapFile(HPI->MMFile);
 }
 
-void LoadEntries(HPIDirectoryEntry * Root, uint8_t * Buffer, int Offset,HPIFile * File,MemoryArena * FileArena)
+void LoadEntries(HPIDirectoryEntry * Root, u8 * Buffer, int Offset,HPIFile * File,MemoryArena * FileArena)
 {
     FILE_HPIDirectoryHeader * directory_header = (FILE_HPIDirectoryHeader *)(Buffer + Offset);
 
@@ -39,7 +39,7 @@ void LoadEntries(HPIDirectoryEntry * Root, uint8_t * Buffer, int Offset,HPIFile 
     }
 }
 
-void DecryptHPIBuffer(HPIFile * HPI, uint8_t * Destination, int32_t Length, int32_t FileOffset)
+void DecryptHPIBuffer(HPIFile * HPI, u8 * Destination, s32 Length, s32 FileOffset)
 {
     int CurrentKey=0;
     if(HPI->DecryptionKey == -1)//Header key was 0 -> No Encryption
@@ -50,11 +50,11 @@ void DecryptHPIBuffer(HPIFile * HPI, uint8_t * Destination, int32_t Length, int3
     for(int BufferIndex=0;BufferIndex < Length; BufferIndex++)
     {
 	CurrentKey =  (BufferIndex + FileOffset) ^ HPI->DecryptionKey;
-	Destination[BufferIndex] = (uint8_t)(CurrentKey ^ ~ (HPI->MMFile.MMapBuffer[BufferIndex+FileOffset]));
+	Destination[BufferIndex] = (u8 )(CurrentKey ^ ~ (HPI->MMFile.MMapBuffer[BufferIndex+FileOffset]));
     }
 }
     
-bool32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena, MemoryArena * TempArena)
+ b32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena, MemoryArena * TempArena)
 {
     MemoryMappedFile HPIMemory = MemoryMapFile(FileName);
     if(HPIMemory.MMapBuffer == 0)
@@ -93,15 +93,15 @@ bool32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena
     memcpy(HPI->Name,FileName,NameLength);
     HPI->Name[NameLength]=0;
 
-    uint8_t * DecryptedDirectory = PushArray(TempArena,header->DirectorySize,uint8_t);
+    u8 * DecryptedDirectory = PushArray(TempArena,header->DirectorySize,u8 );
     DecryptHPIBuffer(HPI,DecryptedDirectory,header->DirectorySize, 0);
     LoadEntries(&HPI->Root, DecryptedDirectory, header->Offset,HPI,FileArena);
-    PopArray(TempArena,DecryptedDirectory,header->DirectorySize,uint8_t);
+    PopArray(TempArena,DecryptedDirectory,header->DirectorySize,u8 );
 
     return 1;
 }
 
-void DecompressZLibChunk(uint8_t * Source, int CompressedSize, int DecompressedSize, uint8_t * Destination)
+void DecompressZLibChunk(u8 * Source, int CompressedSize, int DecompressedSize, u8 * Destination)
 {
     z_stream zs;
     int result;
@@ -138,7 +138,7 @@ void DecompressZLibChunk(uint8_t * Source, int CompressedSize, int DecompressedS
 
 const int LZ77_WINDOW_SIZE=4096;
 const int LZ77_LENGTH_MASK=0x0f;
-void DecompressLZ77Chunk(uint8_t * Source, int CompressedSize, int DecompressedSize, uint8_t * Destination)
+void DecompressLZ77Chunk(u8 * Source, int CompressedSize, int DecompressedSize, u8 * Destination)
 {
     unsigned char Window[LZ77_WINDOW_SIZE];
     
@@ -162,8 +162,8 @@ void DecompressLZ77Chunk(uint8_t * Source, int CompressedSize, int DecompressedS
 	    {
 		//read two bytes, lower 4 bytes are length, upper 12 are offset into window
 		
-		int offset=(*(uint16_t*)Source)>>4;
-		int length=(*(uint16_t*)Source)&LZ77_LENGTH_MASK;
+		int offset=(*(u16 *)Source)>>4;
+		int length=(*(u16 *)Source)&LZ77_LENGTH_MASK;
 		length+=2;
 		if(offset==0)
 		{
@@ -185,7 +185,7 @@ void DecompressLZ77Chunk(uint8_t * Source, int CompressedSize, int DecompressedS
     }
 }
 
-uint8_t * LoadChunk(uint8_t * Source, uint8_t * Destination)
+u8 * LoadChunk(u8 * Source, u8  * Destination)
 {
     FILE_HPIChunk * header=(FILE_HPIChunk *)Source;
     if(header->Marker != CHUNK_MARKER)
@@ -193,8 +193,8 @@ uint8_t * LoadChunk(uint8_t * Source, uint8_t * Destination)
 	LogError("chunk with incorrect marker %d",header->Marker);
 	return 0;
     }
-    uint8_t * data=Source+sizeof(FILE_HPIChunk);
-    int32_t ComputedChecksum=0;
+    u8 * data=Source+sizeof(FILE_HPIChunk);
+    s32 ComputedChecksum=0;
     for(int i=0;i<header->CompressedSize;i++)
     {
 	ComputedChecksum += (unsigned char)data[i];
@@ -207,7 +207,7 @@ uint8_t * LoadChunk(uint8_t * Source, uint8_t * Destination)
     if(header->Encrypt)
     {
 	for(int i=0;i<header->CompressedSize;i++)
-	    data[i]=(uint8_t)((data[i] - i) ^ i);
+	    data[i]=(u8 )((data[i] - i) ^ i);
     }
     Compression_Type CompressionMethod= (Compression_Type)header->CompressionMethod;
     switch(CompressionMethod)
@@ -228,7 +228,7 @@ uint8_t * LoadChunk(uint8_t * Source, uint8_t * Destination)
 
 
 
-bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination, MemoryArena * TempArena)
+ b32 LoadHPIFileEntryData(HPIEntry Entry, u8 * Destination, MemoryArena * TempArena)
 {
     if(Entry.IsDirectory)
     {
@@ -254,19 +254,19 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination, MemoryArena *
 	{
 	    NumChunks++;
 	}
-	//int32_t ChunkSizes[NumChunks];
-	STACK_ARRAY(ChunkSizes,NumChunks,int32_t);
-	DecryptHPIBuffer(Entry.ContainedInFile,(uint8_t*)ChunkSizes,NumChunks*sizeof(int32_t),Entry.File.Offset);
+	//s32  ChunkSizes[NumChunks];
+	STACK_ARRAY(ChunkSizes,NumChunks, s32);
+	DecryptHPIBuffer(Entry.ContainedInFile,(u8 *)ChunkSizes,NumChunks*sizeof(s32),Entry.File.Offset);
 	int ChunkDataSize=NumChunks*sizeof(FILE_HPIChunk);//size of all the headers
-	int ChunkDataOffset = Entry.File.Offset + NumChunks*sizeof(int32_t);
+	int ChunkDataOffset = Entry.File.Offset + NumChunks*sizeof(s32 );
 	for(int i=0;i<NumChunks;i++)
 	{
 	    ChunkDataSize += ChunkSizes[i];
 	}
-	uint8_t * DecryptedChunkData = PushArray(TempArena, ChunkDataSize, uint8_t);
-//	STACK_ARRAY(DecryptedChunkData,ChunkDataSize,uint8_t);
+	u8 * DecryptedChunkData = PushArray(TempArena, ChunkDataSize, u8 );
+//	STACK_ARRAY(DecryptedChunkData,ChunkDataSize,u8 );
 	DecryptHPIBuffer(Entry.ContainedInFile,DecryptedChunkData,ChunkDataSize,ChunkDataOffset);
-	uint8_t * DataSource=DecryptedChunkData;
+	u8 * DataSource=DecryptedChunkData;
 	for(int i=0;i<NumChunks;i++)
 	{
 	    if(!DataSource)
@@ -276,7 +276,7 @@ bool32 LoadHPIFileEntryData(HPIEntry Entry, uint8_t * Destination, MemoryArena *
 	    }
 	    DataSource=LoadChunk(DataSource,&Destination[i*CHUNK_SIZE]);
 	}
-	PopArray(TempArena, DecryptedChunkData, ChunkDataSize, uint8_t);
+	PopArray(TempArena, DecryptedChunkData, ChunkDataSize, u8 );
     }
     }
 
@@ -344,7 +344,7 @@ const char * HPIFileNames[]={"rev31.gp3","btdata.ccx","ccdata.ccx","tactics1.hpi
 
 const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
 
-bool32 LoadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection, MemoryArena * GameArena, MemoryArena * TempArena)
+ b32 LoadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection, MemoryArena * GameArena, MemoryArena * TempArena)
 {
     UFOSearchResult UfoFiles=GetUfoFiles();
     GlobalArchiveCollection->NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
@@ -373,7 +373,7 @@ bool32 LoadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection, Memory
     return 1;
 }
 
-int32_t FindEntryInVector(HPIEntry Entry, std::vector<HPIEntry> & Entries)
+b32 EntryIsInVector(HPIEntry Entry, std::vector<HPIEntry> & Entries)
 {
     for(int i=0;i<Entries.size();i++)
     {
@@ -414,7 +414,7 @@ HPIEntry FindEntryInAllFiles(const char * Path, HPIFileCollection * GlobalArchiv
 		}
 		for(int i=0;i<temp.Directory.NumberOfEntries;i++)
 		{
-		    if(!FindEntryInVector(temp.Directory.Entries[i], Entries))
+		    if(!EntryIsInVector(temp.Directory.Entries[i], Entries))
 		    {
 			Entries.push_back(temp.Directory.Entries[i]);
 		    }

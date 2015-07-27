@@ -136,7 +136,7 @@ extern "C"{
 	HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(Map.Name)
 	{
-	    uint8_t * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,uint8_t);
+	    u8 * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,u8 );
     
 	    if(LoadHPIFileEntryData(Map,temp,&CurrentGameState->TempArena))
 	    {
@@ -144,7 +144,7 @@ extern "C"{
 	    }
 	    else
 		LogDebug("failed to load map buffer from hpi");
-	    PopArray(&CurrentGameState->TempArena,temp,Map.File.FileSize,uint8_t);
+	    PopArray(&CurrentGameState->TempArena,temp,Map.File.FileSize,u8 );
 	}
 	else
 	    LogDebug("failed to load map");
@@ -159,7 +159,7 @@ extern "C"{
 		//char temp[Entry.Directory.Entries[i].File.FileSize];
 		//STACK_ARRAY(temp,Entry.Directory.Entries[i].File.FileSize,char);
 		char * temp = PushArray(&CurrentGameState->TempArena, Entry.Directory.Entries[i].File.FileSize,char);
-		if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(uint8_t*)temp,&CurrentGameState->TempArena))
+		if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(u8 *)temp,&CurrentGameState->TempArena))
 		{
 		    if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
 		    {
@@ -183,7 +183,7 @@ extern "C"{
 	Entry = FindEntryInAllFiles("fonts/ARMFONT.fnt", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(!Entry.IsDirectory)
 	{
-	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);
+	    STACK_ARRAY(temp, Entry.File.FileSize, u8 );
 	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
 	    {
 		LoadFNTFont(temp, &CurrentGameState->Fonts[0], Entry.File.FileSize);
@@ -193,7 +193,7 @@ extern "C"{
 	Entry = FindEntryInAllFiles("guis/mainmenu.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(!Entry.IsDirectory)
 	{
-	    STACK_ARRAY(temp, Entry.File.FileSize, uint8_t);
+	    STACK_ARRAY(temp, Entry.File.FileSize, u8 );
 	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
 	    {
 		CurrentGameState->MainGUI = LoadGUIFromBuffer((char*)temp, (char*)temp+Entry.File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,Entry.Name, &CurrentGameState->GlobalArchiveCollection, CurrentGameState->PaletteData);
@@ -207,8 +207,8 @@ extern "C"{
     void GameTeardown(Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-	int64_t EndTime=GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
-	int64_t StartTime=CurrentGameState->StartTime;
+	s64  EndTime=GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
+	s64  StartTime=CurrentGameState->StartTime;
 	int NumberOfFrames=CurrentGameState->NumberOfFrames;
 	LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
 	UnloadShaderProgram(CurrentGameState->UnitShader);
@@ -224,7 +224,7 @@ extern "C"{
 	//return;
 	//TODO(Christof): Fix shaders unecessarily reloading here (cause of the blue flickering)
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-	uint8_t Reload =0;
+	u8 Reload =0;
 	for(int i=0;i<CurrentGameState->ShaderGroup.NumberOfShaders;i++)
 	{
 	    if(GetFileModifiedTime(CurrentGameState->ShaderGroup.Shaders[i].VertexFileName) > CurrentGameState->ShaderGroup.Shaders[i].VertexFileModifiedTime)
