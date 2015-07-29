@@ -501,7 +501,7 @@ extern "C"
 	{
 	    for(int y=0;y<10;y++)
 	    {
-		ModelMatrix.SetTranslation(30.5+x*50,14.5,23.4+y*40);
+		ModelMatrix.SetTranslation(30.5f+x*50,14.5f,23.4f+y*40);
 		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Animate,Side,ModelMatrix);
 	    }
 	}
@@ -527,23 +527,6 @@ extern "C"
 	DrawUIElement(CurrentGameState->ScriptBackground, CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
 	for(int i=0;i<CurrentGameState->CurrentUnitScript.NumberOfFunctions;i++)
 	    DrawOnScreenText(CurrentGameState->UnitDetailsText[i], CurrentGameState->FontShader, CurrentGameState->FontPositionLocation, CurrentGameState->FontColorLocation);
-
-
-	
-	TextureContainer * Textures = ((TAUIContainer*)CurrentGameState->MainGUI.Details)->Textures;
-	Texture * BackgroundTexture = ((TAUIContainer*)CurrentGameState->MainGUI.Details)->Background;
-	DrawTexture2D(Textures->Texture, 0, 0, 640, 480, {{1,1,1}}, 1, &CurrentGameState->DrawTextureShaderDetails, BackgroundTexture->U, BackgroundTexture->V, BackgroundTexture->Widths[0], BackgroundTexture->Heights[0]);
-
-	int X=0, bX=0;
-	int Width, Height;
-	for(int i=150;i<256;i++)
-	{
-	    DrawCharacter(i, &CurrentGameState->DrawTextureShaderDetails,  X,100, {{1.0,1.0,1.0}}, 1.0, &CurrentGameState->Fonts[0]);
-	 //   DrawBitmapCharacter(i, CurrentGameState->DrawTextureShaderDetails, CurrentGameState->Font11, X, 30, {1.0, 0.0, 0.0}, 1.0);
-	    DrawBitmapCharacter(i, &CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, bX, 130, {{1.0, 1.0, 1.0}}, 1.0, &Width, &Height);
-	    bX+=Width;
-	    X+=CurrentGameState->Fonts[0].Characters[i].Width;
-	}
 
 	CurrentGameState->NumberOfFrames++;
     }
