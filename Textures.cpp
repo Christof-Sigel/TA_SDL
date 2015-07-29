@@ -39,8 +39,7 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContai
     int WidthInSquares = Align(Width,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
     int HeightInSquares = Align(Height,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
 
-    int StartX = TextureContainer->FirstFreeTexture.X;
-    for(int Y=TextureContainer->FirstFreeTexture.Y;Y<TextureContainer->HeightInSquares;Y++)
+    for(int Y=0;Y<TextureContainer->HeightInSquares;Y++)
     {
 	for(int X=0;X<TextureContainer->WidthInSquares;X++)
 	{
@@ -69,11 +68,8 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContai
 		    TextureContainer->FreeSquares[Index] |= 1<<BitOffset;
 		}
 	    }
-	    TextureContainer->FirstFreeTexture.X = X;
-	    TextureContainer->FirstFreeTexture.Y = Y;
 	    return {X*PIXELS_PER_SQUARE_SIDE,Y*PIXELS_PER_SQUARE_SIDE};
 	next:
-	    StartX =0;
 	    continue;
 	}
     }
