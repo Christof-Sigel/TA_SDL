@@ -321,7 +321,7 @@ struct TAUIElement
     int Association,X,Y,Width,Height,ColorFore,ColorBack,TextureNumber,FontNumber;
     int Attributes, CommonAttributes;
     char * Help;
-    u8 Visible;//Pulls from active
+    b32 Visible;//Pulls from active
     void * Details;
 };
 

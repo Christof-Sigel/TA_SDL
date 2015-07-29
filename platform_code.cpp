@@ -160,17 +160,11 @@ UFOSearchResult GetUfoFiles()
     UFOSearchResult Result={0,0};
 #ifdef __WINDOWS__
     std::vector<char *> FileNames;
-    if(!SetCurrentDirectory("data"))
-    {
-	LogError("Failed to change to data directory");
-	return Result;
-    }
-    WIN32_FIND_DATA ffd;
-    HANDLE find=FindFirstFile("*.ufo", &ffd);
+    WIN32_FIND_DATAA ffd;
+    HANDLE find=FindFirstFileA(".\\data\\*.ufo", &ffd);
     if(find==INVALID_HANDLE_VALUE)
     {
 	LogError("Failed to find .ufo files in data directory");
-	SetCurrentDirectory("..");
 	return Result;
     }
 
@@ -189,14 +183,11 @@ UFOSearchResult GetUfoFiles()
     {
 	Result.FileNames[i]=FileNames[i];
     }
-    
-    SetCurrentDirectory("..");
 #endif
 #ifdef __LINUX__
-    chdir("data");
     struct dirent **eps=0;
 
-    Result.NumberOfFiles = scandir ("./", &eps, IsUFO, alphasort);
+    Result.NumberOfFiles = scandir ("./data/", &eps, IsUFO, alphasort);
     if (Result.NumberOfFiles >= 0)
     {
 	Result.FileNames=(char**)malloc(sizeof(char*)*Result.NumberOfFiles);
@@ -214,7 +205,6 @@ UFOSearchResult GetUfoFiles()
 	LogError("Failed to find .ufo files in data directory");
     }
     if(eps){free(eps);}
-    chdir("..");
 #endif
     return Result;
 }
