@@ -44,7 +44,7 @@ FILE_UIElement * GetNthElement(FILE_UIElement * Start, int N)
 {
     if(N ==0 || !Start)
 	return Start;
-    return GetNthElement(Start, N-1);
+    return GetNthElement(Start->Next, N-1);
 }
 
 int CountElements(FILE_UIElement * First)
