@@ -189,7 +189,6 @@ struct Object3d
     int NumTriangles;
     int NumLines;
     GLuint LineBuffer;
-    int TextureOffset;
     GLuint TextureCoordBuffer;
 };
 
@@ -230,6 +229,8 @@ struct Object3dTransformationDetails
     float Spin[TA_AXIS_NUM];
 
     Object3dTransformationDetails * Children;
+    int TextureOffset;
+    
     u32 Flags;
 };
 

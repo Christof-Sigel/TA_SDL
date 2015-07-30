@@ -130,7 +130,7 @@ float length(v3 v)
     return sqrt(v.x*v.x+ v.y*v.y + v.z*v.z);
 }
 
-b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side)
+b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 ObjectTextureOffset)
 {
     if(!Object->NumTriangles)
     {
@@ -151,11 +151,14 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side)
     int CurrentLine = 0;
     for(int PrimitiveIndex=0;PrimitiveIndex<Object->NumberOfPrimitives;PrimitiveIndex++)
     {
+
 	Object3dPrimitive * CurrentPrimitive=&Object->Primitives[PrimitiveIndex];
+
 	Texture * Texture=CurrentPrimitive->Texture;
+
 	if(!Texture)
 	    Texture=&NoTexture;
-	s32 TextureOffset = Object->TextureOffset%Texture->NumberOfFrames;
+	int TextureOffset = ObjectTextureOffset % Texture->NumberOfFrames;
 	if(TextureIsSideTexture(Texture))
 	{
 	    TextureOffset = Side;
@@ -356,10 +359,14 @@ void InitTransformationDetails(Object3d * Object, Object3dTransformationDetails 
 	InitTransformationDetails(& Object->Children[i], &TransformationDetails->Children[i], GameArena);
 }
 
-void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails * TransformationDetails,float TimeStep)
+void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails * TransformationDetails,float TimeStep, b32 Animate)
 {
     if(!Object || ! TransformationDetails)
 	return;
+    if(Animate)
+    {
+	TransformationDetails->TextureOffset++;
+    }
     for(int i=0;i<TA_AXIS_NUM;i++)
     {
 	if(TransformationDetails->RotationTarget[i].Speed != 0)
@@ -474,20 +481,17 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
     }
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	UpdateTransformationDetails(&Object->Children[i],&TransformationDetails->Children[i],TimeStep);
+	UpdateTransformationDetails(&Object->Children[i],&TransformationDetails->Children[i],TimeStep,Animate);
     }
 }
 
-void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, u8 * PaletteData, GLuint DebugAxisBuffer, b32 Animate, s32 Side,Matrix ParentMatrix=Matrix())
+void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, u8 * PaletteData, GLuint DebugAxisBuffer, s32 Side,Matrix ParentMatrix=Matrix())
 {
     if((TransformationDetails->Flags & OBJECT3D_FLAG_HIDE))
 	return;
-    if(Animate)
-    {
-	Object->TextureOffset++;
-    }
+   
 //Object->TextureOffset = 3;
-    Object3dRenderingPrep(Object, PaletteData,Side);
+    Object3dRenderingPrep(Object, PaletteData,Side, TransformationDetails->TextureOffset);
     //TODO(Christof): Actually make use of TransformationDetails
 
     Matrix CurrentMatrix;
@@ -505,7 +509,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,DebugAxisBuffer,Animate,Side,CurrentMatrix);
+	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,DebugAxisBuffer,Side,CurrentMatrix);
     }
 
 

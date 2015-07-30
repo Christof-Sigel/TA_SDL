@@ -486,11 +486,11 @@ extern "C"
 
 	    }
 	}
-	b32 Animate = CurrentGameState->NumberOfFrames%30==0;
+	b32 Animate = CurrentGameState->NumberOfFrames%10==0;
 //	s32  Animate =0;
 
 
-	UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f);
+	UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f, Animate);
 	#if TEXTURE_DEBUG
 	if(!DEBUG_done)
 	{
@@ -502,7 +502,7 @@ extern "C"
 	    for(int y=0;y<10;y++)
 	    {
 		ModelMatrix.SetTranslation(30.5f+x*50,14.5f,23.4f+y*40);
-		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Animate,Side,ModelMatrix);
+		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side,ModelMatrix);
 	    }
 	}
 	#if TEXTURE_DEBUG
