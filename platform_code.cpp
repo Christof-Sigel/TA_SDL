@@ -153,7 +153,6 @@ static int IsUFO( const struct dirent * file)
 const int MAX_UFO_FILES = 32;
 const int MAX_UFO_NAME_LENGTH = 64;
 
-#include <vector>
 struct UFOSearchResult
 {
     int NumberOfFiles;
@@ -163,7 +162,6 @@ UFOSearchResult GetUfoFiles()
 {
     UFOSearchResult Result={0,0};
 #ifdef __WINDOWS__
-    std::vector<char *> FileNames;
     WIN32_FIND_DATAA ffd;
     HANDLE find=FindFirstFileA(".\\data\\*.ufo", &ffd);
     if(find==INVALID_HANDLE_VALUE)

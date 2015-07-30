@@ -373,20 +373,22 @@ const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
     return 1;
 }
 
-b32 EntryIsInVector(HPIEntry Entry, std::vector<HPIEntry> & Entries)
+
+b32 NameExistsInEntry(HPIEntry Entry, char * Name)
 {
-    for(int i=0;i<Entries.size();i++)
+    for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
     {
-	if(CaseInsensitiveMatch(Entries[i].Name,Entry.Name))
+	if(CaseInsensitiveMatch(Entry.Directory.Entries[i].Name,Name))
 	    return 1;
     }
     return 0;
 }
 
+const int MAX_TEMP_ENTRY_LIST_FILES = 512;
+
 HPIEntry FindEntryInAllFiles(const char * Path, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena)
 {
     HPIEntry Result={0};
-    std::vector<HPIEntry> Entries;
     for(int ArchiveIndex=0;ArchiveIndex<GlobalArchiveCollection->NumberOfFiles;ArchiveIndex++)
     {
 	HPIEntry temp=FindHPIEntry(&GlobalArchiveCollection->Files[ArchiveIndex],Path);
@@ -394,7 +396,7 @@ HPIEntry FindEntryInAllFiles(const char * Path, HPIFileCollection * GlobalArchiv
 	{
 	    if(!temp.IsDirectory)
 	    {
-		if(Entries.size())
+		if(Result.IsDirectory)
 		{
 		    LogError("Found file in %s while loading directory %s",GlobalArchiveCollection->Files[ArchiveIndex].Name,Path);
 		    return {0};
@@ -406,31 +408,22 @@ HPIEntry FindEntryInAllFiles(const char * Path, HPIFileCollection * GlobalArchiv
 	    }
 	    else
 	    {
-		if(!Entries.size())
+		if(!Result.IsDirectory)
 		{
-		    Result.Name=temp.Name;
+		    Result.Name = temp.Name;
 		    Result.IsDirectory=1;
-		    Result.ContainedInFile=0;
+		    Result.Directory.Entries=PushArray(TempArena,MAX_TEMP_ENTRY_LIST_FILES,HPIEntry);
 		}
 		for(int i=0;i<temp.Directory.NumberOfEntries;i++)
 		{
-		    if(!EntryIsInVector(temp.Directory.Entries[i], Entries))
+		    if(!NameExistsInEntry(Result,temp.Directory.Entries[i].Name))
 		    {
-			Entries.push_back(temp.Directory.Entries[i]);
+			Result.Directory.Entries[Result.Directory.NumberOfEntries++]=temp.Directory.Entries[i];
 		    }
+		    Assert(Result.Directory.NumberOfEntries < MAX_TEMP_ENTRY_LIST_FILES);
 		}
 	    }
 	}
-    }
-    if(!Entries.size())
-    {
-	return {0};
-    }
-    Result.Directory.NumberOfEntries=(int)Entries.size();
-    Result.Directory.Entries=PushArray(TempArena,Result.Directory.NumberOfEntries,HPIEntry);
-    for(int i=0;i<Entries.size();i++)
-    {
-	Result.Directory.Entries[i]=Entries[i];
     }
     return Result;
 }
@@ -439,7 +432,7 @@ void UnloadCompositeEntry(HPIEntry * Entry,MemoryArena * TempArena)
 {
     if(Entry && Entry->IsDirectory)
     {
-	PopArray(TempArena,Entry->Directory.Entries,Entry->Directory.NumberOfEntries,HPIEntry);
+	PopArray(TempArena,Entry->Directory.Entries,MAX_TEMP_ENTRY_LIST_FILES,HPIEntry);
     }
 }
 

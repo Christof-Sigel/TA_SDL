@@ -269,7 +269,7 @@ struct HPIDirectoryEntry
 struct HPIEntry
 {
     char * Name;
-     b32 IsDirectory;
+    b32 IsDirectory;
     struct HPIFile * ContainedInFile;
     union
     {

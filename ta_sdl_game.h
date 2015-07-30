@@ -131,7 +131,7 @@ inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, cons
     printf("Popping %d from %s in %s:%d\n",Size,caller, file,line);
     if((u64 )Memory + Size != Arena->Used + (us64 )Arena->Base)
     {
-	printf("NOPE, NOT ALLOWED TO POP THIS!");
+	Assert(!"NOPE, NOT ALLOWED TO POP THIS!");
 	return;
     }
     Arena->Used -=Size;
@@ -173,7 +173,7 @@ inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
 {
     if((u64 )Memory + Size != Arena->Used + (u64 )Arena->Base)
     {
-	printf("NOPE, NOT ALLOWED TO POP THIS!");
+	Assert(!"NOPE, NOT ALLOWED TO POP THIS!");
 	return;
     }
     Arena->Used -=Size;

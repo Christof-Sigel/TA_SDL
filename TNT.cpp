@@ -58,7 +58,7 @@ float GetHeightFor(int X, int Y, FILE_TNTAttribute * Attributes, int Width,int H
 
     //TODO(Christof): TA Apparently uses 0xDD to denote transparency, need to deal with this here
 
-    int TileTextureSide = (int)ceil(sqrt(Header->NumberOfTiles *32*32));
+    int TileTextureSide = (int)ceil(sqrt(Header->NumberOfTiles *32*32.0f));
     TileTextureSide += 32-(TileTextureSide%32);
     u8 * TileTextureData = PushArray(TempArena,TileTextureSide*TileTextureSide*4,u8 );
     memset(TileTextureData, 0, TileTextureSide*TileTextureSide*4);
