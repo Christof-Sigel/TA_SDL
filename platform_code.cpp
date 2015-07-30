@@ -149,11 +149,15 @@ static int IsUFO( const struct dirent * file)
 }
 #endif
 
+//NOTE(Christof): These should be plenty
+const int MAX_UFO_FILES = 32;
+const int MAX_UFO_NAME_LENGTH = 64;
+
 #include <vector>
 struct UFOSearchResult
 {
     int NumberOfFiles;
-    char ** FileNames;
+    char FileNames[MAX_UFO_FILES][MAX_UFO_NAME_LENGTH];
 };
 UFOSearchResult GetUfoFiles()
 {
@@ -171,18 +175,13 @@ UFOSearchResult GetUfoFiles()
     do
     {
 	int length=(int)strlen(ffd.cFileName)+1;
-	char * FileName=(char*)malloc(length);
-	memcpy(FileName,ffd.cFileName,length);
-	FileNames.push_back(FileName);
+	Assert(length <= MAX_UFO_NAME_LENGTH);
+
+	memcpy(&Result.FileNames[Result.NumberOfFiles],ffd.cFileName,length);
+	Result.NumberOfFiles++;
+	Assert(Result.NumberOfFiles<=MAX_UFO_FILES);
     }while(FindNextFile(find,&ffd));
     FindClose(find);
-
-    Result.NumberOfFiles=(int)FileNames.size();
-    Result.FileNames=(char **)malloc(sizeof(char *)*Result.NumberOfFiles);
-    for(int i=0;i<Result.NumberOfFiles;i++)
-    {
-	Result.FileNames[i]=FileNames[i];
-    }
 #endif
 #ifdef __LINUX__
     struct dirent **eps=0;
@@ -194,10 +193,13 @@ UFOSearchResult GetUfoFiles()
 	for(int i=0;i<Result.NumberOfFiles;i++)
 	{
 	    int length=strlen(eps[i]->d_name)+1;
-	    char * FileName=(char*)malloc(length);
-	    memcpy(FileName,eps[i]->d_name,length);
+	    Assert(length <= MAX_UFO_NAME_LENGTH);
+
+	    memcpy(&Result.FileNames[Result.NumberOfFiles],eps[i]->d_name,length);
+	    Result.NumberOfFiles++;
+	    Assert(Result.NumberOfFiles<=MAX_UFO_FILES);
+	    
 	    free(eps[i]);
-	    Result.FileNames[i]=FileName;
 	}
     }
     else
@@ -207,18 +209,6 @@ UFOSearchResult GetUfoFiles()
     if(eps){free(eps);}
 #endif
     return Result;
-}
-
-void UnloadUFOSearchResult(UFOSearchResult * Result)
-{
-    if(Result)
-    {
-	for(int i=0;i<Result->NumberOfFiles;i++)
-	{
-	    free(Result->FileNames[i]);
-	}
-	free(Result->FileNames);
-    }
 }
 
 inline b32 CaseInsensitiveMatch(const char * String1, const char * String2)

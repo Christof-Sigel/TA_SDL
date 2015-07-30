@@ -368,7 +368,7 @@ const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
 	LoadHPIFile(temp,&GlobalArchiveCollection->Files[i],GameArena,TempArena);
     }
 
-    UnloadUFOSearchResult(&UfoFiles);
+    //UnloadUFOSearchResult(&UfoFiles);
 
     return 1;
 }
