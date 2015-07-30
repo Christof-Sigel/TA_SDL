@@ -98,8 +98,8 @@ int main(int argc, char * argv[])
     InputState GameInputState={};
     Memory GameMemory={};
 
-    GameMemory.PermanentStoreSize = 256 * 1024 * 1024;//TODO(Christof): convenience macros for size
-    GameMemory.TransientStoreSize = 256 * 1024 * 1024;
+    GameMemory.PermanentStoreSize = 512 * 1024 * 1024;//TODO(Christof): convenience macros for size
+    GameMemory.TransientStoreSize = 512 * 1024 * 1024;
 
     u64  TotalSize = GameMemory.PermanentStoreSize + GameMemory.TransientStoreSize;
     GameMemory.PermanentStore = (u8 *)calloc(1,TotalSize);

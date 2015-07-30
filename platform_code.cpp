@@ -227,6 +227,22 @@ inline b32 CaseInsensitiveMatch(const char * String1, const char * String2)
     return *String1 == *String2;
 }
 
+inline b32 NameEndsWith(const char * Name, const char * EndsWith)
+{
+    char * End = (char*)Name;
+    char * test = (char*)EndsWith;
+    while(*++End){}
+
+    while(*++test){}
+
+    while((*End == *test || *End + 'A'-'a' == *test || *End == * test +'A'-'a') && End>=Name && test>=EndsWith)
+    {
+	--End;
+	--test;
+    }
+    return test<EndsWith;
+}
+
 inline u64  GetCurrentFileTime()
 {
 #ifdef __WINDOWS__

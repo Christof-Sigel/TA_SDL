@@ -186,19 +186,32 @@ extern "C"{
 	    STACK_ARRAY(temp, Entry.File.FileSize, u8 );
 	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
 	    {
-		LoadFNTFont(temp, &CurrentGameState->Fonts[0], Entry.File.FileSize);
+		LoadFNTFont(temp, &CurrentGameState->Fonts[0]);
 	    }
 	}
 
-	Entry = FindEntryInAllFiles("guis/mainmenu.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-	if(!Entry.IsDirectory)
+	Entry = FindEntryInAllFiles("guis", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
+	if(Entry.IsDirectory)
 	{
-	    STACK_ARRAY(temp, Entry.File.FileSize, u8 );
-	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
+	    CurrentGameState->GUIs = PushArray(&CurrentGameState->GameArena, Entry.Directory.NumberOfEntries, TAUIElement);
+	    CurrentGameState->NumberOfGuis = Entry.Directory.NumberOfEntries;
+	    for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
 	    {
-		CurrentGameState->MainGUI = LoadGUIFromBuffer((char*)temp, (char*)temp+Entry.File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,Entry.Name, &CurrentGameState->GlobalArchiveCollection, CurrentGameState->PaletteData);
+		HPIEntry * GUIFile = &Entry.Directory.Entries[i];
+		if(NameEndsWith(GUIFile->Name,".gui"))
+		{
+		u8 * temp = PushArray(&CurrentGameState->TempArena, GUIFile->File.FileSize, u8 );
+		if(LoadHPIFileEntryData(*GUIFile, temp, &CurrentGameState->TempArena))
+		{
+		    CurrentGameState->GUIs[i] = LoadGUIFromBuffer((char*)temp, (char*)temp+GUIFile->File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,GUIFile->Name, &CurrentGameState->GlobalArchiveCollection, CurrentGameState->PaletteData);
+		}
+		PopArray(&CurrentGameState->TempArena,temp,  GUIFile->File.FileSize, u8 );
+		}
 	    }
 	}
+
+	
+	
 
 	CurrentGameState->StartTime= GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
     }

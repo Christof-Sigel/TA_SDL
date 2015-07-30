@@ -195,66 +195,115 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     }
        
     char * Help = GetStringValue(Common, "help");
-
-    len = strlen(Help);
-    Element->Help = PushArray(Arena, len+1, char);
-    if(Element->Help)
+    if(Help)
     {
-	memcpy(Element->Help, Help, len);
-	Element->Help[len]=0;
+	len = strlen(Help);
+	Element->Help = PushArray(Arena, len+1, char);
+	if(Element->Help)
+	{
+	    memcpy(Element->Help, Help, len);
+	    Element->Help[len]=0;
+	}
     }
 
     switch(Element->ElementType)
     {
     case TAG_UI_CONTAINER:
     {
-	TAUIContainer * Container = PushStruct(Arena, TAUIContainer);
-	Element->Details = Container;
 	if(CaseInsensitiveMatch(Name, "Mainmenu.gui"))
 	{
-	    Container->Background = AddPCXToTextureContainer(Textures,"bitmaps/FrontEndX.pcx", GlobalArchiveCollection, TempArena);
+	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/FrontEndX.pcx", GlobalArchiveCollection, TempArena);
+	}
+	else if(CaseInsensitiveMatch(Name, "header"))
+	{
+	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/GameSettings.pcx", GlobalArchiveCollection, TempArena);
 	}
 	else
 	{
-	    Container->Background = GetTexture(Name, Textures);
+	    Element->Container.Background = GetTexture(Name, Textures);
 	}
     }
     break;
     case TAG_BUTTON:
     {
-	TAUIButton * Button = PushStruct(Arena, TAUIButton);
-	Element->Details = Button;
-	Button->StartingFrame = GetIntValue(Tree, "status");
-	Button->Stages = GetIntValue(Tree, "Stages");
+	Element->Button.StartingFrame = GetIntValue(Tree, "status");
+	Element->Button.Stages = GetIntValue(Tree, "Stages");
 	char * Text = GetStringValue(Tree, "text");
-	int len = strlen(Text);
-	Button->Text = PushArray(Arena, len+1, char);
-	if(Button->Text)
+	if(Text)
 	{
-	    memcpy(Button->Text, Text, len);
-	    Button->Text[len]=0;
+	    int len = strlen(Text);
+	    Element->Button.Text = PushArray(Arena, len+1, char);
+	    if(Element->Button.Text)
+	    {
+		memcpy(Element->Button.Text, Text, len);
+		Element->Button.Text[len]=0;
+	    }
 	}
-
-	Button->Disabled = GetIntValue(Tree, "grayedout");
+	Element->Button.Disabled = GetIntValue(Tree, "grayedout");
     }
     break;
     case TAG_TEXTFIELD:
     {
-	TAUITextBox * TextBox = PushStruct(Arena,TAUITextBox);
-	Element->Details = TextBox;
-	TextBox->MaximumCharacters = GetIntValue(Tree, "maxchars");
+	Element->TextBox.MaximumCharacters = GetIntValue(Tree, "maxchars");
     }
     break;
     case TAG_SCROLLBAR:
     {
-	TAUIScrollbar * ScrollBar = PushStruct(Arena, TAUIScrollbar);
-	Element->Details = ScrollBar;
-	ScrollBar->Maximum = GetIntValue(Tree, "range");
-	ScrollBar->Position = GetIntValue(Tree, "knobpos");
-	ScrollBar->KnobSize = GetIntValue(Tree, "knobsize");
+	Element->ScrollBar.Maximum = GetIntValue(Tree, "range");
+	Element->ScrollBar.Position = GetIntValue(Tree, "knobpos");
+	Element->ScrollBar.KnobSize = GetIntValue(Tree, "knobsize");
     }
     break;
-    //TODO(Christof): handle all UI elements
+    case TAG_LABEL:
+    {
+	//TODO(Christof): Load Linked button
+	char * Text = GetStringValue(Tree, "text");
+	if(Text)
+	{
+	    int len = strlen(Text);
+	    Element->Label.Text = PushArray(Arena, len+1, char);
+	    if(Element->Label.Text)
+	    {
+		memcpy(Element->Label.Text, Text, len);
+		Element->Label.Text[len]=0;
+	    }
+	}
+    }
+	break;
+    case TAG_DYNAMIC_IMAGE:
+    {
+	Element->DynamicImage.DisplaySelectionRectangle = GetIntValue(Tree, "hotornot");
+    }
+    break;
+    case TAG_LABEL_FONT:
+    {
+	Element->LabelFont.Font = PushStruct(Arena, FNTFont);
+	char * FileName = GetStringValue(Tree, "filename");
+	HPIEntry Font = FindEntryInAllFiles(FileName,GlobalArchiveCollection, TempArena);
+	if(!Font.Name)
+	{
+	    LogError("Could not find font file %s",FileName);
+	    return;
+	}
+	if(Font.IsDirectory)
+	{
+	    LogError("Encountered directory while looking for font %s", FileName);
+	    return;
+	}
+	int FontBufferSize = Font.File.FileSize;
+	STACK_ARRAY(FontBuffer , FontBufferSize, u8);
+	LoadHPIFileEntryData(Font,FontBuffer,TempArena);
+	LoadFNTFont(FontBuffer, Element->LabelFont.Font);
+    }
+    break;
+    case TAG_LISTBOX:
+    case TAG_IMAGE:
+	//NOTE(Christof): no extra loading required for these
+	break;
+    default:
+	Assert(!"NUH UH!");
+	break;
+	
     }
    
     
@@ -265,7 +314,8 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, char * FileName, HPIFileCollection * GlobalArchiveCollection, u8 * PaletteData)
 {
     TextureContainer * Textures =PushStruct(Arena, TextureContainer);
-    SetupTextureContainer(Textures, 1024,1024, 40, Arena);
+    //TODO(Christof): Better texture memory allocation needed, perhaps on Temp and only full size when initially loading gafs?
+    SetupTextureContainer(Textures, 768,768, 40, Arena);
 
     
     int len=snprintf(0,0,"anims/%s",FileName)+1;
@@ -288,26 +338,30 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
     {
 	LoadAllTexturesFromHPIEntry(&UITextures, Textures, TempArena, PaletteData);
     }
-    MemoryArena * UIElementsArena = PushSubArena(TempArena, 16 * 1024);
+    MemoryArena * UIElementsArena = PushSubArena(TempArena, 64*1024);
     FILE_UIElement * First = LoadUIElementsFromBuffer(&Buffer, End, UIElementsArena);
-
-    if(GetIntValue(GetSubElement(First,"common"),"ID") != 0)
+    TAUIElement Container ={};
+    if(First)
     {
-	LogError("First UI element is not a container (%d)!",GetIntValue(GetSubElement(First,"common"),"ID"));
-	return {};
-    }
+	if(GetIntValue(GetSubElement(First,"common"),"ID") != 0)
+	{
+	    LogError("First UI element is not a container (%d)!",GetIntValue(GetSubElement(First,"common"),"ID"));
+	    return {};
+	}
 
-    TAUIElement Container;
-    LoadElementFromTree(&Container, First, Arena, Textures, TempArena, GlobalArchiveCollection);
 
-    TAUIContainer * ContainerDetails = (TAUIContainer *)Container.Details;
-    ContainerDetails->NumberOfElements = CountElements(First)-1;
-    ContainerDetails->Elements = PushArray(Arena, ContainerDetails->NumberOfElements, TAUIElement);
-    ContainerDetails->Textures = Textures;
+	LoadElementFromTree(&Container, First, Arena, Textures, TempArena, GlobalArchiveCollection);
 
-    for(int i=0;i<ContainerDetails->NumberOfElements;i++)
-    {
-	LoadElementFromTree(&ContainerDetails->Elements[i], GetNthElement(First, i+1), Arena, Textures, TempArena, GlobalArchiveCollection);
+	TAUIContainer * ContainerDetails = &Container.Container;
+	ContainerDetails->NumberOfElements = CountElements(First)-1;
+	ContainerDetails->Elements = PushArray(Arena, ContainerDetails->NumberOfElements, TAUIElement);
+	Container.Textures = Textures;
+
+	for(int i=0;i<ContainerDetails->NumberOfElements;i++)
+	{
+	    LoadElementFromTree(&ContainerDetails->Elements[i], GetNthElement(First, i+1), Arena, Textures, TempArena, GlobalArchiveCollection);
+	    ContainerDetails->Elements[i].Textures = Textures;
+	}
     }
 
   

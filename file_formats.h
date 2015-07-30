@@ -315,24 +315,14 @@ struct FontShaderDetails
 };
 
 //TAUI
-struct TAUIElement
-{
-    char * Name;
-    TagType ElementType;
-    int Association,X,Y,Width,Height,ColorFore,ColorBack,TextureNumber,FontNumber;
-    int Attributes, CommonAttributes;
-    char * Help;
-    b32 Visible;//Pulls from active
-    void * Details;
-};
 
 struct TAUIContainer
 {
     Texture * Background;//Name is in Panel
-    TAUIElement * DefaultFocus;
+    struct TAUIElement * DefaultFocus;
     int NumberOfElements;
     TAUIElement * Elements;
-    TextureContainer * Textures;
+   
 };
 
 struct TAUIButton
@@ -340,7 +330,7 @@ struct TAUIButton
     int StartingFrame;//pulls from status
     int Stages;
     char * Text;// | seperator for multistage buttons, center aligned for simple (single stage) buttons, right aligned otherwise
-    u8 Disabled;//pulls from grayedout
+    b8 Disabled;//pulls from grayedout
 };
 
 struct TAUITextBox
@@ -363,13 +353,35 @@ struct TAUILabel
 
 struct TAUIDynamicImage
 {
-    u8 DisaplySelectionRectangle;//Puller from hotornot
+    b8 DisplaySelectionRectangle;//Puller from hotornot
 };
 
-struct TAULabelFont
+struct TAUILabelFont
 {
     FNTFont * Font;//from filename
 };
+
+struct TAUIElement
+{
+    char * Name;
+    TagType ElementType;
+    int Association,X,Y,Width,Height,ColorFore,ColorBack,TextureNumber,FontNumber;
+    int Attributes, CommonAttributes;
+    char * Help;
+    b32 Visible;//Pulls from active
+    TextureContainer * Textures;
+    union
+    {
+	TAUIButton Button;
+	TAUIContainer Container;
+	TAUITextBox TextBox;
+	TAUIScrollbar ScrollBar;
+	TAUILabel Label;
+	TAUIDynamicImage DynamicImage;
+	TAUILabelFont LabelFont;
+    } ;
+};
+
 
 struct FILE_UINameValue
 {

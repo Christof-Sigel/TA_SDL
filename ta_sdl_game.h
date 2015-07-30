@@ -266,6 +266,7 @@ struct GameState
 
     ShaderGroup ShaderGroup;
     TextureContainer CommonGUITextures;
-    TAUIElement MainGUI;
+    TAUIElement *GUIs;
+    int NumberOfGuis;
 };
 
