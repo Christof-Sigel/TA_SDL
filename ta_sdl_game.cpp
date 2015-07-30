@@ -528,6 +528,15 @@ extern "C"
 	for(int i=0;i<CurrentGameState->CurrentUnitScript.NumberOfFunctions;i++)
 	    DrawOnScreenText(CurrentGameState->UnitDetailsText[i], CurrentGameState->FontShader, CurrentGameState->FontPositionLocation, CurrentGameState->FontColorLocation);
 
+	static int GUIIndex = 0;
+	if(CurrentGameState->NumberOfFrames%30 ==0)
+	    GUIIndex++;
+	if(GUIIndex > CurrentGameState->NumberOfGuis)
+	    GUIIndex =0;
+       
+	
+	RenderTAUIElement(&CurrentGameState->GUIs[GUIIndex],&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures);
+
 	CurrentGameState->NumberOfFrames++;
     }
 

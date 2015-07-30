@@ -391,3 +391,92 @@ void LoadCommonUITextures(GameState * CurrentGameState)
     }
 
 }
+
+void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDetails, TextureContainer * ButtonFont, TextureContainer * CommonUIElements, TAUIContainer * Container = 0)
+{
+    switch(Element->ElementType)
+    {
+    case TAG_UI_CONTAINER:
+    {
+	Texture * Background =  Element->Container.Background;
+	if(Background)
+	{
+	    DrawTexture2D(Element->Textures->Texture, Element->X, Element->Y, Element->Width, Element->Height, {1,1,1}, 1.0, ShaderDetails, Background->U, Background->V, Background->Widths[0], Background->Heights[0]);
+	}
+	for(int i=0;i<Element->Container.NumberOfElements;i++)
+	{
+	    RenderTAUIElement(&Element->Container.Elements[i], ShaderDetails, ButtonFont, CommonUIElements, &Element->Container);
+	}
+    }
+    break;
+    case TAG_BUTTON:
+    {
+	TAUIButton * Button = &Element->Button;
+	Texture * ButtonBackground = GetTexture(Element->Name, Element->Textures);
+	TextureContainer * ButtonTextureContainer = Element->Textures;
+	int ButtonIndex =0;
+	if(!ButtonBackground)
+	{
+	    ButtonBackground = GetTexture(Element->Name, CommonUIElements);
+	    ButtonTextureContainer = CommonUIElements;
+	    if(!ButtonBackground)
+	    {
+		ButtonBackground = GetTexture("Buttons0", CommonUIElements);
+		float ElementWidthInUV = (float)Element->Width / CommonUIElements->TextureWidth;
+		float ElementHeightInUV = (float)Element->Height / CommonUIElements->TextureHeight;
+		float BestMatchAmount = abs(ButtonBackground->Widths[0] - ElementWidthInUV) + abs(ElementHeightInUV - ButtonBackground->Heights[0]);
+		for(int i=1;i<ButtonBackground->NumberOfFrames;i++)
+		{
+		    float CurrentMatchAmount = abs(ButtonBackground->Widths[i] - ElementWidthInUV) + abs(ElementHeightInUV - ButtonBackground->Heights[i]);
+		    if(CurrentMatchAmount < BestMatchAmount)
+		    {
+			BestMatchAmount = CurrentMatchAmount;
+			ButtonIndex =i;
+		    }
+		}
+	    }
+	}
+	Assert(ButtonBackground);
+	float U = ButtonBackground->U;
+	float V = ButtonBackground->V;
+	for(int i=0;i<ButtonIndex;i++)
+	{
+	    U+=ButtonBackground->Widths[i];
+	}
+	DrawTexture2D(ButtonTextureContainer->Texture, Element->X, Element->Y, Element->Width, Element->Height, {1,1,1}, 1.0, ShaderDetails, U, V, ButtonBackground->Widths[ButtonIndex], ButtonBackground->Heights[ButtonIndex]);
+	if(Button->Text)
+	{
+	    int Width = TextWidthInPixels(Button->Text, ButtonFont);
+	    int Height = TextHeightInPixels(Button->Text,ButtonFont);
+	    Draw2DFontText(Button->Text, Element->X+((Element->Width - Width)/2), Element->Y, ButtonFont, ShaderDetails,Height);
+	}
+    }
+    break;
+    case TAG_LABEL:
+    {
+	//TODO(Christof): update text for specially named labels here
+	if(Element->Label.Text)
+	{
+	FNTFont * LabelFont = 0;
+	for(int i=0;i<Container->NumberOfElements;i++)
+	{
+	    if(Container->Elements[i].ElementType == TAG_LABEL_FONT)
+	    {
+		LabelFont = Container->Elements[i].LabelFont.Font;
+		break;
+	    }
+	}
+	if(LabelFont)
+	{
+	}
+	else
+	{
+	    int Width = TextWidthInPixels(Element->Label.Text, ButtonFont);
+	    int Height = TextHeightInPixels(Element->Label.Text,ButtonFont);
+	    Draw2DFontText(Element->Label.Text, Element->X+((Element->Width - Width)/2), Element->Y+((Element->Height - Height)/2), ButtonFont, ShaderDetails,Height);
+	}
+	}
+    }
+    break;
+    }
+}

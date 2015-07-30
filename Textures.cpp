@@ -26,7 +26,7 @@ Texture * GetTexture(const char * Name,TextureContainer * TextureContainer)
     return 0;
 }
 
- b32 SquareIsFree(TextureContainer * TextureContainer, int x, int y)
+b32 SquareIsFree(TextureContainer * TextureContainer, int x, int y)
 {
      int Offset = y*TextureContainer->WidthInSquares + x;
      int Index = Offset / 8;
