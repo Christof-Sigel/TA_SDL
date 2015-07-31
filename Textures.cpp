@@ -6,7 +6,6 @@ void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int He
     TextureContainer->MaximumTextures = MaxTextures;
     TextureContainer->TextureWidth = Align(Width, PIXELS_PER_SQUARE_SIDE);
     TextureContainer->TextureHeight = Align(Height, PIXELS_PER_SQUARE_SIDE);
-    TextureContainer->TextureData = PushArray(Arena, TextureContainer->TextureWidth*TextureContainer->TextureHeight*4, u8 );
     TextureContainer->Textures = PushArray(Arena, MaxTextures, Texture);
     TextureContainer->WidthInSquares = Align(Width,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
     TextureContainer->HeightInSquares = Align(Height, PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
@@ -76,10 +75,9 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContai
     return {-1,-1};
 }
 
-void LoadGafTextureData(u8 * Buffer, FILE_GafFrameData * Frame, TexturePosition OriginalPosition, TexturePosition PositionToStore, TextureContainer * TextureContainer, u8 * PaletteData)
+void LoadGafTextureData(u8 * Buffer, FILE_GafFrameData * Frame, TexturePosition OriginalPosition, TexturePosition PositionToStore, TextureContainer * TextureContainer, u8 * PaletteData, u8 * TextureData)
 {
-    u8 * TextureData = TextureContainer->TextureData;
-    u8 * FrameData= (u8 *)(Buffer + Frame->FrameDataOffset);
+        u8 * FrameData= (u8 *)(Buffer + Frame->FrameDataOffset);
     if(Frame->Compressed)
     {
 	for(int y=0;y<Frame->Height;y++)
@@ -154,7 +152,7 @@ void LoadGafTextureData(u8 * Buffer, FILE_GafFrameData * Frame, TexturePosition 
 
 }
 
-void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContainer, u8 * PaletteData)
+void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContainer, u8 * PaletteData, u8 * TextureData)
 {
     FILE_GafEntry * Entry = (FILE_GafEntry*)(Buffer +Offset);
     FILE_GafFrameEntry * FrameEntries=(FILE_GafFrameEntry *)(Buffer + Offset + sizeof(*Entry));
@@ -197,13 +195,13 @@ void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContai
 	    {
 		FILE_GafFrameData * SubFrame = (FILE_GafFrameData*)(Buffer + SubFrameOffsets[x]);
 		TexturePosition currentpos = {PositionToStore.X + (Frame->XPos - SubFrame->XPos), PositionToStore.Y +(Frame->YPos - SubFrame->YPos)};
-		LoadGafTextureData(Buffer, SubFrame, PositionToStore, currentpos, TextureContainer, PaletteData);
+		LoadGafTextureData(Buffer, SubFrame, PositionToStore, currentpos, TextureContainer, PaletteData, TextureData);
 	    }
 	}
 	else
 	{
 	    //NOTE: Many textures have non-zero X and/or Y, perhaps this influences texture coord gen in some way? rendering in the past has ignored these values and seemed fine, so going to just ignore them for now
-	    LoadGafTextureData(Buffer, Frame, PositionToStore, PositionToStore, TextureContainer, PaletteData);
+	    LoadGafTextureData(Buffer, Frame, PositionToStore, PositionToStore, TextureContainer, PaletteData, TextureData);
 	}
 	Textures[NextTexture].Widths[i]=Frame->Width/float(TextureContainer->TextureWidth);
 	Textures[NextTexture].Heights[i]=Frame->Height/float(TextureContainer->TextureHeight);
@@ -214,7 +212,7 @@ void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContai
     TextureContainer->NumberOfTextures++;
 }
 
-void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureContainer, u8 * PalletteData)
+void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureContainer, u8 * PalletteData, u8 * TextureData)
 {
     FILE_GafHeader * header= (FILE_GafHeader *)Buffer;
     if(header->IDVersion != GAF_IDVERSION)
@@ -225,7 +223,7 @@ void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureContainer, 
     s32 * EntryOffsets = (s32  *)(Buffer + sizeof(*header));
     for(int i=0;i<header->NumberOfEntries;i++)
     {
-	LoadGafFrameEntry(Buffer, EntryOffsets[i], TextureContainer, PalletteData);
+	LoadGafFrameEntry(Buffer, EntryOffsets[i], TextureContainer, PalletteData, TextureData);
     }
 }
 
@@ -251,11 +249,12 @@ void LoadPalette(GameState * CurrentGameState)
 
 void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * TextureContainer, MemoryArena * TempArena,u8 * PaletteData)
 {
+    u8* TextureData = PushArray(TempArena, TextureContainer->TextureWidth * TextureContainer->TextureHeight *4, u8);
     if(!Textures->IsDirectory)
     {
 	u8 * GafBuffer = PushArray(TempArena, Textures->File.FileSize,u8 );
 	LoadHPIFileEntryData(*Textures,GafBuffer,TempArena);
-	LoadTexturesFromGafBuffer(GafBuffer,TextureContainer,PaletteData);
+	LoadTexturesFromGafBuffer(GafBuffer,TextureContainer,PaletteData, TextureData);
 	PopArray(TempArena, GafBuffer,  Textures->File.FileSize, u8 );
     }
     else
@@ -270,7 +269,7 @@ void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * Texture
 	    //STACK_ARRAY(GafBuffer,Textures->Directory.Entries[i].File.FileSize,u8 );
 	    u8 * GafBuffer = PushArray(TempArena, Textures->Directory.Entries[i].File.FileSize,u8 );
 	    LoadHPIFileEntryData(Textures->Directory.Entries[i],GafBuffer,TempArena);
-	    LoadTexturesFromGafBuffer(GafBuffer,TextureContainer, PaletteData);
+	    LoadTexturesFromGafBuffer(GafBuffer,TextureContainer, PaletteData, TextureData);
 	    PopArray(TempArena, GafBuffer,Textures->Directory.Entries[i].File.FileSize,u8 );
 	}    
     }
@@ -279,7 +278,8 @@ void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * Texture
     glBindTexture(GL_TEXTURE_2D,TextureContainer->Texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureContainer->TextureWidth,TextureContainer->TextureHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureContainer->TextureData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureContainer->TextureWidth,TextureContainer->TextureHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
+    PopArray(TempArena, TextureData, TextureContainer->TextureWidth * TextureContainer->TextureHeight *4, u8);
 }
 
 void LoadAllUnitTextures(HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, TextureContainer * UnitTextures, u8 * PaletteData)

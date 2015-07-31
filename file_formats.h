@@ -162,7 +162,6 @@ struct TextureContainer
     Texture * Textures;
     int MaximumTextures;
     int NumberOfTextures;
-    u8 * TextureData;
     u8 * FreeSquares;
     int TextureWidth, TextureHeight, HeightInSquares, WidthInSquares;
     GLuint Texture;
