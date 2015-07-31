@@ -185,18 +185,15 @@ UFOSearchResult GetUfoFiles()
     struct dirent **eps=0;
 
     Result.NumberOfFiles = scandir ("./data/", &eps, IsUFO, alphasort);
+    Assert(Result.NumberOfFiles < MAX_UFO_FILES);
     if (Result.NumberOfFiles >= 0)
     {
-	Result.FileNames=(char**)malloc(sizeof(char*)*Result.NumberOfFiles);
 	for(int i=0;i<Result.NumberOfFiles;i++)
 	{
 	    int length=strlen(eps[i]->d_name)+1;
 	    Assert(length <= MAX_UFO_NAME_LENGTH);
 
-	    memcpy(&Result.FileNames[Result.NumberOfFiles],eps[i]->d_name,length);
-	    Result.NumberOfFiles++;
-	    Assert(Result.NumberOfFiles<=MAX_UFO_FILES);
-	    
+	    memcpy(&Result.FileNames[i],eps[i]->d_name,length);
 	    free(eps[i]);
 	}
     }
