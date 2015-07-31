@@ -133,7 +133,7 @@ extern "C"{
 	SetupFontRendering(&CurrentGameState->Draw2DVertexBuffer);
 	CurrentGameState->DrawTextureShaderDetails.VertexBuffer = CurrentGameState->Draw2DVertexBuffer;
 	
-	HPIEntry Map = FindEntryInAllFiles("maps/Coast To Coast.tnt",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
+	HPIEntry Map = FindEntryInAllFiles("maps/Metal Maze.tnt",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(Map.Name)
 	{
 	    u8 * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,u8 );
@@ -180,16 +180,6 @@ extern "C"{
 
 	LoadCurrentModel(CurrentGameState);
 
-	Entry = FindEntryInAllFiles("fonts/ARMFONT.fnt", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-	if(!Entry.IsDirectory)
-	{
-	    STACK_ARRAY(temp, Entry.File.FileSize, u8 );
-	    if(LoadHPIFileEntryData(Entry, temp, &CurrentGameState->TempArena))
-	    {
-		LoadFNTFont(temp, &CurrentGameState->Fonts[0]);
-	    }
-	}
-
 	Entry = FindEntryInAllFiles("guis", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(Entry.IsDirectory)
 	{
@@ -203,7 +193,7 @@ extern "C"{
 		u8 * temp = PushArray(&CurrentGameState->TempArena, GUIFile->File.FileSize, u8 );
 		if(LoadHPIFileEntryData(*GUIFile, temp, &CurrentGameState->TempArena))
 		{
-		    CurrentGameState->GUIs[i] = LoadGUIFromBuffer((char*)temp, (char*)temp+GUIFile->File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,GUIFile->Name, &CurrentGameState->GlobalArchiveCollection, CurrentGameState->PaletteData);
+		    CurrentGameState->GUIs[i] = LoadGUIFromBuffer((char*)temp, (char*)temp+GUIFile->File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,GUIFile->Name, &CurrentGameState->GlobalArchiveCollection, CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 		}
 		PopArray(&CurrentGameState->TempArena,temp,  GUIFile->File.FileSize, u8 );
 		}

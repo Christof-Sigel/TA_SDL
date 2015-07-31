@@ -37,6 +37,8 @@ void LoadFNTFont(u8 * Buffer, FNTFont * Font)
     Font->Height = Header->Height;
     int TextureWidth = 0;
 
+   
+
     for(int i=0;i<255;i++)
     {
 	Font->Characters[i] = {};
@@ -169,12 +171,13 @@ void DrawBitmapCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, T
 int TextWidthInPixels(char * Text, TextureContainer * Font)
 {
     int Result =0;
-    while(*Text)
+    u8 * Char = (u8*)Text;
+    while(*Char)
     {
-	float CharWidth = Font->Textures[0].Widths[(u32)*Text];
+	float CharWidth = Font->Textures[0].Widths[*Char];
 	int CharWidthInPixels = CharWidth * Font->TextureWidth;
 	Result += CharWidthInPixels;
-	Text++;
+	Char++;
     }
     return Result;
 }
@@ -182,16 +185,17 @@ int TextWidthInPixels(char * Text, TextureContainer * Font)
 int TextHeightInPixels(char * Text, TextureContainer * Font)
 {
     int Result =0;
-    while(*Text)
+    u8 * Char = (u8*)Text;
+    while(*Char)
     {
-	float CharHeight = Font->Textures[0].Heights[(u32)*Text];
+	float CharHeight = Font->Textures[0].Heights[*Char];
 	
 	int CharHeightInPixels = CharHeight * Font->TextureHeight;
 	if(Result<CharHeightInPixels)
 	{
 	Result = CharHeightInPixels;
 	}
-	Text++;
+	Char++;
     }
     return Result;
 }
@@ -199,22 +203,74 @@ int TextHeightInPixels(char * Text, TextureContainer * Font)
 void Draw2DFontText(char * Text, int X, int Y, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, int TextHeight)
 {
     int FontHeightInPixels = Font->Textures[0].Heights[0]*Font->TextureHeight;
-    while(*Text)
+    u8* Char = (u8*)Text;
+    while(*Char)
     {
-	float CharWidth = Font->Textures[0].Widths[(u32)*Text];
-	float CharHeight = Font->Textures[0].Heights[(u32)*Text];
+	float CharWidth = Font->Textures[0].Widths[*Char];
+	float CharHeight = Font->Textures[0].Heights[*Char];
 	float U = Font->Textures[0].U, V = Font->Textures[0].V;
-	for(int i=0;i<*Text;i++)
+	for(int i=0;i<*Char;i++)
 	{
 	    U+=Font->Textures[0].Widths[i];
 	}
 	int CharWidthInPixels = CharWidth * Font->TextureWidth;
 	int CharHeightInPixels = CharHeight * Font->TextureHeight;
-	if(*Text > ' ')
+	if(*Char > ' ')
 	{
-	    DrawTexture2D(Font->Texture, X, Y-Font->Textures[0].Y[(u32)*Text]+FontHeightInPixels, CharWidthInPixels, CharHeightInPixels, {{1,1,1}}, 1.0, ShaderDetails, U, V, CharWidth, CharHeight);
+	    DrawTexture2D(Font->Texture, X, Y-Font->Textures[0].Y[*Char]+FontHeightInPixels, CharWidthInPixels, CharHeightInPixels, {{1,1,1}}, 1.0, ShaderDetails, U, V, CharWidth, CharHeight);
 	}
 	X+=CharWidthInPixels;
-	Text++;
+	Char++;
     }
+}
+
+FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCollection * FileCollection, MemoryArena * TempArena)
+{
+    FNTFont * Result = 0;
+
+    for(int i=0;i<FontContainer->NumberOfFonts;i++)
+    {
+	if(CaseInsensitiveMatch(FontContainer->FontNames[i],Name))
+	{
+	    return &FontContainer->Fonts[i];
+	}
+    }
+
+    char FontName[74];
+    
+    int len=strlen(Name)+1;
+    if(len>63)
+	len=63;
+   
+    memcpy(&FontName[6], Name, len);
+    FontName[len+9]=0;
+    FontName[len+5]='.';
+    FontName[len+6]='f';
+    FontName[len+7]='n';
+    FontName[len+8]='t';
+    FontName[0]='f';
+    FontName[1]='o';
+    FontName[2]='n';
+    FontName[3]='t';
+    FontName[4]='s';
+    FontName[5]='/';
+
+    HPIEntry Font = FindEntryInAllFiles(FontName, FileCollection, TempArena);
+    if(Font.Name)
+    {
+	if(Font.IsDirectory)
+	{
+	}
+	else
+	{
+	    u8 * FontFileBuffer = PushArray(TempArena, Font.File.FileSize, u8);
+	    LoadHPIFileEntryData(Font, FontFileBuffer, TempArena);
+	    LoadFNTFont(FontFileBuffer, &FontContainer->Fonts[FontContainer->NumberOfFonts]);
+	    PopArray(TempArena, FontFileBuffer, Font.File.FileSize, u8);
+	    memcpy(FontContainer->FontNames[FontContainer->NumberOfFonts], Name, len);
+	    FontContainer->FontNames[FontContainer->NumberOfFonts][len]=0;
+	    return &FontContainer->Fonts[FontContainer->NumberOfFonts++];
+	}
+    }
+    return 0;
 }

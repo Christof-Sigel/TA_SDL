@@ -2,9 +2,6 @@
 #include <string.h>
 #include "zlib.h"
 
-
-
-
 void UnloadHPIFile(HPIFile * HPI)
 {
     UnMapFile(HPI->MMFile);
@@ -54,7 +51,7 @@ void DecryptHPIBuffer(HPIFile * HPI, u8 * Destination, s32 Length, s32 FileOffse
     }
 }
     
- b32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena, MemoryArena * TempArena)
+b32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena, MemoryArena * TempArena)
 {
     MemoryMappedFile HPIMemory = MemoryMapFile(FileName);
     if(HPIMemory.MMapBuffer == 0)
@@ -134,7 +131,6 @@ void DecompressZLibChunk(u8 * Source, int CompressedSize, int DecompressedSize, 
 	LogError("Error on inflateEnd %d: Message: %s", result, zs.msg);
     }
 }
-
 
 const int LZ77_WINDOW_SIZE=4096;
 const int LZ77_LENGTH_MASK=0x0f;
@@ -226,9 +222,7 @@ u8 * LoadChunk(u8 * Source, u8  * Destination)
     return data + header->CompressedSize;
 }
 
-
-
- b32 LoadHPIFileEntryData(HPIEntry Entry, u8 * Destination, MemoryArena * TempArena)
+b32 LoadHPIFileEntryData(HPIEntry Entry, u8 * Destination, MemoryArena * TempArena)
 {
     if(Entry.IsDirectory)
     {
@@ -279,11 +273,8 @@ u8 * LoadChunk(u8 * Source, u8  * Destination)
 	PopArray(TempArena, DecryptedChunkData, ChunkDataSize, u8 );
     }
     }
-
     return 1;
 }
-
-
 
 inline char * IsDirectory(char * Path, char * Directory)
 {
@@ -300,7 +291,7 @@ inline char * IsDirectory(char * Path, char * Directory)
 	Directory++;
     }
     if(!*Directory && (*Path == '/' || *Path == '\\'))
-       return ++Path;
+	return ++Path;
     return 0;
 }
 
@@ -341,10 +332,9 @@ HPIEntry FindHPIEntry(HPIFile * File, const char * Path)
 const char * HPIFileNames[]={"rev31.gp3","btdata.ccx","ccdata.ccx","tactics1.hpi","tactics2.hpi",
 			     "tactics3.hpi","tactics4.hpi","tactics5.hpi","tactics6.hpi","tactics7.hpi",
 			     "tactics8.hpi","totala1.hpi","totala2.hpi","totala3.hpi","totala4.hpi"};
-
 const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
 
- b32 LoadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection, MemoryArena * GameArena, MemoryArena * TempArena)
+b32 LoadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection, MemoryArena * GameArena, MemoryArena * TempArena)
 {
     UFOSearchResult UfoFiles=GetUfoFiles();
     GlobalArchiveCollection->NumberOfFiles = UfoFiles.NumberOfFiles + NUM_FIXED_FILES;
@@ -367,12 +357,10 @@ const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
 	//TODO(Christof): Determine if file memory stuff should go in a seperate arena
 	LoadHPIFile(temp,&GlobalArchiveCollection->Files[i],GameArena,TempArena);
     }
-
     //UnloadUFOSearchResult(&UfoFiles);
 
     return 1;
 }
-
 
 b32 NameExistsInEntry(HPIEntry Entry, char * Name)
 {
@@ -435,7 +423,6 @@ void UnloadCompositeEntry(HPIEntry * Entry,MemoryArena * TempArena)
 	PopArray(TempArena,Entry->Directory.Entries,MAX_TEMP_ENTRY_LIST_FILES,HPIEntry);
     }
 }
-
 
 void UnloadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection)
 {

@@ -305,6 +305,14 @@ struct FNTFont
     int Height;
     GLuint Texture;
     FNTGlyph Characters[256];
+    char Name[64];
+};
+
+struct FontContainer
+{
+    FNTFont Fonts[MAX_TA_FONT_NUMBER];
+    s32 NumberOfFonts;
+    char FontNames[MAX_TA_FONT_NUMBER][64];
 };
 
 struct FontShaderDetails

@@ -259,7 +259,7 @@ struct GameState
     UIElement ScriptBackground;
     GLuint DebugAxisBuffer;
     FontShaderDetails FontShaderDetails;
-    FNTFont Fonts[MAX_TA_FONT_NUMBER];
+    FontContainer LoadedFonts;
     GLuint Draw2DVertexBuffer;
     Texture2DShaderDetails DrawTextureShaderDetails;
     

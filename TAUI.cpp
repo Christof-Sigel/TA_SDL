@@ -167,7 +167,7 @@ FILE_UIElement * LoadUIElementsFromBuffer(char ** InBuffer, char * End, MemoryAr
     return First;
 }
 
-void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryArena * Arena, TextureContainer * Textures, MemoryArena * TempArena, HPIFileCollection * GlobalArchiveCollection)
+void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryArena * Arena, TextureContainer * Textures, MemoryArena * TempArena, HPIFileCollection * GlobalArchiveCollection, FontContainer * FontContainer)
 {
     FILE_UIElement * Common = GetSubElement(Tree,"common");
     Element->ElementType = (TagType)GetIntValue(Common, "ID");
@@ -277,23 +277,8 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     break;
     case TAG_LABEL_FONT:
     {
-	Element->LabelFont.Font = PushStruct(Arena, FNTFont);
 	char * FileName = GetStringValue(Tree, "filename");
-	HPIEntry Font = FindEntryInAllFiles(FileName,GlobalArchiveCollection, TempArena);
-	if(!Font.Name)
-	{
-	    LogError("Could not find font file %s",FileName);
-	    return;
-	}
-	if(Font.IsDirectory)
-	{
-	    LogError("Encountered directory while looking for font %s", FileName);
-	    return;
-	}
-	int FontBufferSize = Font.File.FileSize;
-	STACK_ARRAY(FontBuffer , FontBufferSize, u8);
-	LoadHPIFileEntryData(Font,FontBuffer,TempArena);
-	LoadFNTFont(FontBuffer, Element->LabelFont.Font);
+	Element->LabelFont.Font=GetFont(FontContainer,FileName, GlobalArchiveCollection, TempArena);
     }
     break;
     case TAG_LISTBOX:
@@ -309,13 +294,11 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     
 }
 
-
-
-TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, char * FileName, HPIFileCollection * GlobalArchiveCollection, u8 * PaletteData)
+TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, char * FileName, HPIFileCollection * GlobalArchiveCollection, u8 * PaletteData, FontContainer * FontContainer)
 {
     TextureContainer * Textures =PushStruct(Arena, TextureContainer);
     //TODO(Christof): Better texture memory allocation needed, perhaps on Temp and only full size when initially loading gafs?
-    SetupTextureContainer(Textures, 768,768, 40, Arena);
+    SetupTextureContainer(Textures, 1024,1024, 40, Arena);
 
     
     int len=snprintf(0,0,"anims/%s",FileName)+1;
@@ -332,7 +315,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
     }
     else if(!UITextures.Name)
     {
-	LogError("Failed to load %s", GafFileName);
+	//NOTE(Christof): just silently fail here, most guis don't have a .gaf
     }
     else
     {
@@ -350,7 +333,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
 	}
 
 
-	LoadElementFromTree(&Container, First, Arena, Textures, TempArena, GlobalArchiveCollection);
+	LoadElementFromTree(&Container, First, Arena, Textures, TempArena, GlobalArchiveCollection, FontContainer);
 
 	TAUIContainer * ContainerDetails = &Container.Container;
 	ContainerDetails->NumberOfElements = CountElements(First)-1;
@@ -359,7 +342,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
 
 	for(int i=0;i<ContainerDetails->NumberOfElements;i++)
 	{
-	    LoadElementFromTree(&ContainerDetails->Elements[i], GetNthElement(First, i+1), Arena, Textures, TempArena, GlobalArchiveCollection);
+	    LoadElementFromTree(&ContainerDetails->Elements[i], GetNthElement(First, i+1), Arena, Textures, TempArena, GlobalArchiveCollection, FontContainer);
 	    ContainerDetails->Elements[i].Textures = Textures;
 	}
     }
@@ -424,11 +407,11 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 		ButtonBackground = GetTexture("Buttons0", CommonUIElements);
 		float ElementWidthInUV = (float)Element->Width / CommonUIElements->TextureWidth;
 		float ElementHeightInUV = (float)Element->Height / CommonUIElements->TextureHeight;
-		float BestMatchAmount = fabs(ButtonBackground->Widths[0] - ElementWidthInUV) + fabs(ElementHeightInUV - ButtonBackground->Heights[0]);
+		float BestMatchAmount = (ButtonBackground->Widths[0] - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Heights[0]);
 		for(int i=1;i<ButtonBackground->NumberOfFrames;i++)
 		{
-		    float CurrentMatchAmount = fabs(ButtonBackground->Widths[i] - ElementWidthInUV) + fabs(ElementHeightInUV - ButtonBackground->Heights[i]);
-		    if(CurrentMatchAmount < BestMatchAmount)
+		    float CurrentMatchAmount = (ButtonBackground->Widths[i] - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Heights[i]);
+		    if(fabs(CurrentMatchAmount) < fabs(BestMatchAmount) )
 		    {
 			BestMatchAmount = CurrentMatchAmount;
 			ButtonIndex =i;
