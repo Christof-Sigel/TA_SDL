@@ -401,7 +401,7 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	Texture * Background =  Element->Container.Background;
 	if(Background)
 	{
-	    DrawTexture2D(Element->Textures->Texture, Element->X, Element->Y, Element->Width, Element->Height, {1,1,1}, 1.0, ShaderDetails, Background->U, Background->V, Background->Widths[0], Background->Heights[0]);
+	    DrawTexture2D(Element->Textures->Texture, Element->X, Element->Y, Element->Width, Element->Height, {{1,1,1}}, 1.0, ShaderDetails, Background->U, Background->V, Background->Widths[0], Background->Heights[0]);
 	}
 	for(int i=0;i<Element->Container.NumberOfElements;i++)
 	{
@@ -424,10 +424,10 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 		ButtonBackground = GetTexture("Buttons0", CommonUIElements);
 		float ElementWidthInUV = (float)Element->Width / CommonUIElements->TextureWidth;
 		float ElementHeightInUV = (float)Element->Height / CommonUIElements->TextureHeight;
-		float BestMatchAmount = abs(ButtonBackground->Widths[0] - ElementWidthInUV) + abs(ElementHeightInUV - ButtonBackground->Heights[0]);
+		float BestMatchAmount = fabs(ButtonBackground->Widths[0] - ElementWidthInUV) + fabs(ElementHeightInUV - ButtonBackground->Heights[0]);
 		for(int i=1;i<ButtonBackground->NumberOfFrames;i++)
 		{
-		    float CurrentMatchAmount = abs(ButtonBackground->Widths[i] - ElementWidthInUV) + abs(ElementHeightInUV - ButtonBackground->Heights[i]);
+		    float CurrentMatchAmount = fabs(ButtonBackground->Widths[i] - ElementWidthInUV) + fabs(ElementHeightInUV - ButtonBackground->Heights[i]);
 		    if(CurrentMatchAmount < BestMatchAmount)
 		    {
 			BestMatchAmount = CurrentMatchAmount;
@@ -443,7 +443,7 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	{
 	    U+=ButtonBackground->Widths[i];
 	}
-	DrawTexture2D(ButtonTextureContainer->Texture, Element->X, Element->Y, Element->Width, Element->Height, {1,1,1}, 1.0, ShaderDetails, U, V, ButtonBackground->Widths[ButtonIndex], ButtonBackground->Heights[ButtonIndex]);
+	DrawTexture2D(ButtonTextureContainer->Texture, Element->X, Element->Y, Element->Width, Element->Height, {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Widths[ButtonIndex], ButtonBackground->Heights[ButtonIndex]);
 	if(Button->Text)
 	{
 	    int Width = TextWidthInPixels(Button->Text, ButtonFont);

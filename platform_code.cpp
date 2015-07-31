@@ -160,7 +160,7 @@ struct UFOSearchResult
 };
 UFOSearchResult GetUfoFiles()
 {
-    UFOSearchResult Result={0,0};
+    UFOSearchResult Result={};
 #ifdef __WINDOWS__
     WIN32_FIND_DATAA ffd;
     HANDLE find=FindFirstFileA(".\\data\\*.ufo", &ffd);
