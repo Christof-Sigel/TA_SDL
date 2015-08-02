@@ -226,8 +226,6 @@ void Draw2DFontText(char * Text, int X, int Y, TextureContainer * Font, Texture2
 
 FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCollection * FileCollection, MemoryArena * TempArena)
 {
-    FNTFont * Result = 0;
-
     for(int i=0;i<FontContainer->NumberOfFonts;i++)
     {
 	if(CaseInsensitiveMatch(FontContainer->FontNames[i],Name))

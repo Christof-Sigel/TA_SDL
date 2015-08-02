@@ -338,6 +338,7 @@ struct TAUIButton
     int Stages;
     char * Text;// | seperator for multistage buttons, center aligned for simple (single stage) buttons, right aligned otherwise
     b8 Disabled;//pulls from grayedout
+    s32 CurrentStatus;
 };
 
 struct TAUITextBox
