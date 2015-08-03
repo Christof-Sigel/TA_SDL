@@ -16,7 +16,6 @@
 
 
 #include "GL.cpp"
-#include "UI.cpp"
 #include "file_formats.cpp"
 
 
@@ -56,14 +55,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    LoadUnitScriptFromBuffer(&CurrentGameState->CurrentUnitScript, ScriptBuffer,&CurrentGameState->GameArena);
 	    CurrentGameState->CurrentScriptPool={};
 	    
-	    for(int i=0;i<CurrentGameState->CurrentUnitScript.NumberOfFunctions;i++)
-	    {
-		int size=snprintf(NULL, 0, "%d) %s",i,CurrentGameState->CurrentUnitScript.FunctionNames[i])+2;
-		//char tmp[size];
-		STACK_ARRAY(tmp,size,char);
-		snprintf(tmp,size,"%d) %s",i,CurrentGameState->CurrentUnitScript.FunctionNames[i]);
-		CurrentGameState->UnitDetailsText[i]=SetupOnScreenText(tmp,float(CurrentGameState->ScreenWidth-220), float(i*CurrentGameState->Times24.Height*2+40), 1,1,1, &CurrentGameState->Times24);
-	    }
+
 	    if(CurrentGameState->temp_model.Vertices)
 		Unload3DO(&CurrentGameState->temp_model);
 	    Load3DOFromBuffer(temp,&CurrentGameState->temp_model,&CurrentGameState->UnitTextures,&CurrentGameState->GameArena);
@@ -76,54 +68,6 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		CurrentGameState->CurrentScriptPool.Scripts[0].TransformationDetails = &CurrentGameState->UnitTransformationDetails;
 		CurrentGameState->CurrentScriptPool.Scripts[0].StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript.NumberOfStatics, s32);
 		CurrentGameState->CurrentScriptPool.Scripts[0].NumberOfStaticVariables = CurrentGameState->CurrentUnitScript.NumberOfStatics;
-	    }
-
-
-	    
-
-	
-
-	    //TODO(Christof): free memory correctly
-	    float X=0,Y=0;
-	    for(int i=0;i<5;i++)
-	    {
-		int Index=CurrentGameState->UnitIndex+(i-2);
-		if(Index<0)
-		    Index+=CurrentGameState->Units.Size;
-		if(Index>=CurrentGameState->Units.Size)
-		    Index-=CurrentGameState->Units.Size;
-		char * Name=CurrentGameState->Units.Details[Index].GetString("Name");
-		const char * SideName;
-		UnitSide Side=CurrentGameState->Units.Details[Index].GetSide();
-		switch(Side)
-		{
-		case SIDE_ARM:
-		    SideName = "ARM";
-		    break;
-		case SIDE_CORE:
-		    SideName = "CORE";
-		    break;
-		default:
-		    SideName="UNKNOWN";
-		    break;
-		}
-
-		int size=snprintf(NULL, 0, "%s: %s",SideName,Name)+1;
-		//char tmp[size];
-		STACK_ARRAY(tmp,size,char);
-		snprintf(tmp,size,"%s: %s",SideName, Name);
-		CurrentGameState->NameAndDescText[i*2+0]=SetupOnScreenText(tmp,10,30, 1,1,1, &CurrentGameState->Times32);
-
-		{
-		    char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
-		    int size=snprintf(NULL, 0, "%s",Desc)+1;
-		    //char tmp[size];
-		    STACK_ARRAY(tmp,size,char);
-		    snprintf(tmp,size,"%s",Desc);
-		    CurrentGameState->NameAndDescText[i*2+1]=SetupOnScreenText(tmp,15,54, 1,1,1, &CurrentGameState->Times24);
-		}
-		CurrentGameState->TestElement[i]=SetupUIElementEnclosingText(X,Y, 0.25f,0.75f,0.25f, 1,1,1, 5,(float)(1.0-fabs(i-2.0)/4), 2,&CurrentGameState->NameAndDescText[i*2]);
-		Y+=CurrentGameState->TestElement[i].Size.Height+5;
 	    }
 //	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
 	}
@@ -355,12 +299,9 @@ void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->CameraTranslation[1] =40.0f;
     CurrentGameState->CameraTranslation[2] =50.0f;
 
-
-    CurrentGameState->ScriptBackground = SetupUIElement(float(CurrentGameState->ScreenWidth -240),0, 240, float(CurrentGameState->ScreenHeight), 0,0,0, 1,1,1, 1.0, 1.0);
     CurrentGameState->UnitIndex=14;
-
     
-        //GL Setup:
+    //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -454,37 +395,6 @@ extern "C"
 	for(int i=0;i<CurrentGameState->CurrentScriptPool.NumberOfScripts;i++)
 	{
 	    RunScript(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], &CurrentGameState->temp_model, &CurrentGameState->CurrentScriptPool);
-	    ScreenText * ScriptText = &CurrentGameState->UnitDetailsText[CurrentGameState->CurrentScriptPool.Scripts[i].ScriptNumber];
-	    switch(CurrentGameState->CurrentScriptPool.Scripts[i].BlockedOn)
-	    {
-		//Green - this will at the moment never happen
-	    case BLOCK_NOT_BLOCKED:
-		ScriptText->Color = {{0,1,0}};
-		break;
-		//CYAN
-	    case BLOCK_MOVE:
-		ScriptText->Color = {{0,1,1}};
-		break;
-		//PURPLE
-	    case BLOCK_TURN:
-		ScriptText->Color = {{1,0,1}};
-		break;
-//BLUE
-	    case BLOCK_SLEEP:
-		ScriptText->Color = {{0,0,1}};
-		break;
-//YELLOW
-	    case BLOCK_DONE:
-		ScriptText->Color = {{1,1,0}};
-		break;
-		//RED
-	    case BLOCK_SCRIPT:
-		ScriptText->Color = {{1,0,0}};
-		break;
-
-
-
-	    }
 	}
 	b32 Animate = CurrentGameState->NumberOfFrames%10==0;
 //	s32  Animate =0;
@@ -518,26 +428,78 @@ extern "C"
 	//TODO(Christof): Unit Rendering here
 
 
+
+	//NOTE(Christof): All 2D Rendering to be done after this, all 3D before
+	//TODO(Christof): Make the division here clearer?
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);                      // Turn Blending on
 	glDisable(GL_DEPTH_TEST);        //Turn Depth Testing off
 
-	for(int i=0;i<5;i++)
-	    DrawUIElement(CurrentGameState->TestElement[i],CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
-	DrawUIElement(CurrentGameState->ScriptBackground, CurrentGameState->UIElementShaderProgram,CurrentGameState->UIElementPositionLocation, CurrentGameState->UIElementSizeLocation,  CurrentGameState->UIElementColorLocation, CurrentGameState->UIElementBorderColorLocation, CurrentGameState->UIElementBorderWidthLocation,  CurrentGameState->UIElementAlphaLocation,  CurrentGameState->UIElementRenderingVertexBuffer, CurrentGameState->FontShader,  CurrentGameState->FontPositionLocation,  CurrentGameState->FontColorLocation);
+
 	for(int i=0;i<CurrentGameState->CurrentUnitScript.NumberOfFunctions;i++)
-	    DrawOnScreenText(CurrentGameState->UnitDetailsText[i], CurrentGameState->FontShader, CurrentGameState->FontPositionLocation, CurrentGameState->FontColorLocation);
+	{
+	    int size=snprintf(NULL, 0, "%d) %s",i,CurrentGameState->CurrentUnitScript.FunctionNames[i])+2;
+	    //char tmp[size];
+	    STACK_ARRAY(tmp,size,char);
+	    snprintf(tmp,size,"%d) %s",i,CurrentGameState->CurrentUnitScript.FunctionNames[i]);
+	}
+	//TODO(Christof): free memory correctly
+	int X=0,Y=0;
+	for(int i=0;i<5;i++)
+	{
+	    int Index=CurrentGameState->UnitIndex+(i-2);
+	    if(Index<0)
+		Index+=CurrentGameState->Units.Size;
+	    if(Index>=CurrentGameState->Units.Size)
+		Index-=CurrentGameState->Units.Size;
+	    char * Name=CurrentGameState->Units.Details[Index].GetString("Name");
+	    const char * SideName;
+	    UnitSide Side=CurrentGameState->Units.Details[Index].GetSide();
+	    switch(Side)
+	    {
+	    case SIDE_ARM:
+		SideName = "ARM";
+		break;
+	    case SIDE_CORE:
+		SideName = "CORE";
+		break;
+	    default:
+		SideName="UNKNOWN";
+		break;
+	    }
+
+	    int size=snprintf(NULL, 0, "%s: %s",SideName,Name)+1;
+	    //char tmp[size];
+	    STACK_ARRAY(tmp,size,char);
+	    float Alpha = 1.0f - fabs((i-2)/4.0f);
+
+	    snprintf(tmp,size,"%s: %s",SideName, Name);
+	    DrawTextureFontText(tmp, 15, Y+54, &CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, Alpha);
+	    Y+=TextHeightInPixels(tmp, &CurrentGameState->Font12)+5;
+	    {
+		char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
+		int size=snprintf(NULL, 0, "%s",Desc)+1;
+		//char tmp[size];
+		STACK_ARRAY(tmp,size,char);
+		snprintf(tmp,size,"%s",Desc);
+		DrawTextureFontText(tmp, 15, Y+54, &CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, Alpha);
+		Y+=TextHeightInPixels(tmp, &CurrentGameState->Font12)+15;
+	    }
+	   
+	}
 
 	static int GUIIndex = 0;
 	if(CurrentGameState->NumberOfFrames%30 ==0)
 	    GUIIndex++;
 	if(GUIIndex > CurrentGameState->NumberOfGuis)
 	    GUIIndex =0;
-       
 	
-	RenderTAUIElement(&CurrentGameState->GUIs[GUIIndex],&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures);
+	
+	//RenderTAUIElement(&CurrentGameState->GUIs[GUIIndex],&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures);
 
 	CurrentGameState->NumberOfFrames++;
+
+	
     }
 
 }

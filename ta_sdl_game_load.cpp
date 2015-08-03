@@ -1,16 +1,3 @@
-
-
-
-void LoadFonts(GameState * CurrentGameState)
-{
-    LoadFont(&CurrentGameState->Times32,"data/times.ttf",32,CurrentGameState->FontBitmap);
-    LoadFont(&CurrentGameState->Times24,"data/times.ttf",24,CurrentGameState->FontBitmap);
-    LoadFont(&CurrentGameState->Times16,"data/times.ttf",16,CurrentGameState->FontBitmap);
-}
-
-
-
-
 void LoadCurrentModel(GameState * CurrentGameState);
 void InitialiseGame(Memory * GameMemory);
 
@@ -114,10 +101,6 @@ extern "C"{
 	QueryPerformanceFrequency(&PerfCountFrequencyResult);
 	PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
 #endif
-	
-	LoadFonts(CurrentGameState);
-	SetupUIElementDrawing(CurrentGameState);
-
 	ReloadShaders(GameMemory);
         
 	LoadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->GameArena, &CurrentGameState->TempArena);	

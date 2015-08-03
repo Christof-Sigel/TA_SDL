@@ -200,8 +200,9 @@ int TextHeightInPixels(char * Text, TextureContainer * Font)
     return Result;
 }
 
-void Draw2DFontText(char * Text, int X, int Y, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, int TextHeight)
+void DrawTextureFontText(char * Text, int X, int Y, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0)
 {
+    int TextHeight = TextHeightInPixels(Text, Font);
     int FontHeightInPixels = int(Font->Textures[0].Heights[0]*Font->TextureHeight);
     u8* Char = (u8*)Text;
     while(*Char)
@@ -236,7 +237,7 @@ FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCollection 
 
     char FontName[74];
     
-    int len=strlen(Name)+1;
+    size_t len=strlen(Name)+1;
     if(len>63)
 	len=63;
    

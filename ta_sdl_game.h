@@ -54,7 +54,6 @@ const int MAX_SHADER_NUMBER = 32;
 const int MAX_SHADER_FILENAME = 50;
 #include "platform_code.cpp"
 #include "GL.h"
-#include "UI.h"
 #include "file_formats.h"
 
 
@@ -221,7 +220,6 @@ struct GameState
 
     GLuint UIElementPositionLocation,UIElementSizeLocation,UIElementColorLocation,UIElementBorderColorLocation,UIElementBorderWidthLocation,UIElementAlphaLocation;
 
-    UIElement TestElement[5];
     Object3d temp_model;
     TAMap TestMap;
     Object3dTransformationDetails UnitTransformationDetails;
@@ -240,13 +238,6 @@ struct GameState
     u8 PaletteData[1024];
     u8 FontBitmap[FONT_BITMAP_SIZE*FONT_BITMAP_SIZE];
 
-    ScreenText NameAndDescText[5*2];
-    ScreenText UnitDetailsText[NUMBER_OF_UNIT_DETAILS];
-    
-    FontDetails Times32;
-    FontDetails Times24;
-    FontDetails Times16;
-
     UnitScript CurrentUnitScript;
     u64  PerformanceCounterStart;
     u64  PerformanceCounterFrequency;
@@ -256,7 +247,6 @@ struct GameState
 
     float CameraTranslation[3];
     ScriptStatePool CurrentScriptPool;
-    UIElement ScriptBackground;
     GLuint DebugAxisBuffer;
     FontShaderDetails FontShaderDetails;
     FontContainer LoadedFonts;
