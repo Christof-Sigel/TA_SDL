@@ -105,7 +105,7 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 #define PopSubArena(Arena, SubArena) PopSubArena_(Arena, SubArena,__func__,__LINE__,__FILE__)
 
 inline void *
-PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, const char * file)
+    PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, const char * file)
 {
     if(Size ==0)
 	return 0;
@@ -195,10 +195,10 @@ struct TempUnitList
 
 struct GameState
 {
-     b32 IsInitialised;
+    b32 IsInitialised;
     MemoryArena GameArena;
     MemoryArena TempArena;
-     b32 Quit;
+    b32 Quit;
 
 
     Matrix ProjectionMatrix;
@@ -252,7 +252,7 @@ struct GameState
     FontContainer LoadedFonts;
     GLuint Draw2DVertexBuffer;
     Texture2DShaderDetails DrawTextureShaderDetails;
-    
+
 
     ShaderGroup ShaderGroup;
     TextureContainer CommonGUITextures;

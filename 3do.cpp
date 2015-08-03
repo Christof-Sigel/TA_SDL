@@ -1,4 +1,3 @@
-
 void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLfloat * UV, Texture * Texture, Object3d * Object, Object3dPrimitive * Primitive,u8 * PaletteData, GLfloat * TextureData)
 {
     int Offset=CurrentTriangle*(3+3)*3;
@@ -13,8 +12,6 @@ void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices,GLf
 	Data[i*6+0]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+0];
 	Data[i*6+1]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+1];
 	Data[i*6+2]=Object->Vertices[Primitive->VertexIndexes[VertexIndices[i]]*3+2];
-
-	
 
 	Data[i*6+3]=(u8 )PaletteData[Primitive->ColorIndex*4+0]/255.0f;
 	Data[i*6+4]=(u8 )PaletteData[Primitive->ColorIndex*4+1]/255.0f;
@@ -36,20 +33,8 @@ b32 TextureIsSideTexture(Texture * Texture)
     return Texture->NumberOfTextureFrames ==10 ;
 }
 
-#define TEXTURE_DEBUG 0
-
-#if TEXTURE_DEBUG
-s32 DEBUG_done = 0;
-#endif
-
- b32 IsAirPadTexture(Texture * Texture)
+b32 IsAirPadTexture(Texture * Texture)
 {
-#if TEXTURE_DEBUG
-    if(!DEBUG_done)
-    {
-	LogDebug("Texture name: %s",Texture->Name);
-    }
-#endif
     return strstr(Texture->Name, "CorSe11a")!=0 || strstr(Texture->Name, "Helipad")!=0;
 }
 
@@ -200,7 +185,7 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	    FillObject3dData(Data,CurrentTriangle,Vertexes,UVCoords,Texture,Object,CurrentPrimitive,PaletteData,TextureData);
 	    CurrentTriangle++;
 	}
-	    break;
+	break;
 	case 4:
 	{
 	    //GLfloat UVCoords1[]={0,0, 1,0,  1,1 };
@@ -224,12 +209,12 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	    d[3] = length(sub(P3,Center));
 	    
 	    float mod[4]= {1,1,1,1};
-	    #if 1
+#if 1
 	    mod[0] = (d[0]+d[2])/d[2];
 	    mod[1] = (d[1]+d[3])/d[3];
 	    mod[2] = (d[2]+d[0])/d[0];
 	    mod[3] = (d[3]+d[1])/d[1];
-	    #endif
+#endif
 
 
 	    
@@ -258,7 +243,7 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	   
 	    
 	}
-	    break;
+	break;
 	default:
 	{
 	    GLfloat UVCoords[6];
@@ -280,57 +265,62 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		CurrentTriangle++;
 	    }
 	}
-	    break;
+	break;
 	}
     }
 
     if(!Object->VertexBuffer)
     {
-    //VERTEX DATA
-    glGenVertexArrays(1,&Object->VertexBuffer);
-    glBindVertexArray(Object->VertexBuffer);
+	//VERTEX DATA
+	glGenVertexArrays(1,&Object->VertexBuffer);
+	glBindVertexArray(Object->VertexBuffer);
 
-    GLuint VertexBuffer;
-    glGenBuffers(1,&VertexBuffer);
+	GLuint VertexBuffer;
+	glGenBuffers(1,&VertexBuffer);
 
-    glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(3+3)*3,Data,GL_STATIC_DRAW);
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+3),0);
-    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+3),(GLvoid*)(sizeof(GLfloat)*3));
+	glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(3+3)*3,Data,GL_STATIC_DRAW);
+	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+3),0);
+	glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+3),(GLvoid*)(sizeof(GLfloat)*3));
 
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(2);
 
-    //TEXTURES
 
-    glGenBuffers(1,&Object->TextureCoordBuffer);
 
-    glBindBuffer(GL_ARRAY_BUFFER,Object->TextureCoordBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(4)*3,TextureData,GL_STATIC_DRAW);
+	//TEXTURES
+
+	glGenBuffers(1,&Object->TextureCoordBuffer);
+
+	glBindBuffer(GL_ARRAY_BUFFER,Object->TextureCoordBuffer);
+	glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(4)*3,TextureData,GL_STATIC_DRAW);
     
-    glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(4),0);
-    glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(4),0);
+	glEnableVertexAttribArray(1);
 
-    glBindVertexArray(0);
+	glBindVertexArray(0);
 
-    //LINES
-    glGenVertexArrays(1,&Object->LineBuffer);
-    glBindVertexArray(Object->LineBuffer);
+	glDeleteBuffers(1, &VertexBuffer);
 
-    glGenBuffers(1,&VertexBuffer);
+	//LINES
+	glGenVertexArrays(1,&Object->LineBuffer);
+	glBindVertexArray(Object->LineBuffer);
 
-    glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumLines*(3+4+3)*2,LineData,GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),0);
-    glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*3));
+	glGenBuffers(1,&VertexBuffer);
 
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumLines*(3+4+3)*2,LineData,GL_DYNAMIC_DRAW);
+	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),0);
+	glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*3));
 
-    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*7));
-    glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 
-    glBindVertexArray(0);
+	glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*7));
+	glEnableVertexAttribArray(2);
+
+	glBindVertexArray(0);
+	glDeleteBuffers(1, &VertexBuffer);
 	
     }
     else
@@ -498,9 +488,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     
     CurrentMatrix.Move(Object->Position.X,Object->Position.Y,Object->Position.Z);
 
-   CurrentMatrix = ParentMatrix * CurrentMatrix ;
-//       CurrentMatrix =  CurrentMatrix *ParentMatrix ;
-    
+    CurrentMatrix = ParentMatrix * CurrentMatrix ;
     
     CurrentMatrix.Move(TransformationDetails->Movement[0],TransformationDetails->Movement[1],TransformationDetails->Movement[2]);
 
@@ -527,7 +515,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 	LogError("failed to render : %s",gluErrorString(ErrorValue));
     }
 
-    #if 0
+#if 0
     //Debug Axis rendering
     glBindVertexArray(DebugAxisBuffer);
     glDrawArrays(GL_LINES, 0, 3*2);
@@ -536,14 +524,8 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     {
 	LogError("failed to render : %s",gluErrorString(ErrorValue));
     }
-    #endif
-
-    
-
+#endif
 }
-
-
-
 
 
 //TODO(Christof): Load Primitives from file to memory
@@ -552,7 +534,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 
 
 /*TODO(Christof): Figure out if we can/need to use bindless textures or something similar for rendering, for now lets just go with the simple solution
- Probably just load all the textures into one big (1024x1024 or 2048x2048 - will need to check what size we need) texture and use offsets, since the textures are all quite small*/
+  Probably just load all the textures into one big (1024x1024 or 2048x2048 - will need to check what size we need) texture and use offsets, since the textures are all quite small*/
 
 int Count3DOChildren(u8 * Buffer,FILE_Object3dHeader * header)
 {
@@ -571,9 +553,7 @@ int Count3DOChildren(u8 * Buffer,FILE_Object3dHeader * header)
 }
 
 
-
-
- b32 Load3DOFromBuffer(u8 * Buffer, Object3d * Object, TextureContainer * TextureContainer, MemoryArena * GameArena, int Offset=0)
+b32 Load3DOFromBuffer(u8 * Buffer, Object3d * Object, TextureContainer * TextureContainer, MemoryArena * GameArena, int Offset=0)
 {
     FILE_Object3dHeader * header = (FILE_Object3dHeader *)(Buffer+Offset);
     if(header->Version != 1)
@@ -638,8 +618,6 @@ int Count3DOChildren(u8 * Buffer,FILE_Object3dHeader * header)
 	Object->Vertices[i*3+2]=Vertices[i].z*TA_TO_GL_SCALE*TranslationZAxisModModel;
     }
     
-    
-
     Object->NumberOfChildren = Count3DOChildren(Buffer,header);
     Object->Children = PushArray(GameArena,Object->NumberOfChildren,Object3d);
     memset(Object->Children,0,sizeof(Object3d)*Object->NumberOfChildren);
@@ -650,13 +628,9 @@ int Count3DOChildren(u8 * Buffer,FILE_Object3dHeader * header)
 	header = (FILE_Object3dHeader *)(Buffer+ChildOffset);
 	ChildOffset=header->OffsetToSiblingObject;
     }
-
     return 1;
 }
 
-/**
-   Frees all contents allocated by loading the object, leaving it in a state to be reused for loading without memory leaks
- **/
 void Unload3DO(Object3d * Object)
 {
     if(!Object)
@@ -665,7 +639,8 @@ void Unload3DO(Object3d * Object)
     {
 	glDeleteBuffers(1,&Object->VertexBuffer);	
 	glDeleteBuffers(1,&Object->LineBuffer);
-	Object->LineBuffer = Object->VertexBuffer = 0;
+	glDeleteBuffers(1,&Object->TextureCoordBuffer);
+	Object->LineBuffer = Object->VertexBuffer = Object->TextureCoordBuffer= 0;
     }
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
