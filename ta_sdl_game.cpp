@@ -493,13 +493,9 @@ extern "C"
 	    GUIIndex++;
 	if(GUIIndex > CurrentGameState->NumberOfGuis)
 	    GUIIndex =0;
-	
-	
+		
 	//RenderTAUIElement(&CurrentGameState->GUIs[GUIIndex],&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures);
 
 	CurrentGameState->NumberOfFrames++;
-
-	
     }
-
 }
