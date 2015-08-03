@@ -207,7 +207,6 @@ struct GameState
 
     ShaderProgram * UnitShader;
     ShaderProgram * MapShader;
-    ShaderProgram * FontShader;
     ShaderProgram * UIElementShaderProgram;
     
     s64  StartTime;
@@ -215,7 +214,6 @@ struct GameState
     GLuint ProjectionMatrixLocation;
     GLuint ModelMatrixLocation;
     GLuint ViewMatrixLocation;
-    GLuint FontPositionLocation,FontColorLocation;
     GLuint UIElementRenderingVertexBuffer;
 
     GLuint UIElementPositionLocation,UIElementSizeLocation,UIElementColorLocation,UIElementBorderColorLocation,UIElementBorderWidthLocation,UIElementAlphaLocation;
@@ -236,7 +234,6 @@ struct GameState
     TextureContainer Font12;
 
     u8 PaletteData[1024];
-    u8 FontBitmap[FONT_BITMAP_SIZE*FONT_BITMAP_SIZE];
 
     UnitScript CurrentUnitScript;
     u64  PerformanceCounterStart;

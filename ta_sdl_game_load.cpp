@@ -27,18 +27,6 @@ void ReloadShaders(Memory * GameMemory)
 
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
-
-    CurrentGameState->FontShader= LoadShaderProgram("shaders/font.vs.glsl","shaders/font.fs.glsl",&CurrentGameState->ShaderGroup);
-    if(CurrentGameState->FontShader->ProgramID)
-    {
-	glUseProgram(CurrentGameState->FontShader->ProgramID);
-	glUniform1i(GetUniformLocation(CurrentGameState->FontShader,"Texture"),0);
-
-	glUniform2iv(GetUniformLocation(CurrentGameState->FontShader,"Viewport"),1,viewport+2);
-	CurrentGameState->FontPositionLocation=GetUniformLocation(CurrentGameState->FontShader,"Position");
-	CurrentGameState->FontColorLocation=GetUniformLocation(CurrentGameState->FontShader,"TextColor");
-    }
-
     
     CurrentGameState->UIElementShaderProgram = LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl",&CurrentGameState->ShaderGroup);
     if(CurrentGameState->UIElementShaderProgram->ProgramID)
