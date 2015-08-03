@@ -186,7 +186,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     Element->Visible = GetIntValue(Common, "active");
 
     char * Name = GetStringValue(Common, "name");
-    int len = strlen(Name);
+    size_t len = strlen(Name);
     Element->Name = PushArray(Arena, len+1, char);
     if(Element->Name)
     {
@@ -231,7 +231,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	char * Text = GetStringValue(Tree, "text");
 	if(Text)
 	{
-	    int len = strlen(Text);
+	    size_t len = strlen(Text);
 	    Element->Button.Text = PushArray(Arena, len+1, char);
 	    if(Element->Button.Text)
 	    {
@@ -239,7 +239,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 		Element->Button.Text[len]=0;
 	    }
 	}
-	Element->Button.Disabled = GetIntValue(Tree, "grayedout");
+	Element->Button.Disabled = b8(GetIntValue(Tree, "grayedout"));
     }
     break;
     case TAG_TEXTFIELD:
@@ -260,7 +260,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	char * Text = GetStringValue(Tree, "text");
 	if(Text)
 	{
-	    int len = strlen(Text);
+	    size_t len = strlen(Text);
 	    Element->Label.Text = PushArray(Arena, len+1, char);
 	    if(Element->Label.Text)
 	    {
@@ -272,7 +272,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	break;
     case TAG_DYNAMIC_IMAGE:
     {
-	Element->DynamicImage.DisplaySelectionRectangle = GetIntValue(Tree, "hotornot");
+	Element->DynamicImage.DisplaySelectionRectangle = (b8)GetIntValue(Tree, "hotornot");
     }
     break;
     case TAG_LABEL_FONT:
@@ -384,7 +384,7 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	Texture * Background =  Element->Container.Background;
 	if(Background)
 	{
-	    DrawTexture2D(Element->Textures->Texture, Element->X, Element->Y, Element->Width, Element->Height, {{1,1,1}}, 1.0, ShaderDetails, Background->U, Background->V, Background->Widths[0], Background->Heights[0]);
+	    DrawTexture2D(Element->Textures->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, Background->U, Background->V, Background->Widths[0], Background->Heights[0]);
 	}
 	for(int i=0;i<Element->Container.NumberOfElements;i++)
 	{
@@ -426,7 +426,7 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	{
 	    U+=ButtonBackground->Widths[i];
 	}
-	DrawTexture2D(ButtonTextureContainer->Texture, Element->X, Element->Y, Element->Width, Element->Height, {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Widths[ButtonIndex], ButtonBackground->Heights[ButtonIndex]);
+	DrawTexture2D(ButtonTextureContainer->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Widths[ButtonIndex], ButtonBackground->Heights[ButtonIndex]);
 	if(Button->Text)
 	{
 	    int Width = TextWidthInPixels(Button->Text, ButtonFont);

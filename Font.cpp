@@ -12,7 +12,7 @@ void LoadCharacter(s16  CharacterOffset, u8 * FileBuffer, u8 * TextureBuffer, in
     {
 	for(int i=7;i>=0;i--)
 	{
-	    int bit = ImageData[ByteOffset]&(1<<i);
+	    u8 bit = ImageData[ByteOffset]&(1<<i);
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+0] = 255;
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+1] = 255;
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+2] = 255;
@@ -69,7 +69,7 @@ void LoadFNTFont(u8 * Buffer, FNTFont * Font)
 
 void DrawCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, float X, float Y, Color Color, float Alpha, FNTFont * Font )
 {
-    DrawTexture2D(Font->Texture, X,Y, Font->Characters[Character].Width, Font->Height, Color, Alpha, ShaderDetails, Font->Characters[Character].U, 0.0f,  Font->Characters[Character].TextureWidth, 1.0f);
+    DrawTexture2D(Font->Texture, X,Y, (float)Font->Characters[Character].Width, (float)Font->Height, Color, Alpha, ShaderDetails, Font->Characters[Character].U, 0.0f,  Font->Characters[Character].TextureWidth, 1.0f);
 }
 
 
@@ -175,7 +175,7 @@ int TextWidthInPixels(char * Text, TextureContainer * Font)
     while(*Char)
     {
 	float CharWidth = Font->Textures[0].Widths[*Char];
-	int CharWidthInPixels = CharWidth * Font->TextureWidth;
+	int CharWidthInPixels = int(CharWidth * Font->TextureWidth);
 	Result += CharWidthInPixels;
 	Char++;
     }
@@ -190,7 +190,7 @@ int TextHeightInPixels(char * Text, TextureContainer * Font)
     {
 	float CharHeight = Font->Textures[0].Heights[*Char];
 	
-	int CharHeightInPixels = CharHeight * Font->TextureHeight;
+	int CharHeightInPixels = int(CharHeight * Font->TextureHeight);
 	if(Result<CharHeightInPixels)
 	{
 	Result = CharHeightInPixels;
@@ -202,7 +202,7 @@ int TextHeightInPixels(char * Text, TextureContainer * Font)
 
 void Draw2DFontText(char * Text, int X, int Y, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, int TextHeight)
 {
-    int FontHeightInPixels = Font->Textures[0].Heights[0]*Font->TextureHeight;
+    int FontHeightInPixels = int(Font->Textures[0].Heights[0]*Font->TextureHeight);
     u8* Char = (u8*)Text;
     while(*Char)
     {
@@ -213,11 +213,11 @@ void Draw2DFontText(char * Text, int X, int Y, TextureContainer * Font, Texture2
 	{
 	    U+=Font->Textures[0].Widths[i];
 	}
-	int CharWidthInPixels = CharWidth * Font->TextureWidth;
-	int CharHeightInPixels = CharHeight * Font->TextureHeight;
+	int CharWidthInPixels = int(CharWidth * Font->TextureWidth);
+	int CharHeightInPixels = int(CharHeight * Font->TextureHeight);
 	if(*Char > ' ')
 	{
-	    DrawTexture2D(Font->Texture, X, Y-Font->Textures[0].Y[*Char]+FontHeightInPixels, CharWidthInPixels, CharHeightInPixels, {{1,1,1}}, 1.0, ShaderDetails, U, V, CharWidth, CharHeight);
+	    DrawTexture2D(Font->Texture,(float) X, float(Y-Font->Textures[0].Y[*Char]+FontHeightInPixels), float(CharWidthInPixels), float(CharHeightInPixels), {{1,1,1}}, Alpha, ShaderDetails, U, V, CharWidth, CharHeight);
 	}
 	X+=CharWidthInPixels;
 	Char++;
