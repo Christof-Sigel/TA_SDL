@@ -437,7 +437,7 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	DrawTexture2D(ButtonTextureContainer->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Width, ButtonBackground->Height);
 	if(Button->Text)
 	{
-	    int Width = TextWidthInPixels(Button->Text, ButtonFont);
+	    int Width = TextSizeInPixels(Button->Text, ButtonFont).Width;
 	    DrawTextureFontText(Button->Text, Element->X+((Element->Width - Width)/2), Element->Y, ButtonFont, ShaderDetails);
 	}
     }
@@ -461,9 +461,8 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	}
 	else
 	{
-	    int Width = TextWidthInPixels(Element->Label.Text, ButtonFont);
-	    int Height = TextHeightInPixels(Element->Label.Text,ButtonFont);
-	    DrawTextureFontText(Element->Label.Text, Element->X+((Element->Width - Width)/2), Element->Y+((Element->Height - Height)/2), ButtonFont, ShaderDetails);
+	    FontDimensions Size = TextSizeInPixels(Element->Label.Text, ButtonFont);
+	    DrawTextureFontText(Element->Label.Text, Element->X+((Element->Width - Size.Width)/2), Element->Y+((Element->Height - Size.Height)/2), ButtonFont, ShaderDetails);
 	}
 	}
     }

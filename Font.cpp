@@ -163,23 +163,7 @@ void DrawBitmapCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, T
     DrawTexture2D(TextureContainer->Texture, X, Y-Height, Width, Height, Color, Alpha, ShaderDetails, U, V, tex->Width, tex->Height);
 }
 
-
-int TextWidthInPixels(char * Text, TextureContainer * Font)
-{
-    int Result =0;
-    u8 * Char = (u8*)Text;
-    while(*Char)
-    {
-	Texture * tex = GetTexture(&Font->Textures[0], *Char, Font);
-	float CharWidth = tex->Width;
-	int CharWidthInPixels = int(CharWidth * Font->TextureWidth);
-	Result += CharWidthInPixels;
-	Char++;
-    }
-    return Result;
-}
-
-int TextHeightInPixels(char * Text, TextureContainer * Font)
+int FontHeightInPixels(char * Text, TextureContainer * Font)
 {
     int Result =0;
     u8 * Char = (u8*)Text;
@@ -198,10 +182,62 @@ int TextHeightInPixels(char * Text, TextureContainer * Font)
     return Result;
 }
 
-void DrawTextureFontText(char * Text, int X, int Y, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0)
+struct FontDimensions
 {
-    int TextHeight = TextHeightInPixels(Text, Font);
+    s32 Width;
+    s32 Height;
+};
+
+FontDimensions TextSizeInPixels(char * Text, TextureContainer * Font)
+{
+    FontDimensions Result = {};
+    u8 * Char = (u8*)Text;
+    Texture * Textures = &Font->Textures[0];
+    int MaxHeight = 0;
+    int CurrentWidth = 0;
+    while(*Char)
+    {
+	float CharHeight = Textures[*Char].Height;
+	int CharHeightInPixels = int(CharHeight * Font->TextureHeight);
+
+	float CharWidth = Textures[*Char].Width;
+	int CharWidthInPixels = int(CharWidth * Font->TextureWidth);
+	if(*Char == '\n')
+	{
+	    Result.Height += MaxHeight;
+	    if(Result.Width < CurrentWidth)
+	    {
+		Result.Width = CurrentWidth;
+	    }
+	    MaxHeight =0;
+	    CurrentWidth=0;
+	}
+	else
+	{
+	    if(MaxHeight < CharHeightInPixels)
+	    {
+		MaxHeight = CharHeightInPixels;
+	    }
+	    CurrentWidth += CharWidthInPixels;
+	}
+	Char++;
+    }
+    if(CurrentWidth != 0 || MaxHeight != 0)
+    {
+	Result.Height += MaxHeight;
+	if(Result.Width < CurrentWidth)
+	{
+	    Result.Width = CurrentWidth;
+	}
+    }
+    return Result;
+}
+
+void DrawTextureFontText(char * Text, int InitialX, int InitialY, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0)
+{
+    int TextHeight = FontHeightInPixels(Text, Font);
     u8* Char = (u8*)Text;
+    int X =InitialX, Y=InitialY;
     while(*Char)
     {
 	Texture * tex = GetTexture(&Font->Textures[0], *Char, Font);
@@ -215,7 +251,15 @@ void DrawTextureFontText(char * Text, int X, int Y, TextureContainer * Font, Tex
 	{
 	    DrawTexture2D(Font->Texture,(float) X, float(Y-tex->Y+TextHeight), float(CharWidthInPixels), float(CharHeightInPixels), {{1,1,1}}, Alpha, ShaderDetails, U, V, CharWidth, CharHeight);
 	}
-	X+=CharWidthInPixels;
+	if(*Char == '\n' || *Char == '\r')
+	{
+	    X=InitialX;
+	    Y+=TextHeight;
+	}
+	else
+	{
+	    X+=CharWidthInPixels;
+	}
 	Char++;
     }
 }

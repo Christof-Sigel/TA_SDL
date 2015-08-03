@@ -19,9 +19,6 @@
 #include "file_formats.cpp"
 
 
-
-
-
 #include "ta_sdl_game_load.cpp"
 
 
@@ -398,16 +395,8 @@ extern "C"
 	    RunScript(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], &CurrentGameState->temp_model, &CurrentGameState->CurrentScriptPool);
 	}
 	b32 Animate = CurrentGameState->NumberOfFrames%10==0;
-//	s32  Animate =0;
-
 
 	UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f, Animate);
-	#if TEXTURE_DEBUG
-	if(!DEBUG_done)
-	{
-	    LogDebug("\n\n\n\n\n");
-	}
-	#endif
 	for(int x=0;x<5;x++)
 	{
 	    for(int y=0;y<10;y++)
@@ -416,9 +405,6 @@ extern "C"
 		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,ModelMatrix);
 	    }
 	}
-	#if TEXTURE_DEBUG
-	DEBUG_done = 1;
-	#endif
 	
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
 	CurrentGameState->ProjectionMatrix.Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));
@@ -472,11 +458,11 @@ extern "C"
 	    int size=snprintf(NULL, 0, "%s: %s",SideName,Name)+1;
 	    //char tmp[size];
 	    STACK_ARRAY(tmp,size,char);
-	    float Alpha = 1.0f - fabs((i-2)/4.0f);
+	    float Alpha = 1.0f - fabs((i-2)/8.0f);
 
 	    snprintf(tmp,size,"%s: %s",SideName, Name);
 	    DrawTextureFontText(tmp, 15, Y+54, &CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, Alpha);
-	    Y+=TextHeightInPixels(tmp, &CurrentGameState->Font12)+5;
+	    Y+=TextSizeInPixels(tmp, &CurrentGameState->Font12).Height+5;
 	    {
 		char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
 		int size=snprintf(NULL, 0, "%s",Desc)+1;
@@ -484,9 +470,8 @@ extern "C"
 		STACK_ARRAY(tmp,size,char);
 		snprintf(tmp,size,"%s",Desc);
 		DrawTextureFontText(tmp, 15, Y+54, &CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, Alpha);
-		Y+=TextHeightInPixels(tmp, &CurrentGameState->Font12)+15;
+		Y+=TextSizeInPixels(tmp, &CurrentGameState->Font12).Height+15;
 	    }
-	   
 	}
 
 	static int GUIIndex = 0;
@@ -509,6 +494,16 @@ extern "C"
 	snprintf(FPS, 32, "%0.2f, %ld", CurrentFPS, CurrentFrameTime - LastFrameTime);
 	DrawTextureFontText(FPS, 0,0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
 	LastFrameTime = CurrentFrameTime;
+
+	char MemoryUsageText[128];
+
+	snprintf(MemoryUsageText, 128, "Game Arena: %.2fMB of %.2fMB (%.2f%% free)\nTemp Arena: %.2fMB of %.2fMB (%.2f%% free)\nScript Pool Size: %d",
+		 CurrentGameState->GameArena.Used/(1024.0f*1024), CurrentGameState->GameArena.Size/(1024.0f*1024),
+		 float(CurrentGameState->GameArena.Size - CurrentGameState->GameArena.Used)/CurrentGameState->GameArena.Size*100.0f,
+		 CurrentGameState->TempArena.Used/(1024.0f*1024), CurrentGameState->TempArena.Size/(1024.0f*1024),
+		 float(CurrentGameState->TempArena.Size - CurrentGameState->TempArena.Used)/CurrentGameState->TempArena.Size*100.0f,
+	    CurrentGameState->CurrentScriptPool.NumberOfScripts);
+	DrawTextureFontText(MemoryUsageText, CurrentGameState->ScreenWidth-TextSizeInPixels(MemoryUsageText, &CurrentGameState->Font12).Width, 0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
 
 
 	CurrentGameState->NumberOfFrames++;

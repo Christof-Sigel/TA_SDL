@@ -151,7 +151,7 @@ extern "C"{
 
 	LoadCurrentModel(CurrentGameState);
 
-	Entry = FindEntryInAllFiles("guis", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
+	Entry = FindEntryInAllFiles("guiss", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(Entry.IsDirectory)
 	{
 	    CurrentGameState->GUIs = PushArray(&CurrentGameState->GameArena, Entry.Directory.NumberOfEntries, TAUIElement);
