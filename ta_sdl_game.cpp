@@ -412,7 +412,7 @@ extern "C"
 	    for(int y=0;y<10;y++)
 	    {
 		ModelMatrix.SetTranslation(30.5f+x*50,14.5f,23.4f+y*40);
-		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side,ModelMatrix);
+		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,ModelMatrix);
 	    }
 	}
 	#if TEXTURE_DEBUG

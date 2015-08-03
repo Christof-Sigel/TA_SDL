@@ -14,13 +14,31 @@ void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int He
     memset(TextureContainer->FreeSquares, 0, FreeSquareSize);
 }
 
-Texture * GetTexture(const char * Name,TextureContainer * TextureContainer)
+Texture * GetTexture(const char * Name, TextureContainer * TextureContainer)
 {
     //TODO(Christof): some better storage/retrieval mechanism for texture lookup?
     for(int i=0;i<TextureContainer->NumberOfTextures;i++)
     {
 	if(CaseInsensitiveMatch(Name,TextureContainer->Textures[i].Name))
+	{
 	    return &TextureContainer->Textures[i];
+	}
+    }
+    return 0;
+}
+
+Texture * GetTexture(Texture * Texture, s32 FrameNumber, TextureContainer * TextureContainer)
+{
+    if(Texture)
+    {
+	if(Texture->NumberOfTextureFrames <= FrameNumber)
+	{
+	    LogError("Frame number higher than the number of frames requested, %d > %d",FrameNumber, Texture->NumberOfTextureFrames);
+	}
+	else
+	{
+	    return Texture + (FrameNumber - Texture->FrameNumber);
+	}
     }
     return 0;
 }
@@ -164,30 +182,22 @@ void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContai
 	LogInformation("Skipping %s as it has already been loaded",Entry->Name);
 	return;
     }
-    int NextTexture = TextureContainer->NumberOfTextures;
-    int TotalWidth =0;
-    int MaxHeight =0;
+    
     for(int i=0;i<Entry->NumberOfFrames;i++)
     {
 	FILE_GafFrameData * Frame = (FILE_GafFrameData *)(Buffer + FrameEntries[i].FrameInfoOffset);
-	TotalWidth += Frame->Width;
-	if(MaxHeight < Frame->Height)
-	    MaxHeight = Frame->Height;
-    }
-    TexturePosition PositionToStore = GetAvailableTextureLocation(TotalWidth,MaxHeight, TextureContainer);
-    if(PositionToStore.X==-1)
-    {
-	LogError("Unable to get storage location for texture: %s (%dx%d), Texture: %dx%d",Entry->Name,TotalWidth,MaxHeight, TextureContainer->TextureWidth, TextureContainer->TextureHeight);
-	return;
-    }
-    Textures[NextTexture].U=PositionToStore.X/float(TextureContainer->TextureWidth);
-    Textures[NextTexture].V=PositionToStore.Y/float(TextureContainer->TextureHeight);
-    Textures[NextTexture].NumberOfFrames = Entry->NumberOfFrames;
-    memcpy(Textures[NextTexture].Name,Entry->Name,32);
+	
 
-    for(int i=0;i<Entry->NumberOfFrames;i++)
-    {
-	FILE_GafFrameData * Frame = (FILE_GafFrameData *)(Buffer + FrameEntries[i].FrameInfoOffset);
+	
+	int NextTexture = TextureContainer->NumberOfTextures;
+	Assert(NextTexture < TextureContainer->MaximumTextures);
+	TexturePosition PositionToStore = GetAvailableTextureLocation(Frame->Width,Frame->Height, TextureContainer);
+	if(PositionToStore.X==-1)
+	{
+	    LogError("Unable to get storage location for texture: %s(%d) (%dx%d), Texture: %dx%d",Entry->Name,i,Frame->Width, Frame->Height, TextureContainer->TextureWidth, TextureContainer->TextureHeight);
+	    continue;
+	}
+	memcpy(Textures[NextTexture].Name,Entry->Name,32);
 	if(Frame->NumberOfSubframes!=0)
 	{
 	    s32 * SubFrameOffsets = (s32  *)(Buffer + Frame->FrameDataOffset);
@@ -203,13 +213,17 @@ void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContai
 	    //NOTE: Many textures have non-zero X and/or Y, perhaps this influences texture coord gen in some way? rendering in the past has ignored these values and seemed fine, so going to just ignore them for now
 	    LoadGafTextureData(Buffer, Frame, PositionToStore, PositionToStore, TextureContainer, PaletteData, TextureData);
 	}
-	Textures[NextTexture].Widths[i]=Frame->Width/float(TextureContainer->TextureWidth);
-	Textures[NextTexture].Heights[i]=Frame->Height/float(TextureContainer->TextureHeight);
-	PositionToStore.X += Frame->Width;
-	Textures[NextTexture].X[i]=Frame->XPos;
-	Textures[NextTexture].Y[i]=Frame->YPos;
+	Textures[NextTexture].U=PositionToStore.X/float(TextureContainer->TextureWidth);
+	Textures[NextTexture].V=PositionToStore.Y/float(TextureContainer->TextureHeight);
+	Textures[NextTexture].Width=Frame->Width/float(TextureContainer->TextureWidth);
+	Textures[NextTexture].Height=Frame->Height/float(TextureContainer->TextureHeight);
+	Textures[NextTexture].X=Frame->XPos;
+	Textures[NextTexture].Y=Frame->YPos;
+	Textures[NextTexture].FrameNumber = i;
+	Textures[NextTexture].NumberOfTextureFrames = Entry->NumberOfFrames;
+	TextureContainer->NumberOfTextures++;
     }
-    TextureContainer->NumberOfTextures++;
+    
 }
 
 void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureContainer, u8 * PalletteData, u8 * TextureData)
@@ -386,13 +400,14 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, u8 );
 
 	int NextTexture = Textures->NumberOfTextures;
-	Textures->Textures[NextTexture].Widths[0]=Width/float( Textures->TextureWidth);
-	Textures->Textures[NextTexture].Heights[0]=Height/float( Textures->TextureHeight);
-	Textures->Textures[NextTexture].X[0]=0;
-	Textures->Textures[NextTexture].Y[0]=0;
+	Textures->Textures[NextTexture].Width=Width/float( Textures->TextureWidth);
+	Textures->Textures[NextTexture].Height=Height/float( Textures->TextureHeight);
+	Textures->Textures[NextTexture].X=0;
+	Textures->Textures[NextTexture].Y=0;
 	Textures->Textures[NextTexture].U=PCXPos.X/float(Textures->TextureWidth);
 	Textures->Textures[NextTexture].V=PCXPos.Y/float(Textures->TextureHeight);
-	Textures->Textures[NextTexture].NumberOfFrames = 1;
+	Textures->Textures[NextTexture].FrameNumber = 0;
+	Textures->Textures[NextTexture].NumberOfTextureFrames =1;
 	
 	
 	return &Textures->Textures[Textures->NumberOfTextures++];

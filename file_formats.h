@@ -1,7 +1,6 @@
 ////////// Defines ////////
 //Textures
 const s32 GAF_IDVERSION=0x00010100;
-const s32 MAX_NUMBER_OF_TEXTURE_FRAMES=256;
 const int PIXELS_PER_SQUARE_SIDE = 8;
 
 //3DO
@@ -151,10 +150,11 @@ struct TexturePosition
 struct Texture
 {
     char Name[32];
-    int NumberOfFrames;
-    float U,V;
-    float Widths[MAX_NUMBER_OF_TEXTURE_FRAMES],Heights[MAX_NUMBER_OF_TEXTURE_FRAMES];
-    int X[MAX_NUMBER_OF_TEXTURE_FRAMES], Y[MAX_NUMBER_OF_TEXTURE_FRAMES];
+    s32 FrameNumber;
+    r32 U,V;
+    r32 Width,Height;
+    s32 X, Y;
+    s32 NumberOfTextureFrames;
 };
 
 struct TextureContainer

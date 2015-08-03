@@ -126,8 +126,8 @@ void SetupFontRendering(GLuint * Draw2DVertexBuffer)
 
 void LoadGafFonts(GameState * CurrentGameState)
 {
-    SetupTextureContainer(&CurrentGameState->Font11, 1700, 15, 1, &CurrentGameState->GameArena);
-    SetupTextureContainer(&CurrentGameState->Font12, 2200, 18, 1, &CurrentGameState->GameArena);
+    SetupTextureContainer(&CurrentGameState->Font11, 256*2*PIXELS_PER_SQUARE_SIDE, 15, 256, &CurrentGameState->GameArena);
+    SetupTextureContainer(&CurrentGameState->Font12, 256*2*PIXELS_PER_SQUARE_SIDE, 18, 256, &CurrentGameState->GameArena);
     
     HPIEntry Font = FindEntryInAllFiles("anims/hattfont12.GAF",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     if(Font.IsDirectory)
@@ -153,18 +153,14 @@ void LoadGafFonts(GameState * CurrentGameState)
 
 void DrawBitmapCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, TextureContainer * TextureContainer, float X, float Y, Color Color, float Alpha, int * oWidth, int *oHeight)
 {
-    Texture tex = TextureContainer->Textures[0];
-    float Width = tex.Widths[Character] * TextureContainer->TextureWidth;
-    float Height = tex.Heights[Character] * TextureContainer->TextureHeight;
+    Texture * tex = GetTexture(&TextureContainer->Textures[0], Character, TextureContainer);
+    float Width = tex->Width * TextureContainer->TextureWidth;
+    float Height = tex->Height * TextureContainer->TextureHeight;
     *oWidth = (int)ceil(Width);
     *oHeight = (int)ceil(Height);
-    float U = tex.U;
-    float V = tex.V;
-    for(int i=0;i<Character;i++)
-    {
-	U+= tex.Widths[i];
-    }
-    DrawTexture2D(TextureContainer->Texture, X, Y-Height, Width, Height, Color, Alpha, ShaderDetails, U, V, tex.Widths[Character], tex.Heights[Character]);
+    float U = tex->U;
+    float V = tex->V;
+    DrawTexture2D(TextureContainer->Texture, X, Y-Height, Width, Height, Color, Alpha, ShaderDetails, U, V, tex->Width, tex->Height);
 }
 
 
@@ -174,7 +170,8 @@ int TextWidthInPixels(char * Text, TextureContainer * Font)
     u8 * Char = (u8*)Text;
     while(*Char)
     {
-	float CharWidth = Font->Textures[0].Widths[*Char];
+	Texture * tex = GetTexture(&Font->Textures[0], *Char, Font);
+	float CharWidth = tex->Width;
 	int CharWidthInPixels = int(CharWidth * Font->TextureWidth);
 	Result += CharWidthInPixels;
 	Char++;
@@ -188,12 +185,13 @@ int TextHeightInPixels(char * Text, TextureContainer * Font)
     u8 * Char = (u8*)Text;
     while(*Char)
     {
-	float CharHeight = Font->Textures[0].Heights[*Char];
+	Texture * tex = GetTexture(&Font->Textures[0], *Char, Font);
+	float CharHeight = tex->Height;
 	
 	int CharHeightInPixels = int(CharHeight * Font->TextureHeight);
 	if(Result<CharHeightInPixels)
 	{
-	Result = CharHeightInPixels;
+	    Result = CharHeightInPixels;
 	}
 	Char++;
     }
@@ -203,22 +201,19 @@ int TextHeightInPixels(char * Text, TextureContainer * Font)
 void DrawTextureFontText(char * Text, int X, int Y, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0)
 {
     int TextHeight = TextHeightInPixels(Text, Font);
-    int FontHeightInPixels = int(Font->Textures[0].Heights[0]*Font->TextureHeight);
     u8* Char = (u8*)Text;
     while(*Char)
     {
-	float CharWidth = Font->Textures[0].Widths[*Char];
-	float CharHeight = Font->Textures[0].Heights[*Char];
-	float U = Font->Textures[0].U, V = Font->Textures[0].V;
-	for(int i=0;i<*Char;i++)
-	{
-	    U+=Font->Textures[0].Widths[i];
-	}
+	Texture * tex = GetTexture(&Font->Textures[0], *Char, Font);
+	float CharWidth = tex->Width;
+	float CharHeight = tex->Height;
+	float U = tex->U, V = tex->V;
+	
 	int CharWidthInPixels = int(CharWidth * Font->TextureWidth);
 	int CharHeightInPixels = int(CharHeight * Font->TextureHeight);
 	if(*Char > ' ')
 	{
-	    DrawTexture2D(Font->Texture,(float) X, float(Y-Font->Textures[0].Y[*Char]+FontHeightInPixels), float(CharWidthInPixels), float(CharHeightInPixels), {{1,1,1}}, Alpha, ShaderDetails, U, V, CharWidth, CharHeight);
+	    DrawTexture2D(Font->Texture,(float) X, float(Y-tex->Y+TextHeight), float(CharWidthInPixels), float(CharHeightInPixels), {{1,1,1}}, Alpha, ShaderDetails, U, V, CharWidth, CharHeight);
 	}
 	X+=CharWidthInPixels;
 	Char++;

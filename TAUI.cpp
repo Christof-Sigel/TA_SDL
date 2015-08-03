@@ -220,7 +220,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	}
 	else
 	{
-	    Element->Container.Background = GetTexture(Name, Textures);
+	    Element->Container.Background = GetTexture(Name,Textures);
 	}
     }
     break;
@@ -384,7 +384,7 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	Texture * Background =  Element->Container.Background;
 	if(Background)
 	{
-	    DrawTexture2D(Element->Textures->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, Background->U, Background->V, Background->Widths[0], Background->Heights[0]);
+	    DrawTexture2D(Element->Textures->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, Background->U, Background->V, Background->Width, Background->Height);
 	}
 	for(int i=0;i<Element->Container.NumberOfElements;i++)
 	{
@@ -394,39 +394,39 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
     break;
     case TAG_BUTTON:
     {
+	//TODO(Christof): Button States
+	int ButtonState =0;
 	TAUIButton * Button = &Element->Button;
 	Texture * ButtonBackground = GetTexture(Element->Name, Element->Textures);
 	TextureContainer * ButtonTextureContainer = Element->Textures;
-	int ButtonIndex =0;
 	if(!ButtonBackground)
 	{
-	    ButtonBackground = GetTexture(Element->Name, CommonUIElements);
+	    ButtonBackground = GetTexture(Element->Name,  CommonUIElements);
 	    ButtonTextureContainer = CommonUIElements;
 	    if(!ButtonBackground)
 	    {
 		ButtonBackground = GetTexture("Buttons0", CommonUIElements);
 		float ElementWidthInUV = (float)Element->Width / CommonUIElements->TextureWidth;
 		float ElementHeightInUV = (float)Element->Height / CommonUIElements->TextureHeight;
-		float BestMatchAmount = (ButtonBackground->Widths[0] - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Heights[0]);
-		for(int i=1;i<ButtonBackground->NumberOfFrames;i++)
+		float BestMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
+		Texture * BestMatch = ButtonBackground;
+		for(int i=1;i<ButtonBackground->NumberOfTextureFrames;i++)
 		{
-		    float CurrentMatchAmount = (ButtonBackground->Widths[i] - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Heights[i]);
+		    ButtonBackground = GetTexture(ButtonBackground, i , CommonUIElements);
+		    float CurrentMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
 		    if(fabs(CurrentMatchAmount) < fabs(BestMatchAmount) )
 		    {
 			BestMatchAmount = CurrentMatchAmount;
-			ButtonIndex =i;
+			BestMatch = ButtonBackground;
 		    }
 		}
+		ButtonBackground = BestMatch;
 	    }
 	}
 	Assert(ButtonBackground);
 	float U = ButtonBackground->U;
 	float V = ButtonBackground->V;
-	for(int i=0;i<ButtonIndex;i++)
-	{
-	    U+=ButtonBackground->Widths[i];
-	}
-	DrawTexture2D(ButtonTextureContainer->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Widths[ButtonIndex], ButtonBackground->Heights[ButtonIndex]);
+	DrawTexture2D(ButtonTextureContainer->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Width, ButtonBackground->Height);
 	if(Button->Text)
 	{
 	    int Width = TextWidthInPixels(Button->Text, ButtonFont);
