@@ -126,8 +126,8 @@ void SetupFontRendering(GLuint * Draw2DVertexBuffer)
 
 void LoadGafFonts(GameState * CurrentGameState)
 {
-    SetupTextureContainer(&CurrentGameState->Font11, 256*2*PIXELS_PER_SQUARE_SIDE, 15, 256, &CurrentGameState->GameArena);
-    SetupTextureContainer(&CurrentGameState->Font12, 256*2*PIXELS_PER_SQUARE_SIDE, 18, 256, &CurrentGameState->GameArena);
+    SetupTextureContainer(&CurrentGameState->Font11, 2120, 15, 256, &CurrentGameState->GameArena);
+    SetupTextureContainer(&CurrentGameState->Font12, 2880, 18, 256, &CurrentGameState->GameArena);
     
     HPIEntry Font = FindEntryInAllFiles("anims/hattfont12.GAF",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     if(Font.IsDirectory)

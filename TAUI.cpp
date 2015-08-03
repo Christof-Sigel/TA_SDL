@@ -354,11 +354,6 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
 	    ContainerDetails->Elements[i].Textures = Textures;
 	}
     }
-
-  
-
-
-    
     PopSubArena(TempArena, UIElementsArena);
     return Container;
 }
