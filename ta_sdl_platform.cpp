@@ -139,14 +139,14 @@ int main(int argc, char * argv[])
 	
 
 	GameUpdateAndRender(&GameInputState,&GameMemory);
-	SDL_GL_SwapWindow( MainSDLWindow );
+	SDL_GL_SwapWindow( CurrentGameState->MainSDLWindow );
 	for(int i=0;i<256;i++)
 	{
 	    GameInputState.KeyWasDown[i]=GameInputState.KeyIsDown[i];
 	}
     }
     GameTeardown(&GameMemory);
-    SDL_DestroyWindow(MainSDLWindow);
+    SDL_DestroyWindow(CurrentGameState->MainSDLWindow);
     SDL_Quit();
 
     return 0;

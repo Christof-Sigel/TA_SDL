@@ -226,6 +226,7 @@ struct GameState
     TempUnitList Units;
 
     int ScreenWidth,ScreenHeight;
+    SDL_Window * MainSDLWindow;
 
     HPIFileCollection GlobalArchiveCollection;
     

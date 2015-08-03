@@ -1,7 +1,3 @@
-
-
-
-
 void HandleKeyDown(SDL_Keysym key, InputState * GameInputState)
 {
     u8 Index = key.sym&255;
@@ -17,7 +13,6 @@ void HandleKeyUp(SDL_Keysym key, InputState * GameInputState)
 }
 
 
-SDL_Window * MainSDLWindow;
 const int DEFAULT_SCREEN_WIDTH=1280;
 const int DEFAULT_SCREEN_HEIGHT=1024;
 
@@ -40,14 +35,15 @@ const int DEFAULT_SCREEN_HEIGHT=1024;
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24); 
 
 
-    MainSDLWindow = SDL_CreateWindow("TA_SDL: SOMETHING HERE!!!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,CurrentGameState->ScreenWidth, CurrentGameState->ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
+    CurrentGameState->MainSDLWindow = SDL_CreateWindow("TA_SDL: SOMETHING HERE!!!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,CurrentGameState->ScreenWidth, CurrentGameState->ScreenHeight, SDL_WINDOW_SHOWN|SDL_WINDOW_OPENGL);
 
-    if (!MainSDLWindow)
+    if (!CurrentGameState->MainSDLWindow)
     {
 	LogError("SDL_CreateWindow Error: %s", SDL_GetError());
 	return 0;
     }
     CurrentGameState->PerformanceCounterFrequency = SDL_GetPerformanceFrequency();
+    Assert(CurrentGameState->PerformanceCounterFrequency);
 
     GLint GLMajorVer, GLMinorVer;
     
@@ -58,8 +54,8 @@ const int DEFAULT_SCREEN_HEIGHT=1024;
     }
     
 
-    SDL_GLContext gContext = SDL_GL_CreateContext( MainSDLWindow);
-    SDL_GL_MakeCurrent (MainSDLWindow,gContext);
+    SDL_GLContext gContext = SDL_GL_CreateContext( CurrentGameState->MainSDLWindow);
+    SDL_GL_MakeCurrent (CurrentGameState->MainSDLWindow,gContext);
     if( SDL_GL_SetSwapInterval( 1 ) < 0 )
     {
 	LogWarning("Warning: Unable to set VSync! SDL Error: %s",SDL_GetError());
