@@ -496,6 +496,20 @@ extern "C"
 		
 	//RenderTAUIElement(&CurrentGameState->GUIs[GUIIndex],&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures);
 
+	static u64 CurrentFrameTime = 0;
+	static u64 LastFrameTime =0;
+	static float CurrentFPS = 0;
+
+	CurrentFrameTime = GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
+
+	char FPS[32];
+	const float FramesToCount = 30.0f;
+	CurrentFPS = (CurrentFPS*(FramesToCount-1) + 1.0f/((CurrentFrameTime - LastFrameTime)/1000.0f))/FramesToCount;
+	snprintf(FPS, 32, "%0.2f, %ld", CurrentFPS, CurrentFrameTime - LastFrameTime);
+	DrawTextureFontText(FPS, 0,0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
+	LastFrameTime = CurrentFrameTime;
+
+
 	CurrentGameState->NumberOfFrames++;
     }
 }
