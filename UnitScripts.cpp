@@ -193,6 +193,18 @@ int GetScriptNumberForFunction(UnitScript * Script, const char * FunctionName)
     return -1;
 }
 
+void CleanUpScriptPool(ScriptStatePool * Pool)
+{
+    int i;
+    for(i=Pool->NumberOfScripts - 1 ; i>=0;i--)
+    {
+	if(Pool->Scripts[i].BlockedOn != BLOCK_DONE)
+	{
+	    break;
+	}
+    }
+    Pool->NumberOfScripts = i+1;
+}
 
 
 void CreateNewScriptState(UnitScript * Script, ScriptState * State, ScriptState * NewState)

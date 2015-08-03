@@ -391,7 +391,8 @@ extern "C"
 	
 	Matrix ModelMatrix;
 
-
+	CleanUpScriptPool(&CurrentGameState->CurrentScriptPool);
+	
 	for(int i=0;i<CurrentGameState->CurrentScriptPool.NumberOfScripts;i++)
 	{
 	    RunScript(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], &CurrentGameState->temp_model, &CurrentGameState->CurrentScriptPool);
