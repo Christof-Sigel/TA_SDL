@@ -316,6 +316,14 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
     else if(!UITextures.Name)
     {
 	//NOTE(Christof): just silently fail here, most guis don't have a .gaf
+	 glGenTextures(1,&Textures->Texture);
+	 glBindTexture(GL_TEXTURE_2D,Textures->Texture);
+	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	 u8* TextureData = PushArray(TempArena, Textures->TextureWidth * Textures->TextureHeight *4, u8);
+	 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,Textures->TextureWidth,Textures->TextureHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
+	 PopArray(TempArena, TextureData, Textures->TextureWidth * Textures->TextureHeight *4, u8);
     }
     else
     {

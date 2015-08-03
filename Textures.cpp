@@ -264,6 +264,7 @@ void LoadPalette(GameState * CurrentGameState)
 void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * TextureContainer, MemoryArena * TempArena,u8 * PaletteData)
 {
     u8* TextureData = PushArray(TempArena, TextureContainer->TextureWidth * TextureContainer->TextureHeight *4, u8);
+    memset(TextureData, 0, TextureContainer->TextureWidth * TextureContainer->TextureHeight *4);
     if(!Textures->IsDirectory)
     {
 	u8 * GafBuffer = PushArray(TempArena, Textures->File.FileSize,u8 );
@@ -314,6 +315,7 @@ void LoadAllUnitTextures(HPIFileCollection * GlobalArchiveCollection, MemoryAren
 
 Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * FileName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena)
 {
+    Assert(Textures->Texture != 0);
     HPIEntry PCX = FindEntryInAllFiles(FileName, GlobalArchiveCollection, TempArena);
     if(PCX.IsDirectory)
     {
