@@ -1,5 +1,4 @@
-
- b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryArena * GameArena)
+b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryArena * GameArena)
 {
     FILE_CobHeader * Header = (FILE_CobHeader *)Buffer;
     Script->NumberOfPieces = Header->NumberOfPieces;
@@ -189,7 +188,7 @@ int GetScriptNumberForFunction(UnitScript * Script, const char * FunctionName)
     for(int i=0;i<Script->NumberOfFunctions;i++)
     {
 	if(CaseInsensitiveMatch(Script->FunctionNames[i],FunctionName))
-	   return i;
+	    return i;
     }
     return -1;
 }
@@ -545,13 +544,13 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    State->BlockedOnPiece = PostData(Script,State);
 	    State->BlockedOnAxis = PostData(Script,State);
 	    return;
-	break;
+	    break;
 	case COB_WAIT_FOR_MOVE:
 	    State->BlockedOn = BLOCK_MOVE;
 	    State->BlockedOnPiece = PostData(Script,State);
 	    State->BlockedOnAxis = PostData(Script,State);
 	    return;
-	break;
+	    break;
 	case COB_SLEEP:
 	    State->BlockedOn = BLOCK_SLEEP;
 	    State->BlockTime = PopStack(State);
@@ -561,7 +560,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 		State->NumberOfParameters--;
 	    else
 		State->NumberOfLocalVariables++;
-	break;
+	    break;
 	case COB_STACK_FLUSH:
 	    LogDebug("Flushing stack in %s",Script->FunctionNames[State->ScriptNumber]);
 	    State->StackSize=0;
@@ -597,7 +596,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 		PushStack(State, State->StaticVariables[Index]);
 	    }
 	}
-	    break;
+	break;
 	case COB_POP_LOCAL_VARIABLE:
 	{
 	    s32 Index = PostData(Script,State);
@@ -610,9 +609,9 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 		State->LocalVariables[Index] = PopStack(State);
 	    }
 	}
-	    break;
+	break;
 	case COB_POP_STATIC_VARIABLE:
-	    	{
+	{
 	    s32 Index = PostData(Script,State);
 	    if(Index >= State->NumberOfStaticVariables)
 	    {
@@ -624,7 +623,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    }
 	}
 	    
-	    break;
+	break;
 	case COB_ADD:
 	    PushStack(State, PopStack(State)+PopStack(State));
 	    break;
