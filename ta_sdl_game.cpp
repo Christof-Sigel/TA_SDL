@@ -431,48 +431,32 @@ extern "C"
 	    snprintf(tmp,size,"%d) %s",i,CurrentGameState->CurrentUnitScript.FunctionNames[i]);
 	}
 	//TODO(Christof): free memory correctly
-	int X=0,Y=0;
-	for(int i=0;i<5;i++)
+	int Index=CurrentGameState->UnitIndex;
+	char * Name=CurrentGameState->Units.Details[Index].GetString("Name");
+	const char * SideName;
+	UnitSide Side=CurrentGameState->Units.Details[Index].GetSide();
+	switch(Side)
 	{
-	    int Index=CurrentGameState->UnitIndex+(i-2);
-	    if(Index<0)
-		Index+=CurrentGameState->Units.Size;
-	    if(Index>=CurrentGameState->Units.Size)
-		Index-=CurrentGameState->Units.Size;
-	    char * Name=CurrentGameState->Units.Details[Index].GetString("Name");
-	    const char * SideName;
-	    UnitSide Side=CurrentGameState->Units.Details[Index].GetSide();
-	    switch(Side)
-	    {
-	    case SIDE_ARM:
-		SideName = "ARM";
-		break;
-	    case SIDE_CORE:
-		SideName = "CORE";
-		break;
-	    default:
-		SideName="UNKNOWN";
-		break;
-	    }
-
-	    int size=snprintf(NULL, 0, "%s: %s",SideName,Name)+1;
-	    //char tmp[size];
-	    STACK_ARRAY(tmp,size,char);
-	    float Alpha = 1.0f - fabs((i-2)/8.0f);
-
-	    snprintf(tmp,size,"%s: %s",SideName, Name);
-	    DrawTextureFontText(tmp, 15, Y+54, &CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, Alpha);
-	    Y+=TextSizeInPixels(tmp, &CurrentGameState->Font12).Height+5;
-	    {
-		char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
-		int size=snprintf(NULL, 0, "%s",Desc)+1;
-		//char tmp[size];
-		STACK_ARRAY(tmp,size,char);
-		snprintf(tmp,size,"%s",Desc);
-		DrawTextureFontText(tmp, 15, Y+54, &CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, Alpha);
-		Y+=TextSizeInPixels(tmp, &CurrentGameState->Font12).Height+15;
-	    }
+	case SIDE_ARM:
+	    SideName = "ARM";
+	    break;
+	case SIDE_CORE:
+	    SideName = "CORE";
+	    break;
+	default:
+	    SideName="UNKNOWN";
+	    break;
 	}
+	char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
+	int size=snprintf(NULL, 0, "%s: %s\n%s",SideName,Name,Desc)+1;
+	//char tmp[size];
+	char * tmp = PushArray(&CurrentGameState->TempArena, size, char);
+	float Alpha = 1.0f ;
+
+	snprintf(tmp,size,"%s: %s\n%s",SideName, Name,Desc);
+	DrawTextureFontText(tmp, 15, 54, &CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, Alpha);
+	PopArray(&CurrentGameState->TempArena, tmp, size, char);
+
 
 	static int GUIIndex = 0;
 	if(CurrentGameState->NumberOfFrames%30 ==0)
