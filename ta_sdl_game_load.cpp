@@ -13,8 +13,19 @@ void ReloadShaders(Memory * GameMemory)
         CurrentGameState->ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ProjectionMatrix");
 	CurrentGameState->ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ModelMatrix");
 	CurrentGameState->ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ViewMatrix");
+    }
+
+    CurrentGameState-> = LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",&CurrentGameState->ShaderGroup);
+    if(CurrentGameState->UnitShader->ProgramID)
+    {
+	glUseProgram(CurrentGameState->UnitShader->ProgramID);
+	glUniform1i(GetUniformLocation(CurrentGameState->UnitShader,"UnitTexture"),0);
+        CurrentGameState->ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ProjectionMatrix");
+	CurrentGameState->ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ModelMatrix");
+	CurrentGameState->ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ViewMatrix");
 
     }
+
 
     CurrentGameState->MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl",&CurrentGameState->ShaderGroup);
 
@@ -170,7 +181,6 @@ extern "C"{
     void GameTeardown(Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-	int NumberOfFrames=CurrentGameState->NumberOfFrames;
 	UnloadShaderProgram(CurrentGameState->UnitShader);
 	UnloadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection);
 	Unload3DO(&CurrentGameState->temp_model);
