@@ -30,23 +30,19 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	CurrentGameState->UnitIndex=CurrentGameState->Units.Size-1;
 
     char * UnitName=CurrentGameState->Units.Details[CurrentGameState->UnitIndex].GetString("UnitName");
-    int len=snprintf(0,0,"objects3d/%s.3do",UnitName)+1;
-    //char ModelName[len];
-    STACK_ARRAY(ModelName,len,char);
-    snprintf(ModelName,len,"objects3d/%s.3do",UnitName);
+    const int MAX_MODEL_NAME=64;
+    char Name[MAX_MODEL_NAME];
+    snprintf(Name,MAX_MODEL_NAME,"objects3d/%s.3do",UnitName);
     
-    HPIEntry Entry=FindEntryInAllFiles(ModelName,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
+    HPIEntry Entry=FindEntryInAllFiles(Name,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     //u8 temp[Entry.File.FileSize];
-    STACK_ARRAY(temp,Entry.File.FileSize,u8 );
+    u8 * temp = PushArray(&CurrentGameState->TempArena,Entry.File.FileSize,u8 );
     if(LoadHPIFileEntryData(Entry,temp,&CurrentGameState->TempArena))
     {
-	int ScriptLength=snprintf(0,0,"scripts/%s.cob",UnitName)+1;
-	//char ScriptName[ScriptLength];
-	STACK_ARRAY(ScriptName,ScriptLength,char);
-	snprintf(ScriptName,ScriptLength,"scripts/%s.cob",UnitName);
-	HPIEntry ScriptEntry=FindEntryInAllFiles(ScriptName,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
+	snprintf(Name,MAX_MODEL_NAME,"scripts/%s.cob",UnitName);
+	HPIEntry ScriptEntry=FindEntryInAllFiles(Name,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	//u8 ScriptBuffer[ScriptEntry.File.FileSize];
-	STACK_ARRAY(ScriptBuffer, ScriptEntry.File.FileSize, u8 );
+	u8 * ScriptBuffer = PushArray(&CurrentGameState->TempArena, ScriptEntry.File.FileSize, u8 );
 	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer,&CurrentGameState->TempArena))
 	{
 	    LoadUnitScriptFromBuffer(&CurrentGameState->CurrentUnitScript, ScriptBuffer,&CurrentGameState->GameArena);
@@ -68,7 +64,10 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    }
 //	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
 	}
+	PopArray(&CurrentGameState->TempArena, ScriptBuffer,ScriptEntry.File.FileSize, u8 );
+
     }
+    PopArray(&CurrentGameState->TempArena, temp,Entry.File.FileSize,u8 );
 }
 
 static s32 Side=0;
@@ -402,7 +401,7 @@ extern "C"
 	    for(int y=0;y<10;y++)
 	    {
 		ModelMatrix.SetTranslation(30.5f+x*50,14.5f,23.4f+y*40);
-		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,ModelMatrix);
+		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,&CurrentGameState->TempArena,ModelMatrix);
 	    }
 	}
 	
@@ -425,10 +424,7 @@ extern "C"
 
 	for(int i=0;i<CurrentGameState->CurrentUnitScript.NumberOfFunctions;i++)
 	{
-	    int size=snprintf(NULL, 0, "%d) %s",i,CurrentGameState->CurrentUnitScript.FunctionNames[i])+2;
-	    //char tmp[size];
-	    STACK_ARRAY(tmp,size,char);
-	    snprintf(tmp,size,"%d) %s",i,CurrentGameState->CurrentUnitScript.FunctionNames[i]);
+	    //TODO(Christof): Display Scripts as before?
 	}
 	//TODO(Christof): free memory correctly
 	int Index=CurrentGameState->UnitIndex;

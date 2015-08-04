@@ -302,13 +302,14 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
 
     
     int len=snprintf(0,0,"anims/%s",FileName)+1;
-    STACK_ARRAY(GafFileName,len,char);
+    char * GafFileName = PushArray(TempArena,len,char);
     snprintf(GafFileName,len,"anims/%s",FileName);
     GafFileName[len-4]='g';
     GafFileName[len-3]='a';
     GafFileName[len-2]='f';
     
     HPIEntry UITextures = FindEntryInAllFiles(GafFileName, GlobalArchiveCollection, TempArena);
+    PopArray(TempArena, GafFileName, len, char);
     if(UITextures.IsDirectory)
     {
 	LogError("Unexpectedly found a directory while trying to load %s", GafFileName);

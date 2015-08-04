@@ -111,7 +111,7 @@ float length(v3 v)
     return sqrt(v.x*v.x+ v.y*v.y + v.z*v.z);
 }
 
-b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 ObjectTextureOffset, TextureContainer * TextureContainer)
+b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 ObjectTextureOffset, TextureContainer * TextureContainer, MemoryArena * TempArena)
 {
     if(!Object->NumTriangles)
     {
@@ -123,10 +123,9 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	    Object->NumLines += Object->Primitives[i].NumberOfVertices == 2;
 	}
     }
-    //GLfloat Data[Object->NumTriangles * (3+2+3)*3];//3 coord, 2 tex, 3 color
-    STACK_ARRAY(Data,Object->NumTriangles * (3+3)*3, GLfloat);
-    STACK_ARRAY(LineData,Object->NumLines * (3+4+3)*2, GLfloat);
-    STACK_ARRAY(TextureData,Object->NumTriangles * (4)*3, GLfloat);
+    GLfloat * Data = PushArray(TempArena,Object->NumTriangles * (3+3)*3, GLfloat);
+    GLfloat * LineData = PushArray(TempArena,Object->NumLines * (3+4+3)*2, GLfloat);
+    GLfloat * TextureData = PushArray(TempArena,Object->NumTriangles * (4)*3, GLfloat);
     //NOTE: signal no texture in some way, perhaps negative texture coords?
     int CurrentTriangle=0;
     int CurrentLine = 0;
@@ -330,6 +329,12 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	glBufferSubData(GL_ARRAY_BUFFER, 0,sizeof(GLfloat)*4*Object->NumTriangles * 3 ,TextureData);
     }
 
+    if(TextureData)
+    PopArray(TempArena,TextureData ,Object->NumTriangles * (4)*3, GLfloat);
+    if(LineData)
+    PopArray(TempArena,LineData,Object->NumLines * (3+4+3)*2, GLfloat);
+    if(Data)
+    PopArray(TempArena,Data,Object->NumTriangles * (3+3)*3, GLfloat);
 
 
     return 1;
@@ -472,13 +477,13 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
     }
 }
 
-void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, u8 * PaletteData, GLuint DebugAxisBuffer, s32 Side,TextureContainer * TextureContainer, Matrix ParentMatrix=Matrix())
+void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, u8 * PaletteData, GLuint DebugAxisBuffer, s32 Side,TextureContainer * TextureContainer, MemoryArena * TempArena, Matrix ParentMatrix)
 {
     if((TransformationDetails->Flags & OBJECT3D_FLAG_HIDE))
 	return;
    
 //Object->TextureOffset = 3;
-    Object3dRenderingPrep(Object, PaletteData,Side, TransformationDetails->TextureOffset,TextureContainer);
+    Object3dRenderingPrep(Object, PaletteData,Side, TransformationDetails->TextureOffset,TextureContainer, TempArena);
     //TODO(Christof): Actually make use of TransformationDetails
 
     Matrix CurrentMatrix;
@@ -494,7 +499,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,DebugAxisBuffer,Side,TextureContainer,CurrentMatrix);
+	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,DebugAxisBuffer,Side,TextureContainer,TempArena,CurrentMatrix);
     }
 
 

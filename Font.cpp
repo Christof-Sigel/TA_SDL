@@ -31,7 +31,7 @@ void LoadCharacter(s16  CharacterOffset, u8 * FileBuffer, u8 * TextureBuffer, in
 }
 
 
-void LoadFNTFont(u8 * Buffer, FNTFont * Font)
+void LoadFNTFont(u8 * Buffer, FNTFont * Font, MemoryArena * TempArena)
 {
     FILE_FNT * Header = (FILE_FNT*)Buffer;
     Font->Height = Header->Height;
@@ -49,7 +49,7 @@ void LoadFNTFont(u8 * Buffer, FNTFont * Font)
 	}
     }
 
-    STACK_ARRAY(TextureData, TextureWidth*Font->Height*4, u8 );
+    u8 * TextureData  = PushArray(TempArena, TextureWidth*Font->Height*4, u8 );
     int XOffset = 0;
     for(int i=0;i<254;i++)
     {
@@ -63,7 +63,7 @@ void LoadFNTFont(u8 * Buffer, FNTFont * Font)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TextureWidth,Font->Height,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
-
+    PopArray(TempArena, TextureData,TextureWidth*Font->Height*4, u8 );
 }
 
 
@@ -303,7 +303,7 @@ FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCollection 
 	{
 	    u8 * FontFileBuffer = PushArray(TempArena, Font.File.FileSize, u8);
 	    LoadHPIFileEntryData(Font, FontFileBuffer, TempArena);
-	    LoadFNTFont(FontFileBuffer, &FontContainer->Fonts[FontContainer->NumberOfFonts]);
+	    LoadFNTFont(FontFileBuffer, &FontContainer->Fonts[FontContainer->NumberOfFonts], TempArena);
 	    PopArray(TempArena, FontFileBuffer, Font.File.FileSize, u8);
 	    memcpy(FontContainer->FontNames[FontContainer->NumberOfFonts], Name, len);
 	    FontContainer->FontNames[FontContainer->NumberOfFonts][len]=0;

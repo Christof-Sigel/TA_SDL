@@ -128,11 +128,7 @@ MemoryArena * PushSubArena_(MemoryArena * Arena, memory_index Size, const char *
 inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, const char * caller, int line, const char * file)
 {
     printf("Popping %d from %s in %s:%d\n",Size,caller, file,line);
-    if((u64 )Memory + Size != Arena->Used + (us64 )Arena->Base)
-    {
-	Assert(!"NOPE, NOT ALLOWED TO POP THIS!");
-	return;
-    }
+    Assert(((u64 )Memory + Size == Arena->Used + (us64 )Arena->Base);
     Arena->Used -=Size;
 }
 
@@ -170,11 +166,8 @@ MemoryArena * PushSubArena(MemoryArena * Arena, memory_index Size)
 
 inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
 {
-    if((u64 )Memory + Size != Arena->Used + (u64 )Arena->Base)
-    {
-	Assert(!"NOPE, NOT ALLOWED TO POP THIS!");
-	return;
-    }
+    Assert((u64 )Memory + Size == Arena->Used + (u64 )Arena->Base);
+
     Arena->Used -=Size;
 }
 

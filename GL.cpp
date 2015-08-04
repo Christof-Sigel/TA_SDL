@@ -14,11 +14,13 @@ inline GLuint LoadShader(GLenum Type,MemoryMappedFile ShaderFile, const
     glGetShaderiv(ShaderID,GL_COMPILE_STATUS,&ShaderSuccess);
     if(ShaderSuccess != GL_TRUE)
     {
+	const int MAX_SHADER_LOG_LENGTH = 256;
 	int LogLen;
 	glGetShaderiv(ShaderID,GL_INFO_LOG_LENGTH,&LogLen);
 	//GLchar * ShaderLog = (GLchar *)alloca(LogLen);
-	STACK_ARRAY(ShaderLog, LogLen, GLchar);
-	glGetShaderInfoLog(ShaderID,LogLen,NULL,ShaderLog);
+	GLchar ShaderLog[MAX_SHADER_LOG_LENGTH];
+	Assert(LogLen<MAX_SHADER_LOG_LENGTH);
+	glGetShaderInfoLog(ShaderID,MAX_SHADER_LOG_LENGTH,NULL,ShaderLog);
 	LogError("Compile error while compiling shader %s:",FileName);
 	LogDebug("%s",ShaderLog);
 	return 0;

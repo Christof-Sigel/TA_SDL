@@ -1,8 +1,4 @@
-#ifdef _MSC_VER
-#define STACK_ARRAY(Name, Length, Type) Type * Name = (Type *)alloca(sizeof(Type)*Length);
-#else
-#define STACK_ARRAY(Name,Length, Type) Type Name[Length];
-#endif
+
 enum
 {
     LOG_ERROR,

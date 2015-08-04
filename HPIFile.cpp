@@ -248,8 +248,7 @@ b32 LoadHPIFileEntryData(HPIEntry Entry, u8 * Destination, MemoryArena * TempAre
 	{
 	    NumChunks++;
 	}
-	//s32  ChunkSizes[NumChunks];
-	STACK_ARRAY(ChunkSizes,NumChunks, s32);
+	s32 * ChunkSizes=PushArray(TempArena,NumChunks, s32);
 	DecryptHPIBuffer(Entry.ContainedInFile,(u8 *)ChunkSizes,NumChunks*sizeof(s32),Entry.File.Offset);
 	int ChunkDataSize=NumChunks*sizeof(FILE_HPIChunk);//size of all the headers
 	int ChunkDataOffset = Entry.File.Offset + NumChunks*sizeof(s32 );
@@ -257,8 +256,8 @@ b32 LoadHPIFileEntryData(HPIEntry Entry, u8 * Destination, MemoryArena * TempAre
 	{
 	    ChunkDataSize += ChunkSizes[i];
 	}
+	PopArray(TempArena, ChunkSizes, NumChunks, s32);
 	u8 * DecryptedChunkData = PushArray(TempArena, ChunkDataSize, u8 );
-//	STACK_ARRAY(DecryptedChunkData,ChunkDataSize,u8 );
 	DecryptHPIBuffer(Entry.ContainedInFile,DecryptedChunkData,ChunkDataSize,ChunkDataOffset);
 	u8 * DataSource=DecryptedChunkData;
 	for(int i=0;i<NumChunks;i++)
@@ -351,11 +350,12 @@ b32 LoadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection, MemoryAre
 	    FileName=UfoFiles.FileNames[i];
 	}
 	int size=snprintf(0,0,"data/%s",FileName)+1;
-	//char temp[size];
-	STACK_ARRAY(temp,size,char);
+	char * temp = PushArray(TempArena,size,char);
 	snprintf(temp,size,"data/%s",FileName);
 	//TODO(Christof): Determine if file memory stuff should go in a seperate arena
 	LoadHPIFile(temp,&GlobalArchiveCollection->Files[i],GameArena,TempArena);
+	PopArray(TempArena,temp,size,char);
+
     }
     //UnloadUFOSearchResult(&UfoFiles);
 

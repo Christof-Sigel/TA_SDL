@@ -40,16 +40,16 @@ const char * LogError[]={CONSOLE_COLOR_BOLD CONSOLE_COLOR_RED "ERROR" ,
 
 void __LOG(int loglevel,const char * fmt, const char* caller , int line,const char * file,...)
 {
+    const int MAX_LOG_STRING = 256;
     if (loglevel>LOG_LEVEL)
         return;
     va_list argptr;
     va_start(argptr,file);
-    int size=vsnprintf(NULL, 0, fmt, argptr);
-    //char tmp[size];
-    STACK_ARRAY(tmp,size,char);
+
+    char tmp[MAX_LOG_STRING];
     va_end(argptr);
     va_start(argptr,file);
-    vsnprintf(tmp,size+1,fmt,argptr);
+    vsnprintf(tmp,MAX_LOG_STRING,fmt,argptr);
     //TODO(Christof): Update this to use a log file at some point
     printf("%s:" CONSOLE_COLOR_WHITE_BOLD " %s " CONSOLE_COLOR_RESET "line " CONSOLE_COLOR_WHITE_BOLD "%d" CONSOLE_COLOR_RESET " - %s : %s\n",LogError[loglevel],file,line,caller,tmp);
     va_end(argptr);
