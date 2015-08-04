@@ -82,7 +82,6 @@ struct MemoryArena
     s32 TempCount;
 };
 
-
 inline void
 InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 {
@@ -91,8 +90,6 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
     Arena->Used = 0;
     Arena->TempCount = 0;
 }
-
-
 
 #define VERBOSE_ALLOCATIONS 0
 
@@ -202,7 +199,6 @@ struct GameState
     ShaderProgram * MapShader;
     ShaderProgram * UIElementShaderProgram;
     
-    s64  StartTime;
     int NumberOfFrames;
     GLuint ProjectionMatrixLocation;
     GLuint ModelMatrixLocation;

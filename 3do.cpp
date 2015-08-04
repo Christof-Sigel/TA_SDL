@@ -286,9 +286,7 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	glEnableVertexAttribArray(2);
 
 
-
 	//TEXTURES
-
 	glGenBuffers(1,&Object->TextureCoordBuffer);
 
 	glBindBuffer(GL_ARRAY_BUFFER,Object->TextureCoordBuffer);
@@ -320,7 +318,6 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 
 	glBindVertexArray(0);
 	glDeleteBuffers(1, &VertexBuffer);
-	
     }
     else
     {
@@ -336,11 +333,8 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
     if(Data)
     PopArray(TempArena,Data,Object->NumTriangles * (3+3)*3, GLfloat);
 
-
     return 1;
 }
-
-
 
 
 void InitTransformationDetails(Object3d * Object, Object3dTransformationDetails *  TransformationDetails, MemoryArena * GameArena)

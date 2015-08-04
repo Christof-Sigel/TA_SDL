@@ -24,7 +24,6 @@ void ReloadShaders(Memory * GameMemory)
 	glUniform1i(GetUniformLocation(CurrentGameState->MapShader,"Texture"),0);
     }
 
-
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
     
@@ -42,7 +41,6 @@ void ReloadShaders(Memory * GameMemory)
 
 	glUniform2iv(GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Viewport"),1,viewport+2);
     }
-
 
     FontShaderDetails * FDetails = &CurrentGameState->FontShaderDetails;
     FDetails->Program = LoadShaderProgram("shaders/TAFont.vs.glsl","shaders/TAFont.fs.glsl",&CurrentGameState->ShaderGroup);
@@ -72,7 +70,6 @@ void ReloadShaders(Memory * GameMemory)
 	glUniform1i(GetUniformLocation(TDetails->Program,"Texture"), 0);
 	glUniform2iv(GetUniformLocation(TDetails->Program,"Viewport"),1,viewport+2);
     }
-    
 }
 
 void SetupGameState( GameState * CurrentGameState);
@@ -120,8 +117,6 @@ extern "C"{
 	else
 	    LogDebug("failed to load map");
     
-	
-
 	HPIEntry Entry=FindEntryInAllFiles("units",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(Entry.IsDirectory)
 	{
@@ -161,37 +156,25 @@ extern "C"{
 		HPIEntry * GUIFile = &Entry.Directory.Entries[i];
 		if(NameEndsWith(GUIFile->Name,".gui"))
 		{
-		u8 * temp = PushArray(&CurrentGameState->TempArena, GUIFile->File.FileSize, u8 );
-		if(LoadHPIFileEntryData(*GUIFile, temp, &CurrentGameState->TempArena))
-		{
-		    CurrentGameState->GUIs[i] = LoadGUIFromBuffer((char*)temp, (char*)temp+GUIFile->File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,GUIFile->Name, &CurrentGameState->GlobalArchiveCollection, CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
-		}
-		PopArray(&CurrentGameState->TempArena,temp,  GUIFile->File.FileSize, u8 );
+		    u8 * temp = PushArray(&CurrentGameState->TempArena, GUIFile->File.FileSize, u8 );
+		    if(LoadHPIFileEntryData(*GUIFile, temp, &CurrentGameState->TempArena))
+		    {
+			CurrentGameState->GUIs[i] = LoadGUIFromBuffer((char*)temp, (char*)temp+GUIFile->File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,GUIFile->Name, &CurrentGameState->GlobalArchiveCollection, CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+		    }
+		    PopArray(&CurrentGameState->TempArena,temp,  GUIFile->File.FileSize, u8 );
 		}
 	    }
 	}
-
-	
-	
-
-	CurrentGameState->StartTime= GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
     }
-
 
     void GameTeardown(Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-	s64  EndTime=GetTimeMillis(CurrentGameState->PerformanceCounterFrequency);
-	s64  StartTime=CurrentGameState->StartTime;
 	int NumberOfFrames=CurrentGameState->NumberOfFrames;
-	LogDebug("%d frames in %.3fs, %.2f FPS",NumberOfFrames,(EndTime-StartTime)/1000.0,NumberOfFrames/((EndTime-StartTime)/1000.0));
 	UnloadShaderProgram(CurrentGameState->UnitShader);
 	UnloadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection);
 	Unload3DO(&CurrentGameState->temp_model);
     }
-
-
-
 
     void CheckResources(Memory * GameMemory)
     {
@@ -215,5 +198,4 @@ extern "C"{
 	if(Reload)
 	    ReloadShaders(GameMemory);
     }
-    
 }
