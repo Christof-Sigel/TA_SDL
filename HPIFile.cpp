@@ -80,13 +80,8 @@ b32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena, M
     
     HPI->DecryptionKey = ~((header->HeaderKey *4) | (header->HeaderKey >> 6));
     int NameLength=(int)strlen(FileName);
-    static int MaxLength=0;
-    if(NameLength>MaxLength)
-    {
-	MaxLength=NameLength;
-	LogDebug("Current Max HPI Name Length: %d",MaxLength);
-    }
-    HPI->Name=PushArray(FileArena,NameLength+1,char);
+    Assert(NameLength < MAX_HPI_FILE_NAME);
+	
     memcpy(HPI->Name,FileName,NameLength);
     HPI->Name[NameLength]=0;
 

@@ -90,6 +90,8 @@ const s32 HPI_MARKER= 'H' << 0 | 'A' <<8 | 'P' <<16 | 'I' << 24;
 const s32 CHUNK_MARKER = 'S' << 0 | 'Q' <<8 | 'S' <<16 | 'H' << 24;
 const s32 CHUNK_SIZE = 65536;
 
+const s32 MAX_HPI_FILE_NAME = 32;
+
 enum Compression_Type
 {
     COMPRESSION_NONE=0,
@@ -282,7 +284,7 @@ struct HPIFile
     MemoryMappedFile MMFile;
     HPIDirectoryEntry Root;
     s32 DecryptionKey;
-    char * Name;
+    char Name[MAX_HPI_FILE_NAME];
 };
 
 struct HPIFileCollection
