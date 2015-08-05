@@ -5,24 +5,24 @@ void ReloadShaders(Memory * GameMemory)
 {
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     UnloadAllShaders(&CurrentGameState->ShaderGroup);
-    CurrentGameState->UnitShader = LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",&CurrentGameState->ShaderGroup);
-    if(CurrentGameState->UnitShader->ProgramID)
+    CurrentGameState->UnitShaderDetails.Shader = LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",&CurrentGameState->ShaderGroup);
+    if(CurrentGameState->UnitShaderDetails.Shader->ProgramID)
     {
-	glUseProgram(CurrentGameState->UnitShader->ProgramID);
-	glUniform1i(GetUniformLocation(CurrentGameState->UnitShader,"UnitTexture"),0);
-        CurrentGameState->ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ProjectionMatrix");
-	CurrentGameState->ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ModelMatrix");
-	CurrentGameState->ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ViewMatrix");
+	glUseProgram(CurrentGameState->UnitShaderDetails.Shader->ProgramID);
+	glUniform1i(GetUniformLocation(CurrentGameState->UnitShaderDetails.Shader,"UnitTexture"),0);
+        CurrentGameState->UnitShaderDetails.ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitShaderDetails.Shader,"ProjectionMatrix");
+	CurrentGameState->UnitShaderDetails.ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitShaderDetails.Shader,"ModelMatrix");
+	CurrentGameState->UnitShaderDetails.ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitShaderDetails.Shader,"ViewMatrix");
     }
 
-    CurrentGameState-> = LoadShaderProgram("shaders/unit3do.vs.glsl","shaders/unit3do.fs.glsl",&CurrentGameState->ShaderGroup);
-    if(CurrentGameState->UnitShader->ProgramID)
+    CurrentGameState->UnitBuildShaderDetails.Shader = LoadShaderProgram("shaders/unit3dobuild.vs.glsl","shaders/unit3dobuild.fs.glsl",&CurrentGameState->ShaderGroup);
+    if(CurrentGameState->UnitBuildShaderDetails.Shader->ProgramID)
     {
-	glUseProgram(CurrentGameState->UnitShader->ProgramID);
-	glUniform1i(GetUniformLocation(CurrentGameState->UnitShader,"UnitTexture"),0);
-        CurrentGameState->ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ProjectionMatrix");
-	CurrentGameState->ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ModelMatrix");
-	CurrentGameState->ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitShader,"ViewMatrix");
+	glUseProgram(CurrentGameState->UnitBuildShaderDetails.Shader->ProgramID);
+	glUniform1i(GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"UnitTexture"),0);
+        CurrentGameState->UnitBuildShaderDetails.ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"ProjectionMatrix");
+CurrentGameState->UnitBuildShaderDetails.ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"ModelMatrix");
+CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"ViewMatrix");
 
     }
 
@@ -37,21 +37,6 @@ void ReloadShaders(Memory * GameMemory)
 
     GLint viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
-    
-    CurrentGameState->UIElementShaderProgram = LoadShaderProgram("shaders/UI.vs.glsl","shaders/UI.fs.glsl",&CurrentGameState->ShaderGroup);
-    if(CurrentGameState->UIElementShaderProgram->ProgramID)
-    {
-	glUseProgram(CurrentGameState->UIElementShaderProgram->ProgramID);
-
-	CurrentGameState->UIElementPositionLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Position");
-	CurrentGameState->UIElementSizeLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Size");
-	CurrentGameState->UIElementColorLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Color");
-	CurrentGameState->UIElementBorderColorLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"BorderColor");
-	CurrentGameState->UIElementBorderWidthLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"BorderWidth");
-	CurrentGameState->UIElementAlphaLocation = GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Alpha");
-
-	glUniform2iv(GetUniformLocation(CurrentGameState->UIElementShaderProgram,"Viewport"),1,viewport+2);
-    }
 
     FontShaderDetails * FDetails = &CurrentGameState->FontShaderDetails;
     FDetails->Program = LoadShaderProgram("shaders/TAFont.vs.glsl","shaders/TAFont.fs.glsl",&CurrentGameState->ShaderGroup);
@@ -181,7 +166,7 @@ extern "C"{
     void GameTeardown(Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-	UnloadShaderProgram(CurrentGameState->UnitShader);
+	UnloadShaderProgram(CurrentGameState->UnitShaderDetails.Shader);
 	UnloadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection);
 	Unload3DO(&CurrentGameState->temp_model);
     }

@@ -375,15 +375,15 @@ extern "C"
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
-	glUseProgram(CurrentGameState->UnitShader->ProgramID);
+	glUseProgram(CurrentGameState->UnitShaderDetails.Shader->ProgramID);
 	glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTextures.Texture);
-	CurrentGameState->ProjectionMatrix.Upload(CurrentGameState->ProjectionMatrixLocation);
+	CurrentGameState->ProjectionMatrix.Upload(CurrentGameState->UnitShaderDetails.ProjectionMatrixLocation);
 
 
 	//CurrentGameState->ViewMatrix->Rotate(0,1,0, PI/300);
 	//CurrentGameState->ViewMatrix->Move(0.01,-0.01,-0.01);
 	CurrentGameState->ViewMatrix = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
-	CurrentGameState->ViewMatrix.Upload(CurrentGameState->ViewMatrixLocation);
+	CurrentGameState->ViewMatrix.Upload(CurrentGameState->UnitShaderDetails.ViewMatrixLocation);
 	
 	Matrix ModelMatrix;
 
@@ -401,7 +401,7 @@ extern "C"
 	    for(int y=0;y<10;y++)
 	    {
 		ModelMatrix.SetTranslation(30.5f+x*50,14.5f,23.4f+y*40);
-		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,&CurrentGameState->TempArena,ModelMatrix);
+		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->UnitShaderDetails.ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,&CurrentGameState->TempArena,ModelMatrix);
 	    }
 	}
 	

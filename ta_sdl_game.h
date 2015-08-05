@@ -56,6 +56,12 @@ const int MAX_SHADER_FILENAME = 50;
 #include "GL.h"
 #include "file_formats.h"
 
+struct Unit
+{
+    UnitScript * Script;
+    ScriptStatePool ScriptPool;
+};
+
 
 struct InputState
 {
@@ -175,13 +181,31 @@ void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
 
 
 #endif
-#define MAX_UNITS_LOADED 1024
+#define MAX_UNITS_LOADED 512
 
 struct TempUnitList
 {
     UnitDetails Details[MAX_UNITS_LOADED];
     int Size;
 };
+
+struct UnitShaderDetails
+{
+    ShaderProgram * Shader;
+    GLuint ProjectionMatrixLocation;
+    GLuint ModelMatrixLocation;
+    GLuint ViewMatrixLocation;
+};
+
+struct UnitBuildShaderDetails
+{
+    ShaderProgram * Shader;
+    GLuint ProjectionMatrixLocation;
+    GLuint ModelMatrixLocation;
+    GLuint ViewMatrixLocation;
+    GLuint BuildPercentLocation;
+};
+
 
 struct GameState
 {
@@ -195,17 +219,13 @@ struct GameState
     Matrix ModelMatrix;
     Matrix ViewMatrix;
 
-    ShaderProgram * UnitShader;
+    UnitShaderDetails UnitShaderDetails;
+    UnitBuildShaderDetails UnitBuildShaderDetails;
     ShaderProgram * MapShader;
     ShaderProgram * UIElementShaderProgram;
     
     int NumberOfFrames;
-    GLuint ProjectionMatrixLocation;
-    GLuint ModelMatrixLocation;
-    GLuint ViewMatrixLocation;
-    GLuint UIElementRenderingVertexBuffer;
-
-    GLuint UIElementPositionLocation,UIElementSizeLocation,UIElementColorLocation,UIElementBorderColorLocation,UIElementBorderWidthLocation,UIElementAlphaLocation;
+   
 
     Object3d temp_model;
     TAMap TestMap;
