@@ -60,6 +60,10 @@ struct Unit
 {
     UnitScript * Script;
     ScriptStatePool ScriptPool;
+    char * Name;
+    UnitDetails * Details;
+    UnitSide Side;
+    r32 Health, BuildPercent;
 };
 
 
