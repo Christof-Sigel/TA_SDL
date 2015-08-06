@@ -76,7 +76,7 @@ struct Matrix
 	Matrix temp=Matrix();
 	for(int i=0;i<3;i++)
 	    temp.Contents[i*4+i]=vector[i];
-	*this*=temp;
+	*this = temp * (*this);
     }
 
     void SetScale(float x, float y, float z)
@@ -89,28 +89,10 @@ struct Matrix
 
     void Rotate(float x,float y,float z, float rad)
     {
-	float vector[]={x,y,z};
-	float vleninv=1/sqrt(x*x+y*y+z*z);
-	for(int i=0;i<3;i++)
-	    vector[i]/=vleninv;
-	float cosine=cos(rad);
-	float sine=sin(rad);
-
 	Matrix temp;
-	temp.Contents[0]=cosine+vector[0]*vector[0]*(1-cosine);
-	temp.Contents[1]=vector[0]*vector[1]*(1-cosine)-vector[2]*sine;
-	temp.Contents[2]=vector[0]*vector[2]*(1-cosine)+vector[1]*sine;
 
-	temp.Contents[4]=vector[1]*vector[0]*(1-cosine)+vector[2]*sine;
-	temp.Contents[5]=cosine+vector[1]*vector[1]*(1-cosine);
-	temp.Contents[6]=vector[1]*vector[2]*(1-cosine)-vector[0]*sine;
-	
-	temp.Contents[8]=vector[2]*vector[0]*(1-cosine)-vector[1]*sine;
-	temp.Contents[9]=vector[2]*vector[1]*(1-cosine)+vector[0]*sine;
-	temp.Contents[10]=cosine+vector[2]*vector[2]*(1-cosine);
-
-	//*this = temp**this;
-	*this *= temp;
+	temp.SetRotation(x,y,z,rad);
+	*this = temp* (*this);
     }
     
     void Move(float dx,float dy, float dz)
@@ -118,21 +100,6 @@ struct Matrix
 	float pos[]={dx,dy,dz};
 	for(int i=0;i<3;i++)
 	    Contents[i*4+3]+=pos[i];
-    }
-
-    Matrix & operator*= (const Matrix & other)
-    {
-	float temp[16];
-	for(int i=0;i<4;i++)
-	    for(int j=0;j<4;j++)
-	    {
-		temp[i*4+j]=0;
-		for(int k=0;k<4;k++)
-		    temp[i*4+j]+=Contents[i*4+k]*other.Contents[k*4+j];
-	    }
-	for(int i=0;i<16;i++)
-	    Contents[i]=temp[i];
-	return *this;
     }
     
     Matrix operator* (const Matrix & other)
@@ -145,7 +112,7 @@ struct Matrix
 		for(int k=0;k<4;k++)
 		    ret.Contents[i*4+j]+=Contents[i*4+k]*other.Contents[k*4+j];
 	    }
-	return Matrix(ret);
+	return ret;
     }
     
     Matrix()

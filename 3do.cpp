@@ -471,7 +471,7 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
     }
 }
 
-void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, u8 * PaletteData, GLuint DebugAxisBuffer, s32 Side,TextureContainer * TextureContainer, MemoryArena * TempArena, Matrix ParentMatrix)
+void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLuint ModelMatrixLocation, u8 * PaletteData, GLuint DebugAxisBuffer, s32 Side,TextureContainer * TextureContainer, MemoryArena * TempArena, Matrix ParentRotationMatrix, Matrix ParentMoveMatrix, Matrix ModelMatrix)
 {
     if((TransformationDetails->Flags & OBJECT3D_FLAG_HIDE))
 	return;
@@ -480,23 +480,26 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     Object3dRenderingPrep(Object, PaletteData,Side, TransformationDetails->TextureOffset,TextureContainer, TempArena);
     //TODO(Christof): Actually make use of TransformationDetails
 
-    Matrix CurrentMatrix;
-    CurrentMatrix.Rotate(0,1,0, TransformationDetails->Rotation[1]);
-    CurrentMatrix.Rotate(1,0,0, TransformationDetails->Rotation[0]);
-    CurrentMatrix.Rotate(0,0,1, TransformationDetails->Rotation[2]);
+    Matrix CurrentRotationMatrix;
+    Matrix CurrentMoveMatrix;
+    Matrix CurrentPositionMatrix;
+    CurrentRotationMatrix.Rotate(0,1,0, TransformationDetails->Rotation[1]);
+    CurrentRotationMatrix.Rotate(1,0,0, TransformationDetails->Rotation[0]);
+    CurrentRotationMatrix.Rotate(0,0,1, TransformationDetails->Rotation[2]);
     
-    CurrentMatrix.Move(Object->Position.X,Object->Position.Y,Object->Position.Z);
+    CurrentPositionMatrix.Move(Object->Position.X,Object->Position.Y,Object->Position.Z);
 
-    CurrentMatrix = ParentMatrix * CurrentMatrix ;
+    CurrentMoveMatrix.Move(TransformationDetails->Movement[0],TransformationDetails->Movement[1],TransformationDetails->Movement[2]);
+
     
-    CurrentMatrix.Move(TransformationDetails->Movement[0],TransformationDetails->Movement[1],TransformationDetails->Movement[2]);
 
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
-	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,DebugAxisBuffer,Side,TextureContainer,TempArena,CurrentMatrix);
+	RenderObject3d(&Object->Children[i],&TransformationDetails->Children[i],ModelMatrixLocation,PaletteData,DebugAxisBuffer,Side,TextureContainer,TempArena,CurrentRotationMatrix*ParentRotationMatrix, CurrentMoveMatrix*ParentMoveMatrix*CurrentPositionMatrix, ModelMatrix);
     }
 
-
+    Matrix CurrentMatrix = ModelMatrix * CurrentMoveMatrix  * CurrentRotationMatrix *   CurrentPositionMatrix *  ParentMoveMatrix * ParentRotationMatrix;
+    
     CurrentMatrix.Upload(ModelMatrixLocation);
     glBindVertexArray(Object->VertexBuffer);
     glDrawArrays(GL_TRIANGLES, 0, Object->NumTriangles*3);
@@ -514,7 +517,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 	LogError("failed to render : %s",gluErrorString(ErrorValue));
     }
 
-#if 0
+#if 1
     //Debug Axis rendering
     glBindVertexArray(DebugAxisBuffer);
     glDrawArrays(GL_LINES, 0, 3*2);
