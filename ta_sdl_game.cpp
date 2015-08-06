@@ -53,15 +53,14 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		Unload3DO(&CurrentGameState->temp_model);
 	    Load3DOFromBuffer(temp,&CurrentGameState->temp_model,&CurrentGameState->UnitTextures,&CurrentGameState->GameArena);
 	    InitTransformationDetails(&CurrentGameState->temp_model, &CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
-	    int ScriptNum = GetScriptNumberForFunction(&CurrentGameState->CurrentUnitScript,"Create");
-	    if(ScriptNum !=-1)
-	    {
-		CurrentGameState->CurrentScriptPool.NumberOfScripts = 1;
-		CurrentGameState->CurrentScriptPool.Scripts[0].ScriptNumber = ScriptNum;
-		CurrentGameState->CurrentScriptPool.Scripts[0].TransformationDetails = &CurrentGameState->UnitTransformationDetails;
-		CurrentGameState->CurrentScriptPool.Scripts[0].StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript.NumberOfStatics, s32);
-		CurrentGameState->CurrentScriptPool.Scripts[0].NumberOfStaticVariables = CurrentGameState->CurrentUnitScript.NumberOfStatics;
-	    }
+	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Create",0, 0, &CurrentGameState->UnitTransformationDetails);
+	    s32 Args[] ={1*COB_ANGULAR_CONSTANT};
+	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Activate",1, Args, &CurrentGameState->UnitTransformationDetails);
+	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "StartBuilding",1, Args, &CurrentGameState->UnitTransformationDetails);
+
+	    s32 FireArgs[] ={5*COB_ANGULAR_CONSTANT, -0.25*COB_ANGULAR_CONSTANT};
+	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "AimPrimary",2, FireArgs, &CurrentGameState->UnitTransformationDetails);
+
 //	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
 	}
 	PopArray(&CurrentGameState->TempArena, ScriptBuffer,ScriptEntry.File.FileSize, u8 );
@@ -101,7 +100,7 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 
 		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].ScriptNumber = ScriptNumber;
 		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].TransformationDetails = &CurrentGameState->UnitTransformationDetails;
-		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].StaticVariables = PushArray(&CurrentGameState->GameArena, CurrentGameState->CurrentUnitScript.NumberOfStatics, s32 );
+		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].StaticVariables = CurrentGameState->CurrentScriptPool.StaticVariables;
 		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].NumberOfStaticVariables = CurrentGameState->CurrentUnitScript.NumberOfStatics;
 		CurrentGameState->CurrentScriptPool.NumberOfScripts++;
 	    }
@@ -189,26 +188,27 @@ void SetupDebugAxisBuffer(GLuint * DebugAxisBuffer)
         //Setup Debug axis buffer details:
     GLfloat LineData[3*2 * (3+2+3)];
     int CurrentLine =0;
+    const int SCALE = 3;
     LineData[CurrentLine*2*8 + 0] = 0;
     LineData[CurrentLine*2*8 + 1]= 0;
     LineData[CurrentLine*2*8 + 2]= 0;
 
-    LineData[CurrentLine*2*8 + 3]= -1;
-    LineData[CurrentLine*2*8 + 4]= -1;
+    LineData[CurrentLine*2*8 + 3]= -1*SCALE;
+    LineData[CurrentLine*2*8 + 4]= -1*SCALE;
 	    
-    LineData[CurrentLine*2*8 + 5]= 1;
+    LineData[CurrentLine*2*8 + 5]= 1*SCALE;
     LineData[CurrentLine*2*8 + 6]= 0;
     LineData[CurrentLine*2*8 + 7]= 0;
 
 	    
-    LineData[CurrentLine*2*8 + 8] = 1;
+    LineData[CurrentLine*2*8 + 8] = 1*SCALE;
     LineData[CurrentLine*2*8 + 9]= 0;
     LineData[CurrentLine*2*8 + 10]= 0;
 
-    LineData[CurrentLine*2*8 + 11]= -1;
-    LineData[CurrentLine*2*8 + 12]= -1;
+    LineData[CurrentLine*2*8 + 11]= -1*SCALE;
+    LineData[CurrentLine*2*8 + 12]= -1*SCALE;
 
-    LineData[CurrentLine*2*8 + 13]= 1;
+    LineData[CurrentLine*2*8 + 13]= 1*SCALE;
     LineData[CurrentLine*2*8 + 14]= 0;
     LineData[CurrentLine*2*8 + 15]= 0;
     CurrentLine++;
@@ -217,23 +217,23 @@ void SetupDebugAxisBuffer(GLuint * DebugAxisBuffer)
     LineData[CurrentLine*2*8 + 1]= 0;
     LineData[CurrentLine*2*8 + 2]= 0;
 
-    LineData[CurrentLine*2*8 + 3]= -1;
-    LineData[CurrentLine*2*8 + 4]= -1;
+    LineData[CurrentLine*2*8 + 3]= -1*SCALE;
+    LineData[CurrentLine*2*8 + 4]= -1*SCALE;
 	    
     LineData[CurrentLine*2*8 + 5]= 0;
-    LineData[CurrentLine*2*8 + 6]= 1;
+    LineData[CurrentLine*2*8 + 6]= 1*SCALE;
     LineData[CurrentLine*2*8 + 7]= 0;
 
 	    
     LineData[CurrentLine*2*8 + 8] = 0;
-    LineData[CurrentLine*2*8 + 9]= 1;
+    LineData[CurrentLine*2*8 + 9]= 1*SCALE;
     LineData[CurrentLine*2*8 + 10]= 0;
 
-    LineData[CurrentLine*2*8 + 11]= -1;
-    LineData[CurrentLine*2*8 + 12]= -1;
+    LineData[CurrentLine*2*8 + 11]= -1*SCALE;
+    LineData[CurrentLine*2*8 + 12]= -1*SCALE;
 
     LineData[CurrentLine*2*8 + 13]= 0;
-    LineData[CurrentLine*2*8 + 14]= 1;
+    LineData[CurrentLine*2*8 + 14]= 1*SCALE;
     LineData[CurrentLine*2*8 + 15]= 0;
     CurrentLine++;
 
@@ -241,24 +241,24 @@ void SetupDebugAxisBuffer(GLuint * DebugAxisBuffer)
     LineData[CurrentLine*2*8 + 1]= 0;
     LineData[CurrentLine*2*8 + 2]= 0;
 
-    LineData[CurrentLine*2*8 + 3]= -1;
-    LineData[CurrentLine*2*8 + 4]= -1;
+    LineData[CurrentLine*2*8 + 3]= -1*SCALE;
+    LineData[CurrentLine*2*8 + 4]= -1*SCALE;
 	    
     LineData[CurrentLine*2*8 + 5]= 0;
     LineData[CurrentLine*2*8 + 6]= 0;
-    LineData[CurrentLine*2*8 + 7]= 1;
+    LineData[CurrentLine*2*8 + 7]= 1*SCALE;
 
 	    
     LineData[CurrentLine*2*8 + 8] = 0;
     LineData[CurrentLine*2*8 + 9]= 0;
-    LineData[CurrentLine*2*8 + 10]= 1;
+    LineData[CurrentLine*2*8 + 10]= 1*SCALE;
 
-    LineData[CurrentLine*2*8 + 11]= -1;
-    LineData[CurrentLine*2*8 + 12]= -1;
+    LineData[CurrentLine*2*8 + 11]= -1*SCALE;
+    LineData[CurrentLine*2*8 + 12]= -1*SCALE;
 
     LineData[CurrentLine*2*8 + 13]= 0;
     LineData[CurrentLine*2*8 + 14]= 0;
-    LineData[CurrentLine*2*8 + 15]= 1;
+    LineData[CurrentLine*2*8 + 15]= 1*SCALE;
     CurrentLine++;
 
     GLuint VertexBuffer;
@@ -425,6 +425,48 @@ extern "C"
 	for(int i=0;i<CurrentGameState->CurrentUnitScript.NumberOfFunctions;i++)
 	{
 	    //TODO(Christof): Display Scripts as before?
+	    const int MAX_SCRIPT_STRING_LENGTH = 128;
+	    char ScriptString[MAX_SCRIPT_STRING_LENGTH];
+	    snprintf(ScriptString,MAX_SCRIPT_STRING_LENGTH, "%d) %s", i, CurrentGameState->CurrentUnitScript.FunctionNames[i] );
+	    Color TextColor = {{1,1,1}};
+	    
+	    Block BlockedOn = BLOCK_INIT;
+	    for(int j=0;j<CurrentGameState->CurrentScriptPool.NumberOfScripts;j++)
+	    {
+		if(CurrentGameState->CurrentScriptPool.Scripts[j].ScriptNumber == i )
+		    BlockedOn=CurrentGameState->CurrentScriptPool.Scripts[j].BlockedOn;
+	    }
+	    switch(BlockedOn)
+	    {
+	    case BLOCK_INIT:
+		TextColor = {{1,1,1}};
+		break;
+		//GREEN
+	    case BLOCK_NOT_BLOCKED:
+		TextColor = {{0,1,0}};
+		break;
+		//CYAN
+	    case BLOCK_MOVE:
+		TextColor = {{0,1,1}};
+		break;
+		//PURPLE
+	    case BLOCK_TURN:
+		TextColor = {{1,0,1}};
+		break;
+//BLUE
+	    case BLOCK_SLEEP:
+		TextColor = {{0,0,1}};
+		break;
+//YELLOW
+	    case BLOCK_DONE:
+		TextColor = {{1,1,0}};
+		break;
+		//RED
+	    case BLOCK_SCRIPT:
+		TextColor = {{1,0,0}};
+		break;
+	    }
+	    DrawTextureFontText(ScriptString, CurrentGameState->ScreenWidth - 150,150+i*30,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
 	}
 	//TODO(Christof): free memory correctly
 	int Index=CurrentGameState->UnitIndex;

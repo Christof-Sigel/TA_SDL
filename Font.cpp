@@ -233,7 +233,7 @@ FontDimensions TextSizeInPixels(char * Text, TextureContainer * Font)
     return Result;
 }
 
-void DrawTextureFontText(char * Text, int InitialX, int InitialY, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0)
+void DrawTextureFontText(char * Text, int InitialX, int InitialY, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0, Color Color ={1,1,1})
 {
     int TextHeight = FontHeightInPixels(Text, Font);
     u8* Char = (u8*)Text;
@@ -249,7 +249,7 @@ void DrawTextureFontText(char * Text, int InitialX, int InitialY, TextureContain
 	int CharHeightInPixels = int(CharHeight * Font->TextureHeight);
 	if(*Char > ' ')
 	{
-	    DrawTexture2D(Font->Texture,(float) X, float(Y-tex->Y+TextHeight), float(CharWidthInPixels), float(CharHeightInPixels), {{1,1,1}}, Alpha, ShaderDetails, U, V, CharWidth, CharHeight);
+	    DrawTexture2D(Font->Texture,(float) X, float(Y-tex->Y+TextHeight), float(CharWidthInPixels), float(CharHeightInPixels), Color, Alpha, ShaderDetails, U, V, CharWidth, CharHeight);
 	}
 	if(*Char == '\n' || *Char == '\r')
 	{

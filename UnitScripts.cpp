@@ -142,21 +142,13 @@ enum CobCommands
 
 inline void PushStack(ScriptState * State, s32 Value)
 {
-    if(State->StackSize >= UNIT_SCRIPT_MAX_STACK_SIZE)
-    {
-	LogError("%d items on the stack",State->StackSize);
-	return;
-    }
+    Assert(State->StackSize < UNIT_SCRIPT_MAX_STACK_SIZE);
     State->Stack[State->StackSize++] = Value;
 }
 
 inline s32 PopStack(ScriptState * State)
 {
-    if(State->StackSize <= 0)
-    {
-	LogError("No more items on the stack");
-	return -1;
-    }
+    Assert(State->StackSize >= 0)
     return State->Stack[--State->StackSize];
 }
 
@@ -193,6 +185,26 @@ int GetScriptNumberForFunction(UnitScript * Script, const char * FunctionName)
     return -1;
 }
 
+void CompactScriptPool(ScriptStatePool * Pool)
+{
+    for(int i=Pool->NumberOfScripts - 2 ; i>=0;i--)
+    {
+	if(Pool->Scripts[i].BlockedOn == BLOCK_DONE)
+	{
+	    for(int j=i;j<Pool->NumberOfScripts ; j++)
+	    {
+		Pool->Scripts[j] =Pool->Scripts[j+1];
+	    }
+	    for(int k=0;k<Pool->NumberOfScripts;k++)
+	    {
+		if(Pool->Scripts[k].ReturnTo > &Pool->Scripts[i])
+		    Pool->Scripts[k].ReturnTo--;
+	    }
+	    Pool->NumberOfScripts--;
+	}
+    }
+}
+
 void CleanUpScriptPool(ScriptStatePool * Pool)
 {
     int i;
@@ -204,26 +216,43 @@ void CleanUpScriptPool(ScriptStatePool * Pool)
 	}
     }
     Pool->NumberOfScripts = i+1;
+    CompactScriptPool(Pool);
 }
 
+ScriptState * AddNewScript(ScriptStatePool * Pool, UnitScript * Script, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails, s32 FunctionNumber, s32 SignalMask =0)
+{
+    Assert(Pool->NumberOfScripts < SCRIPT_POOL_SIZE);
+    ScriptState * NewState = &Pool->Scripts[Pool->NumberOfScripts++];
+     *NewState = {};
+    for(int i=NumberOfArguments-1;i>=0;i--)
+    {
+	NewState->LocalVariables[i]= Arguments[i];
+    }
+    NewState->NumberOfLocalVariables = NumberOfArguments;
+    NewState->StaticVariables = Pool->StaticVariables;
+    NewState->NumberOfStaticVariables = Script->NumberOfStatics;
+    NewState->ScriptNumber = FunctionNumber;
+    NewState->SignalMask = SignalMask;
+   
+    NewState->TransformationDetails = TransformationDetails;
+    NewState->NumberOfParameters = NumberOfArguments;
+    return NewState;
+}
 
-void CreateNewScriptState(UnitScript * Script, ScriptState * State, ScriptState * NewState)
+void StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, char * FunctionName, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
+{
+    s32 FunctionNumber =  GetScriptNumberForFunction( Script, FunctionName);
+    AddNewScript(Pool,Script, NumberOfArguments, Arguments, TransformationDetails, FunctionNumber);
+}
+
+ScriptState * CreateNewScriptState(UnitScript * Script, ScriptState * State, ScriptStatePool * Pool)
 {
     s32 FunctionNumber = PostData(Script,State);
     s32 NumberOfArguments = PostData(Script,State);
-    memset(NewState, 0, sizeof(ScriptState));
-    for(int i=NumberOfArguments-1;i>=0;i--)
-    {
-	NewState->LocalVariables[i]= PopStack(State);
-    }
-    NewState->NumberOfLocalVariables = NumberOfArguments;
-    NewState->StaticVariables = State->StaticVariables;
-    NewState->NumberOfStaticVariables = State->NumberOfStaticVariables;
-    NewState->ScriptNumber = FunctionNumber;
-    NewState->SignalMask = State->SignalMask;
-   
-    NewState->TransformationDetails = State->TransformationDetails;
-    NewState->NumberOfParameters = NumberOfArguments;
+    s32 Arguments[32];
+    for(int i=0;i<NumberOfArguments; i++)
+	Arguments[i]=PopStack(State);
+    return AddNewScript(Pool, Script, NumberOfArguments, Arguments, State->TransformationDetails, FunctionNumber,  State->SignalMask);
 }
 
 void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool)
@@ -294,10 +323,10 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
     }
     case BLOCK_NOT_BLOCKED:
 	break;
-    }
-    if(State->ProgramCounter == 0)
-    {
+    case BLOCK_INIT:
 	State->ProgramCounter = Script->FunctionOffsets[State->ScriptNumber];
+	State->BlockedOn = BLOCK_NOT_BLOCKED;
+	break;
     }
     int CurrentInstructionCount=0;
 
@@ -580,13 +609,12 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	case COB_PUSH_CONSTANT:
 	    PushStack(State, PostData(Script,State));
 	    break;
-	    //TODO(Christof): bounds checks on local/static vars
 	case COB_PUSH_LOCAL_VARIABLE:
 	{
 	    s32 Index = PostData(Script,State);
 	    if(Index>=State->NumberOfLocalVariables)
 	    {
-		LogError("%s Trying to push the value of local variable %d, but only %d exist, pushoing 0 instead",Script->FunctionNames[State->ScriptNumber], Index, State->NumberOfLocalVariables);
+		LogError("%s Trying to push the value of local variable %d, but only %d exist, pushing 0 instead",Script->FunctionNames[State->ScriptNumber], Index, State->NumberOfLocalVariables);
 		PushStack(State,0);
 	    }
 	    else
@@ -600,7 +628,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    s32 Index = PostData(Script,State);
 	    if(Index >= State->NumberOfStaticVariables)
 	    {
-	    	LogError("%s Trying to push the value of static variable %d, but only %d exist, pushoing 0 instead",Script->FunctionNames[State->ScriptNumber], Index, State->NumberOfStaticVariables);
+	    	LogError("%s Trying to push the value of static variable %d, but only %d exist, pushing 0 instead",Script->FunctionNames[State->ScriptNumber], Index, State->NumberOfStaticVariables);
 		PushStack(State, 0);
 	    }
 	    else
@@ -627,7 +655,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    s32 Index = PostData(Script,State);
 	    if(Index >= State->NumberOfStaticVariables)
 	    {
-		LogError("%s Trying to set local variable %d to %d, but only %d exists!", Script->FunctionNames[State->ScriptNumber],Index, PopStack(State), State->NumberOfStaticVariables);
+		LogError("%s Trying to set static variable %d to %d, but only %d exists!", Script->FunctionNames[State->ScriptNumber],Index, PopStack(State), State->NumberOfStaticVariables);
 	    }
 	    else
 	    {
@@ -676,19 +704,14 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    s32 Value = 1;
 	    switch(GetValue)
 	    {
-	    case 17:
-		//17 is buildpercent - this will make all the wait for completiong stuff work I hope - 0 is fully built?
-		Value=0;
+	    case UNIT_VAR_BUILD_PERCENT_LEFT:
+		Value =100;
 		break;
-	    case 18:
-		Value=0;
-		break;
-	    case 4:
-		//health - seems to be in %
-		Value=0;
+	    case UNIT_VAR_HEALTH:
+		Value = 50;
 		break;
 	    default:
-		LogWarning("Putting bogus unit value %d on the stack",GetValue);
+		LogWarning("Putting bogus unit value %d (%s) on the stack",GetValue, UnitVariableNames[GetValue]);
 		break;
 	    }
 	    
@@ -697,6 +720,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_GET_VALUE:
 	{
+	    s32 GetValueArg = PopStack(State);
 	    s32 GetValue = PopStack(State);
 	    s32 Value = 1;
 	    switch(GetValue)
@@ -705,7 +729,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 		Value=1;
 		break;
 	    }
-	    LogWarning("Putting bogus value %d on the stack",GetValue);
+	    LogWarning("Putting bogus value %d (%s) on the stack",GetValue, UnitVariableNames[GetValue]);
 	    PushStack(State, Value);   
 	}
 	break;
@@ -758,50 +782,17 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    PushStack(State,!PopStack(State));
 	    break;
 	case COB_START_SCRIPT:
-	{
-	    int ScriptIndex = Pool->NumberOfScripts++;
-
-	    if(ScriptIndex >= SCRIPT_POOL_SIZE)
-	    {
-		Pool->NumberOfScripts--;
-		s32  FunctionNumber = PostData(Script,State);
-		PostData(Script,State);
-
-		LogError("Too many scripts, failed to start new script %s", Script->FunctionNames[FunctionNumber]);
-	    }
-	    else
-	    {
-		ScriptState * NewState = &Pool->Scripts[ScriptIndex];
-		CreateNewScriptState(Script,State,NewState);
-		if(NewState->ScriptNumber >= Script->NumberOfFunctions)
-		    LogDebug("%d over %d", NewState->ScriptNumber, Script->NumberOfFunctions);
-	    }
-	}
+	    CreateNewScriptState(Script,State,Pool);
 	break;
 	case COB_CALL_SCRIPT2:
 	    LogDebug("Call Script NUMBER 2!!!!");
 	case COB_CALL_SCRIPT:
 	{
-	    int ScriptIndex = Pool->NumberOfScripts++;
-	    if(ScriptIndex >= SCRIPT_POOL_SIZE)
-	    {
-		Pool->NumberOfScripts--;
-		s32  FunctionNumber = PostData(Script,State);
-		PostData(Script,State);
-
-		LogError("Too many scripts, failed to call new script %s", Script->FunctionNames[FunctionNumber]);
-	    }
-	    else
-	    {
-		ScriptState * NewState = &Pool->Scripts[ScriptIndex];
-		CreateNewScriptState(Script,State,NewState);
-		NewState->ReturnTo = State;
-		State->BlockedOn = BLOCK_SCRIPT;
-
-		if(NewState->ScriptNumber >= Script->NumberOfFunctions)
-		    LogDebug("%d over %d", NewState->ScriptNumber, Script->NumberOfFunctions);
-		return;
-	    }
+	    //NOTE(Christof): this may need to reuse the same stack?
+	    ScriptState * NewState = CreateNewScriptState(Script,State,Pool);
+	    NewState->ReturnTo = State;
+	    State->BlockedOn = BLOCK_SCRIPT;
+	    return;
 	}
 	break;
 	case COB_JUMP:
@@ -850,7 +841,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	{
 	    s32 Value = PopStack(State);
 	    s32 UnitVariableNumber = PopStack(State);
-	    LogWarning("Not setting Value %d to %d", UnitVariableNumber, Value);
+	    LogWarning("Not setting Value %d (%s) to %d", UnitVariableNumber, UnitVariableNames[UnitVariableNumber], Value);
 	}
 	break;
 	case COB_ATTACH_UNIT:

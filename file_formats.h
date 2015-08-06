@@ -122,6 +122,7 @@ const int FILE_UI_MAX_STRING_LENGTH  = 32;
 //UnitScripts
 enum Block
 {
+    BLOCK_INIT,
     BLOCK_NOT_BLOCKED,
     BLOCK_MOVE,
     BLOCK_TURN,
@@ -468,7 +469,6 @@ struct UnitScript
     s32 * FunctionOffsets;
     s32 NumberOfStatics;
     //TODO(Christof): Make this part of the unit struct?
-    s32 StaticVariables[UNIT_SCRIPT_MAX_STACK_SIZE];
 };
 
 struct ScriptState
@@ -497,6 +497,7 @@ struct ScriptStatePool
 {
     ScriptState Scripts[SCRIPT_POOL_SIZE];
     int NumberOfScripts;
+    s32 StaticVariables[UNIT_SCRIPT_MAX_STACK_SIZE];
 };
 
 //TNT
