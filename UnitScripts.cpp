@@ -240,7 +240,7 @@ ScriptState * AddNewScript(ScriptStatePool * Pool, UnitScript * Script, s32 Numb
     return NewState;
 }
 
-ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, char * FunctionName, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
+ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, const char * FunctionName, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
 {
     s32 FunctionNumber =  GetScriptNumberForFunction( Script, FunctionName);
     return AddNewScript(Pool,Script, NumberOfArguments, Arguments, TransformationDetails, FunctionNumber);

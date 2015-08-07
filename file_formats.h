@@ -161,7 +161,7 @@ enum UnitVariable
     UNIT_VAR_ARMORED
 };
 
-char * UnitVariableNames[]=
+const char * UnitVariableNames[]=
 {
     "NONE",
     "UNIT_VAR_ACTIVATION",

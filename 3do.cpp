@@ -345,7 +345,6 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	GLfloat * TextureData = PushArray(TempArena,Object->NumTriangles * (4)*3, GLfloat);
 
 	int CurrentTriangle=0;
-	int CurrentLine = 0;
 	for(int PrimitiveIndex=0;PrimitiveIndex<Object->NumberOfPrimitives;PrimitiveIndex++)
 	{
 	    Object3dPrimitive * CurrentPrimitive=&Object->Primitives[PrimitiveIndex];

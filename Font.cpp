@@ -233,7 +233,7 @@ FontDimensions TextSizeInPixels(char * Text, TextureContainer * Font)
     return Result;
 }
 
-void DrawTextureFontText(char * Text, int InitialX, int InitialY, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0, Color Color ={1,1,1})
+void DrawTextureFontText(char * Text, int InitialX, int InitialY, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0, Color Color ={{1,1,1}})
 {
     int TextHeight = FontHeightInPixels(Text, Font);
     u8* Char = (u8*)Text;
