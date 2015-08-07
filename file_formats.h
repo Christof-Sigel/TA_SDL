@@ -240,6 +240,7 @@ struct Object3d
     int NumLines;
     GLuint LineBuffer;
     b32 Animates;
+    s32 SelectionPrimitive;
 };
 
 struct Object3dPrimitive

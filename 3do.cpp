@@ -32,7 +32,7 @@ inline void FillTextureData(GLfloat * TextureData , int CurrentTriangle, GLfloat
     }
 }
 
-Texture NoTexture={"",1,-2,-2,0,0,0,0, 1};
+Texture NoTexture={"",0,-2,-2,1,1,0,0, 1};
 b32 TextureIsSideTexture(Texture * Texture)
 {
     //NOTE(Christof): only the side textures seem to have 10 frames?
@@ -641,7 +641,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
     }
     
     glBindVertexArray(Object->LineBuffer);
-    glDrawArrays(GL_LINES, 0, Object->NumLines*2);
+    //glDrawArrays(GL_LINES, 0, Object->NumLines*2);
     ErrorValue = glGetError();
     if(ErrorValue!=GL_NO_ERROR)
     {
@@ -729,6 +729,7 @@ b32 Load3DOFromBuffer(u8 * Buffer, Object3d * Object, TextureContainer * Texture
 	{
 	    Object->Primitives[i].Texture=0;
 	}
+
 	Object->Primitives[i].NumberOfVertices = CurrentPrimitive->NumberOfVertexIndexes;
 	Object->Primitives[i].VertexIndexes = PushArray(GameArena,Object->Primitives[i].NumberOfVertices,int);
 	s16  * VertexIndexes = (s16  *)(Buffer + CurrentPrimitive->OffsetToVertexIndexArray);
@@ -738,7 +739,11 @@ b32 Load3DOFromBuffer(u8 * Buffer, Object3d * Object, TextureContainer * Texture
 	    Object->Animates = 1;
 	
 	Object->Primitives[i].ColorIndex = CurrentPrimitive->ColorIndex & 255;
-
+	if(header->OffsetToSelectionPrimitive == i)
+	{
+	    Object->Primitives[i].Texture=0;
+	    Object->Primitives[i].ColorIndex = 'd';
+	}
 	CurrentPrimitive++;
     }
 

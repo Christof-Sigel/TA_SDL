@@ -221,7 +221,8 @@ void CleanUpScriptPool(ScriptStatePool * Pool)
 
 ScriptState * AddNewScript(ScriptStatePool * Pool, UnitScript * Script, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails, s32 FunctionNumber, s32 SignalMask =0)
 {
-    Assert(Pool->NumberOfScripts < SCRIPT_POOL_SIZE);
+    if(Pool->NumberOfScripts >= SCRIPT_POOL_SIZE)
+	return 0;
     ScriptState * NewState = &Pool->Scripts[Pool->NumberOfScripts++];
      *NewState = {};
     for(int i=NumberOfArguments-1;i>=0;i--)
@@ -239,10 +240,10 @@ ScriptState * AddNewScript(ScriptStatePool * Pool, UnitScript * Script, s32 Numb
     return NewState;
 }
 
-void StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, char * FunctionName, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
+ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, char * FunctionName, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
 {
     s32 FunctionNumber =  GetScriptNumberForFunction( Script, FunctionName);
-    AddNewScript(Pool,Script, NumberOfArguments, Arguments, TransformationDetails, FunctionNumber);
+    return AddNewScript(Pool,Script, NumberOfArguments, Arguments, TransformationDetails, FunctionNumber);
 }
 
 ScriptState * CreateNewScriptState(UnitScript * Script, ScriptState * State, ScriptStatePool * Pool)
