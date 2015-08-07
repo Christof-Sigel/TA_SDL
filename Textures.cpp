@@ -31,9 +31,9 @@ Texture * GetTexture(Texture * Texture, s32 FrameNumber, TextureContainer * Text
 {
     if(Texture)
     {
-	if(Texture->NumberOfTextureFrames <= FrameNumber)
+	if(Texture->NumberOfFrames <= FrameNumber)
 	{
-	    LogError("Frame number higher than the number of frames requested, %d > %d",FrameNumber, Texture->NumberOfTextureFrames);
+	    LogError("Frame number higher than the number of frames requested, %d > %d",FrameNumber, Texture->NumberOfFrames);
 	}
 	else
 	{
@@ -220,7 +220,7 @@ void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContai
 	Textures[NextTexture].X=Frame->XPos;
 	Textures[NextTexture].Y=Frame->YPos;
 	Textures[NextTexture].FrameNumber = i;
-	Textures[NextTexture].NumberOfTextureFrames = Entry->NumberOfFrames;
+	Textures[NextTexture].NumberOfFrames = Entry->NumberOfFrames;
 	TextureContainer->NumberOfTextures++;
     }
     
@@ -409,7 +409,7 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	Textures->Textures[NextTexture].U=PCXPos.X/float(Textures->TextureWidth);
 	Textures->Textures[NextTexture].V=PCXPos.Y/float(Textures->TextureHeight);
 	Textures->Textures[NextTexture].FrameNumber = 0;
-	Textures->Textures[NextTexture].NumberOfTextureFrames =1;
+	Textures->Textures[NextTexture].NumberOfFrames =1;
 	
 	
 	return &Textures->Textures[Textures->NumberOfTextures++];

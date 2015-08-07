@@ -205,7 +205,7 @@ struct Texture
     r32 U,V;
     r32 Width,Height;
     s32 X, Y;
-    s32 NumberOfTextureFrames;
+    s32 NumberOfFrames;
 };
 
 struct TextureContainer
@@ -239,7 +239,7 @@ struct Object3d
     int NumTriangles;
     int NumLines;
     GLuint LineBuffer;
-    GLuint TextureCoordBuffer;
+    b32 Animates;
 };
 
 struct Object3dPrimitive
@@ -280,7 +280,8 @@ struct Object3dTransformationDetails
 
     Object3dTransformationDetails * Children;
     int TextureOffset;
-    
+    GLuint TextureCoordBuffer;
+
     u32 Flags;
 };
 
@@ -490,7 +491,7 @@ struct ScriptState
     int ScriptNumber;
     int NumberOfParameters;
     struct Object3dTransformationDetails * TransformationDetails;
-    int CurrentInstructionCount;
+    u32 CurrentInstructionCount;
 };
 
 struct ScriptStatePool

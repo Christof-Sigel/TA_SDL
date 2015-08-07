@@ -58,7 +58,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Activate",1, Args, &CurrentGameState->UnitTransformationDetails);
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "StartBuilding",1, Args, &CurrentGameState->UnitTransformationDetails);
 
-	    s32 FireArgs[] ={5*COB_ANGULAR_CONSTANT, -0.25*COB_ANGULAR_CONSTANT};
+	    s32 FireArgs[] ={-1*COB_ANGULAR_CONSTANT, -0.25*COB_ANGULAR_CONSTANT};
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "AimPrimary",2, FireArgs, &CurrentGameState->UnitTransformationDetails);
 
 //	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
@@ -396,12 +396,13 @@ extern "C"
 	b32 Animate = CurrentGameState->NumberOfFrames%10==0;
 
 	UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f, Animate);
+	
 	for(int x=0;x<5;x++)
 	{
 	    for(int y=0;y<10;y++)
 	    {
-		ModelMatrix.SetTranslation(30.5f+x*50,14.5f,23.4f+y*40);
-		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->UnitShaderDetails.ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,&CurrentGameState->TempArena,Matrix(),Matrix(),ModelMatrix);
+		ModelMatrix.SetTranslation(30.5f+x*50,44.5f,23.4f+y*50);
+		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->UnitShaderDetails.ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,&CurrentGameState->TempArena,Matrix(),ModelMatrix);
 	    }
 	}
 	

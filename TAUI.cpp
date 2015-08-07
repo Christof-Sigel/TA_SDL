@@ -414,7 +414,7 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 		float ElementHeightInUV = (float)Element->Height / CommonUIElements->TextureHeight;
 		float BestMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
 		Texture * BestMatch = ButtonBackground;
-		for(int i=1;i<ButtonBackground->NumberOfTextureFrames;i++)
+		for(int i=1;i<ButtonBackground->NumberOfFrames;i++)
 		{
 		    ButtonBackground = GetTexture(ButtonBackground, i , CommonUIElements);
 		    float CurrentMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
