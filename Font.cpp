@@ -153,7 +153,7 @@ void LoadGafFonts(GameState * CurrentGameState)
 
 void DrawBitmapCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, TextureContainer * TextureContainer, float X, float Y, Color Color, float Alpha, int * oWidth, int *oHeight)
 {
-    Texture * tex = GetTexture(&TextureContainer->Textures[0], Character, TextureContainer);
+    Texture * tex = GetTexture(&TextureContainer->Textures[0], Character);
     float Width = tex->Width * TextureContainer->TextureWidth;
     float Height = tex->Height * TextureContainer->TextureHeight;
     *oWidth = (int)ceil(Width);
@@ -169,7 +169,7 @@ int FontHeightInPixels(char * Text, TextureContainer * Font)
     u8 * Char = (u8*)Text;
     while(*Char)
     {
-	Texture * tex = GetTexture(&Font->Textures[0], *Char, Font);
+	Texture * tex = GetTexture(&Font->Textures[0], *Char);
 	float CharHeight = tex->Height;
 	
 	int CharHeightInPixels = int(CharHeight * Font->TextureHeight);
@@ -240,7 +240,7 @@ void DrawTextureFontText(char * Text, int InitialX, int InitialY, TextureContain
     int X =InitialX, Y=InitialY;
     while(*Char)
     {
-	Texture * tex = GetTexture(&Font->Textures[0], *Char, Font);
+	Texture * tex = GetTexture(&Font->Textures[0], *Char);
 	float CharWidth = tex->Width;
 	float CharHeight = tex->Height;
 	float U = tex->U, V = tex->V;

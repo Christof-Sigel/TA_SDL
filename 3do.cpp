@@ -118,7 +118,7 @@ float length(v3 v)
     return sqrt(v.x*v.x+ v.y*v.y + v.z*v.z);
 }
 
-b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 ObjectTextureOffset, TextureContainer * TextureContainer, MemoryArena * TempArena, Object3dTransformationDetails * TransformationDetails)
+b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 ObjectTextureOffset, MemoryArena * TempArena, Object3dTransformationDetails * TransformationDetails)
 {
     if(!Object->NumTriangles)
     {
@@ -151,7 +151,7 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		{
 		    TextureOffset = Side;
 		}
-		Texture = GetTexture(Texture, TextureOffset, TextureContainer);
+		Texture = GetTexture(Texture, TextureOffset);
 	    }
 	    switch(CurrentPrimitive->NumberOfVertices)
 	    {
@@ -358,7 +358,7 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		{
 		    TextureOffset = Side;
 		}
-		Texture = GetTexture(Texture, TextureOffset, TextureContainer);
+		Texture = GetTexture(Texture, TextureOffset);
 	    }
 	    switch(CurrentPrimitive->NumberOfVertices)
 	    {
@@ -607,7 +607,7 @@ void RenderObject3d(Object3d * Object,Object3dTransformationDetails * Transforma
 	return;
    
 //Object->TextureOffset = 3;
-    Object3dRenderingPrep(Object, PaletteData,Side, TransformationDetails->TextureOffset,TextureContainer, TempArena, TransformationDetails);
+    Object3dRenderingPrep(Object, PaletteData,Side, TransformationDetails->TextureOffset, TempArena, TransformationDetails);
     //TODO(Christof): Actually make use of TransformationDetails
 
     Matrix CurrentMatrix;

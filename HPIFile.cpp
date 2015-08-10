@@ -129,7 +129,7 @@ void DecompressZLibChunk(u8 * Source, int CompressedSize, int DecompressedSize, 
 
 const int LZ77_WINDOW_SIZE=4096;
 const int LZ77_LENGTH_MASK=0x0f;
-void DecompressLZ77Chunk(u8 * Source, int CompressedSize, int DecompressedSize, u8 * Destination)
+void DecompressLZ77Chunk(u8 * Source,  u8 * Destination)
 {
     unsigned char Window[LZ77_WINDOW_SIZE];
     
@@ -207,7 +207,7 @@ u8 * LoadChunk(u8 * Source, u8  * Destination)
 	DecompressZLibChunk(data,header->CompressedSize,header->DecompressedSize,Destination);
 	break;
     case COMPRESSION_LZ77:
-	DecompressLZ77Chunk(data,header->CompressedSize,header->DecompressedSize,Destination);
+	DecompressLZ77Chunk(data,Destination);
 	break;
     default:
 	LogWarning("Unknown Compression method %d in chunk",CompressionMethod);

@@ -27,7 +27,7 @@ Texture * GetTexture(const char * Name, TextureContainer * TextureContainer)
     return 0;
 }
 
-Texture * GetTexture(Texture * Texture, s32 FrameNumber, TextureContainer * TextureContainer)
+Texture * GetTexture(Texture * Texture, s32 FrameNumber)
 {
     if(Texture)
     {
