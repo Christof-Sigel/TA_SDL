@@ -56,8 +56,8 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Create",0, 0, &CurrentGameState->UnitTransformationDetails);
 	    s32 Args[] ={s32(1*COB_ANGULAR_CONSTANT)};
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Activate",1, Args, &CurrentGameState->UnitTransformationDetails);
-	    s32 FireArgs[] ={s32(-1*COB_ANGULAR_CONSTANT), s32(-0.25*COB_ANGULAR_CONSTANT)};
-	    if(!StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "AimPrimary",2, FireArgs, &CurrentGameState->UnitTransformationDetails))
+
+	    //if(!StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "AimPrimary",2, FireArgs, &CurrentGameState->UnitTransformationDetails))
 	    {
 		StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "StartBuilding",1, Args, &CurrentGameState->UnitTransformationDetails);
 	    }
@@ -104,8 +104,14 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	    
 	}
     }
+
+    if(Input->KeyIsDown[SDLK_f]&& !Input->KeyWasDown[SDLK_f])
+    {
+	s32 FireArgs[] ={s32(-1*COB_ANGULAR_CONSTANT), s32(-0.25*COB_ANGULAR_CONSTANT)};
+	StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "AimPrimary",2, FireArgs, &CurrentGameState->UnitTransformationDetails);
+    }
     
-    if(Input->KeyIsDown[SDLK_ESCAPE])
+    if(Input->KeyIsDown[SDLK_ESCAPE] )
     {
 	CurrentGameState->Quit=true;
     }
@@ -389,7 +395,8 @@ extern "C"
 	
 	for(int i=0;i<CurrentGameState->CurrentScriptPool.NumberOfScripts;i++)
 	{
-	    RunScript(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], &CurrentGameState->temp_model, &CurrentGameState->CurrentScriptPool);
+	    if(CurrentGameState->NumberOfFrames %120 == 0)
+	    RunScript(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], &CurrentGameState->temp_model, &CurrentGameState->CurrentScriptPool,1);
 	}
 	CleanUpScriptPool(&CurrentGameState->CurrentScriptPool);
 	b32 Animate = CurrentGameState->NumberOfFrames%10==0;
