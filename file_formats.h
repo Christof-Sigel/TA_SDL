@@ -275,9 +275,9 @@ struct Object3dTransformationDetails
     MovementDetails MovementTarget[TA_AXIS_NUM];
     SpinDetails SpinTarget[TA_AXIS_NUM];
     
-    float Rotation[TA_AXIS_NUM];
-    float Movement[TA_AXIS_NUM];
-    float Spin[TA_AXIS_NUM];
+    r32 Rotation[TA_AXIS_NUM];
+    r32 Movement[TA_AXIS_NUM];
+    r32 Spin[TA_AXIS_NUM];
 
     Object3dTransformationDetails * Children;
     int TextureOffset;
