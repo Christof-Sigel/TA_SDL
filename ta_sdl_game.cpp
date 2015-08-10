@@ -390,12 +390,13 @@ extern "C"
 	
 	Matrix ModelMatrix;
 
-	CleanUpScriptPool(&CurrentGameState->CurrentScriptPool);
+
 	
 	for(int i=0;i<CurrentGameState->CurrentScriptPool.NumberOfScripts;i++)
 	{
 	    RunScript(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], &CurrentGameState->temp_model, &CurrentGameState->CurrentScriptPool);
 	}
+	CleanUpScriptPool(&CurrentGameState->CurrentScriptPool);
 	b32 Animate = CurrentGameState->NumberOfFrames%10==0;
 
 	UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f, Animate);
@@ -531,6 +532,57 @@ extern "C"
 	    CurrentGameState->CurrentScriptPool.NumberOfScripts);
 	DrawTextureFontText(MemoryUsageText, CurrentGameState->ScreenWidth-TextSizeInPixels(MemoryUsageText, &CurrentGameState->Font12).Width, 0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
 
+
+	for(s32 i=0;i < CurrentGameState->CurrentScriptPool.NumberOfScripts; i++)
+	{
+	    Block BlockedOn = BLOCK_INIT;
+	    
+	    BlockedOn=CurrentGameState->CurrentScriptPool.Scripts[i].BlockedOn;
+	    Color TextColor = {{1,1,1}};
+	    switch(BlockedOn)
+	    {
+	    case BLOCK_INIT:
+		TextColor = {{1,1,1}};
+		break;
+		//GREEN
+	    case BLOCK_NOT_BLOCKED:
+		TextColor = {{0,1,0}};
+		break;
+		//CYAN
+	    case BLOCK_MOVE:
+		TextColor = {{0,1,1}};
+		break;
+		//PURPLE
+	    case BLOCK_TURN:
+		TextColor = {{1,0,1}};
+		break;
+//YELLOW
+	    case BLOCK_SLEEP:
+		TextColor = {{1,1,0}};
+		break;
+		//BLUE
+	    case BLOCK_DONE:
+		TextColor = {{0,0,1}};
+		break;
+		//RED
+	    case BLOCK_SCRIPT:
+		TextColor = {{1,0,0}};
+		break;
+	    }
+	    DrawTextureFontText(CurrentGameState->CurrentUnitScript.FunctionNames[CurrentGameState->CurrentScriptPool.Scripts[i].ScriptNumber],i*350,  CurrentGameState->ScreenHeight -120 ,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
+
+	    
+	    s32 Offset = 0;
+	    TextColor = {{0,1,0}};
+	    for(s32 j=0;j<5;j++)
+	    {
+	
+		Offset += OutputInstructionString(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], 20+ i*350, CurrentGameState->ScreenHeight - 100+(j*20), TextColor, Offset, &CurrentGameState->Font12, &CurrentGameState->DrawTextureShaderDetails);
+		if(Offset == -1)
+		    break;
+		TextColor = {{1,1,1}};
+	    }
+	}
 
 	CurrentGameState->NumberOfFrames++;
     }
