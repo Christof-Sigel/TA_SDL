@@ -32,7 +32,7 @@ inline void FillTextureData(GLfloat * TextureData , int CurrentTriangle, GLfloat
     }
 }
 
-Texture NoTexture={"",0,-2,-2,1,1,0,0, 1};
+Texture NoTexture={"",0,-10,-10,1,1,0,0, 1};
 b32 TextureIsSideTexture(Texture * Texture)
 {
     //NOTE(Christof): only the side textures seem to have 10 frames?
@@ -188,7 +188,7 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		break;
 	    case 3:
 	    {
-		GLfloat UVCoords[]={0,1, 0,0, 1,1};
+		GLfloat UVCoords[]={ 0,0,1, 0,1,1, 1,1,1};
 		int Vertexes[]={0,2,1};
 		FillObject3dData(Data,CurrentTriangle,Vertexes,Object,CurrentPrimitive,PaletteData);
 		FillTextureData(TextureData, CurrentTriangle, UVCoords, Texture);
@@ -259,11 +259,11 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	    break;
 	    default:
 	    {
-		GLfloat UVCoords[6];
+		GLfloat UVCoords[9];
 		//Map sin/cos unit circle at (0,0) onto 1/2 unit circle at (0.5,0.5)
 		UVCoords[2*2]=0.5f*(float)(1.0f-(sin((2.0f*(CurrentPrimitive->NumberOfVertices-1)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
 		UVCoords[2*2+1]=0.5f*(float)(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(CurrentPrimitive->NumberOfVertices-1)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
-
+		UVCoords[2*3+2] = 1.0f;
 		for(int i=0;i<CurrentPrimitive->NumberOfVertices-2;i++)
 		{
 		    int Vertexes[]={i,i+1,CurrentPrimitive->NumberOfVertices-1};
@@ -271,8 +271,9 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		    for(int j=0;j<2;j++)
 		    {
 			//Map sin/cos unit circle at (0,0) onto 1/2 unit circle at (0.5,0.5)
-			UVCoords[j*2]=0.5f*(float)(1-(sin((2.0f*(i+j)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
-			UVCoords[j*2+1]=0.5f*(float)(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(i+j)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
+			UVCoords[j*3]=0.5f*(float)(1-(sin((2.0f*(i+j)+1)*PI/float(CurrentPrimitive->NumberOfVertices))/cos(PI/CurrentPrimitive->NumberOfVertices)));
+			UVCoords[j*3+1]=0.5f*(float)(1-(cos(PI/CurrentPrimitive->NumberOfVertices*(2.0f*(i+j)+1))/cos(PI/CurrentPrimitive->NumberOfVertices)));
+			UVCoords[j*3+2] = 1.0f;
 		    }
 		    FillObject3dData(Data,CurrentTriangle,Vertexes,Object,CurrentPrimitive,PaletteData);
 		    FillTextureData(TextureData, CurrentTriangle, UVCoords, Texture);
@@ -340,7 +341,7 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	if(Data)
 	    PopArray(TempArena,Data,Object->NumTriangles * (3+3)*3, GLfloat);
     }
-    if(Object->Animates)
+    if(Object->Animates && !(TransformationDetails->Flags  & OBJECT3D_FLAG_CACHE))
     {
 	GLfloat * TextureData = PushArray(TempArena,Object->NumTriangles * (4)*3, GLfloat);
 

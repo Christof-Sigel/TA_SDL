@@ -17,7 +17,7 @@ const s32 RotationYAxisMod = 1;
 const s32 RotationZAxisMod = -1;
 
 const u32 OBJECT3D_FLAG_HIDE = 1;
-const u32 OBJECT3D_FLAG_DONT_CACHE = 2;
+const u32 OBJECT3D_FLAG_CACHE = 2;
 const u32 OBJECT3D_FLAG_DONT_SHADE = 4;
 
 const s32 MAX_3DO_NAME_LENGTH = 32;
@@ -476,13 +476,15 @@ struct UnitScript
 struct ScriptState
 {
     //TODO(Christof): determine if stack can contain floats? some docs seem to indicate they should?
-    int StackSize;
-    s32 Stack[UNIT_SCRIPT_MAX_STACK_SIZE];
+    s32 StackSizeN;
+    s32 * StackData;
+    s32 StackStorage[UNIT_SCRIPT_MAX_STACK_SIZE];
     int NumberOfLocalVariables;
     s32 LocalVariables[UNIT_SCRIPT_MAX_STACK_SIZE];//NOTE(Christof): function parameters go at the beginning
     int NumberOfStaticVariables;
     s32 * StaticVariables;
-    int ProgramCounter;
+    int CurrentProgramCounter;
+    int LastProgramCounter;
     Block BlockedOn;
     int BlockTime;//NOTE(Christof): this is in milliseconds
     int BlockedOnPiece;
@@ -492,7 +494,6 @@ struct ScriptState
     int ScriptNumber;
     int NumberOfParameters;
     struct Object3dTransformationDetails * TransformationDetails;
-    u32 CurrentInstructionCount;
 };
 
 struct ScriptStatePool

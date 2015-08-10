@@ -62,6 +62,8 @@ void LoadCurrentModel(GameState * CurrentGameState)
 		StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "StartBuilding",1, Args, &CurrentGameState->UnitTransformationDetails);
 	    }
 
+	    Args[0] = s32(1.0/60.0*COB_ANGULAR_CONSTANT);
+	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "SetSpeed",1, Args, &CurrentGameState->UnitTransformationDetails);
 	    
 
 //	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
@@ -98,15 +100,8 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	if(Input->KeyIsDown[i])
 	{
 	    int ScriptNumber = i -SDLK_0;
-	    if(ScriptNumber < CurrentGameState->CurrentUnitScript.NumberOfFunctions)
-	    {
-
-		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].ScriptNumber = ScriptNumber;
-		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].TransformationDetails = &CurrentGameState->UnitTransformationDetails;
-		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].StaticVariables = CurrentGameState->CurrentScriptPool.StaticVariables;
-		CurrentGameState->CurrentScriptPool.Scripts[CurrentGameState->CurrentScriptPool.NumberOfScripts].NumberOfStaticVariables = CurrentGameState->CurrentUnitScript.NumberOfStatics;
-		CurrentGameState->CurrentScriptPool.NumberOfScripts++;
-	    }
+	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, ScriptNumber ,0, 0, &CurrentGameState->UnitTransformationDetails);
+	    
 	}
     }
     
@@ -539,37 +534,47 @@ extern "C"
 	    
 	    BlockedOn=CurrentGameState->CurrentScriptPool.Scripts[i].BlockedOn;
 	    Color TextColor = {{1,1,1}};
+	    char ScriptBlockDeets[64];
 	    switch(BlockedOn)
 	    {
 	    case BLOCK_INIT:
 		TextColor = {{1,1,1}};
+		snprintf(ScriptBlockDeets, 64, "Waiting to start");
 		break;
 		//GREEN
 	    case BLOCK_NOT_BLOCKED:
 		TextColor = {{0,1,0}};
+		snprintf(ScriptBlockDeets, 64, "Running");
 		break;
 		//CYAN
 	    case BLOCK_MOVE:
 		TextColor = {{0,1,1}};
+		snprintf(ScriptBlockDeets, 64, "Waiting on Move");
 		break;
 		//PURPLE
 	    case BLOCK_TURN:
 		TextColor = {{1,0,1}};
+		snprintf(ScriptBlockDeets, 64, "Waiting on Turn");
 		break;
 //YELLOW
 	    case BLOCK_SLEEP:
 		TextColor = {{1,1,0}};
+		snprintf(ScriptBlockDeets, 64, "Sleeping");
 		break;
 		//BLUE
 	    case BLOCK_DONE:
 		TextColor = {{0,0,1}};
+		snprintf(ScriptBlockDeets, 64, "Done");
 		break;
 		//RED
 	    case BLOCK_SCRIPT:
 		TextColor = {{1,0,0}};
+		snprintf(ScriptBlockDeets, 64, "Waiting on script");
 		break;
 	    }
-	    DrawTextureFontText(CurrentGameState->CurrentUnitScript.FunctionNames[CurrentGameState->CurrentScriptPool.Scripts[i].ScriptNumber],i*350,  CurrentGameState->ScreenHeight -120 ,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
+	    char ScriptNameDeets[128];
+	    snprintf(ScriptNameDeets, 128, "%s - %s", CurrentGameState->CurrentUnitScript.FunctionNames[CurrentGameState->CurrentScriptPool.Scripts[i].ScriptNumber], ScriptBlockDeets);
+	    DrawTextureFontText(ScriptNameDeets,i*350,  CurrentGameState->ScreenHeight -120 ,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
 
 	    
 	    s32 Offset = 0;
@@ -580,6 +585,15 @@ extern "C"
 		Offset += OutputInstructionString(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], 20+ i*350, CurrentGameState->ScreenHeight - 100+(j*20), TextColor, Offset, &CurrentGameState->Font12, &CurrentGameState->DrawTextureShaderDetails);
 		if(Offset == -1)
 		    break;
+		TextColor = {{1,1,1}};
+	    }
+
+	    TextColor = {{0,1,0}};
+	    for(s32 StackIndex = 0; StackIndex < CurrentGameState->CurrentScriptPool.Scripts[i].StackSizeN; StackIndex++)
+	    {
+		char StackString[24];
+		snprintf(StackString, 24, "%d", GetStack(&CurrentGameState->CurrentScriptPool.Scripts[i],0));
+		DrawTextureFontText(StackString,i*350 + 20,  CurrentGameState->ScreenHeight - 140 - StackIndex*20 ,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
 		TextColor = {{1,1,1}};
 	    }
 	}

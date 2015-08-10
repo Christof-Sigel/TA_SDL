@@ -88,6 +88,9 @@ inline b32 HasGameLibraryBeenUpdated()
 
 int main(int argc, char * argv[])
 {
+    int x = argc;
+    char * temp = argv[x];
+    temp++;
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
     {
 	LogError("SDL_Init Error: %s", SDL_GetError());
