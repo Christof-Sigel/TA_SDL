@@ -142,14 +142,14 @@ enum CobCommands
 
 inline void PushStack(ScriptState * State, s32 Value)
 {
-    Assert(State->StackSizeN < UNIT_SCRIPT_MAX_STACK_SIZE);
-    State->StackData[State->StackSizeN++] = Value;
+    Assert(State->StackSize < UNIT_SCRIPT_MAX_STACK_SIZE);
+    State->StackData[State->StackSize++] = Value;
 }
 
 inline s32 PopStack(ScriptState * State)
 {
-    Assert(State->StackSizeN > 0)
-    return State->StackData[--State->StackSizeN];
+    Assert(State->StackSize > 0)
+    return State->StackData[--State->StackSize];
 }
 
 int MILLISECONDS_PER_FRAME = 1000/60;
@@ -171,7 +171,7 @@ Object3dTransformationDetails * FindTransformationForPiece(Object3d * Object, Ob
 
 inline s32 PostData(UnitScript * Script,ScriptState * State)
 {
-    return Script->ScriptData[State->CurrentProgramCounter++];
+    return Script->ScriptData[State->ProgramCounter++];
 }
 
 
@@ -266,23 +266,23 @@ ScriptState * CreateNewScriptState(UnitScript * Script, ScriptState * State, Scr
     return AddNewScript(Pool, Script, NumberOfArguments, Arguments, State->TransformationDetails, FunctionNumber,  State->SignalMask);
 }
 
-void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool, int InstructionsToRun = MAX_INSTRUCTIONS_PER_FRAME)
+s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool, const s32 InstructionsToRun = MAX_INSTRUCTIONS_PER_FRAME)
 {
     if(State->ScriptNumber < 0)
-	return;
+	return -1;
     switch(State->BlockedOn)
     {
     case BLOCK_SCRIPT:
 	//NOTE(christof): the called script will wake us on return (and kill by signal I guess?)
-	return;
+	return -1;
     case BLOCK_DONE:
-	return;
+	return -1;
     case BLOCK_SLEEP:
 	State->BlockTime -= MILLISECONDS_PER_FRAME;
 	if(State->BlockTime < 0)
 	    State->BlockedOn = BLOCK_NOT_BLOCKED;
 	else
-	    return;
+	    return -1;
 	break;
     case BLOCK_MOVE:
     {
@@ -292,7 +292,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	if(!PieceTransform)
 	{
 	    LogError("Could not find piece %s while waiting for move",PieceName);
-	    return;
+	    return -1;
 	}
 	else
 	{
@@ -302,7 +302,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    }
 	    else
 	    {
-		return;
+		return -1;
 	    }
 	}
     }
@@ -315,7 +315,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	if(!PieceTransform)
 	{
 	    LogError("Could not find piece %s while waiting for move",PieceName);
-	    return;
+	    return -1;
 
 	}
 	else
@@ -326,28 +326,28 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    }
 	    else
 	    {
-		return;
-	    }
+		return -1;
+	    } 
 	}
     }
     case BLOCK_NOT_BLOCKED:
 	break;
     case BLOCK_INIT:
-	State->CurrentProgramCounter = Script->FunctionOffsets[State->ScriptNumber];
+	State->ProgramCounter = Script->FunctionOffsets[State->ScriptNumber];
 	State->BlockedOn = BLOCK_NOT_BLOCKED;
 	break;
     }
+    
     int CurrentInstructionCount=0;
 
     //NOTE(Christof): in cob instructions doc, top of the stack is at the BOTTOM of the list
     for(;;)
     {
-	if(CurrentInstructionCount++ > InstructionsToRun)
+	if(++CurrentInstructionCount > InstructionsToRun)
 	{
-	    return;
+	    return -1;
 	}
-	State->LastProgramCounter = State->CurrentProgramCounter;
-	switch(Script->ScriptData[State->CurrentProgramCounter++])
+	switch(Script->ScriptData[State->ProgramCounter++])
 	{
 	case COB_MOVE:
 	{
@@ -439,28 +439,9 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_SPIN_STOP:
 	{
-	    s32 Speed = PopStack(State);
 	    s32 Acceleration = PopStack(State);
 	    s32 PieceNumber = PostData(Script,State);
 	    s32 Axis = PostData(Script,State);
-	    switch(Axis)
-	    {
-	    case TA_AXIS_X:
-		Speed = Speed * RotationXAxisMod;
-		break;
-	    case TA_AXIS_Y:
-		Speed = Speed * RotationYAxisMod;
-		break;
-	    case TA_AXIS_Z:
-		Speed = Speed * RotationZAxisMod;
-		break;
-	    }
-
-	    if(Speed !=0)
-	    {
-		LogWarning("Spin stop called with non zero speed %d?",Speed);
-	    }
-	    //NOTE(Christof): if Acceleration is 0 Spin change is immediate
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
@@ -471,7 +452,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    }
 	    else
 	    {
-		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT;
+		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT/64;
 		PieceTransform->SpinTarget[Axis].Speed = 0;
 	    }
 
@@ -593,18 +574,18 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    State->BlockedOn = BLOCK_TURN;
 	    State->BlockedOnPiece = PostData(Script,State);
 	    State->BlockedOnAxis = PostData(Script,State);
-	    return;
+	    return -1;
 	    break;
 	case COB_WAIT_FOR_MOVE:
 	    State->BlockedOn = BLOCK_MOVE;
 	    State->BlockedOnPiece = PostData(Script,State);
 	    State->BlockedOnAxis = PostData(Script,State);
-	    return;
+	    return -1;
 	    break;
 	case COB_SLEEP:
 	    State->BlockedOn = BLOCK_SLEEP;
 	    State->BlockTime = PopStack(State);
-	    return;
+	    return -1;
 	case COB_CREATE_LOCAL_VARIABLE:
 	    if(State->NumberOfParameters)
 		State->NumberOfParameters--;
@@ -614,6 +595,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	case COB_STACK_FLUSH:
 	    LogDebug("Flushing stack in %s",Script->FunctionNames[State->ScriptNumber]);
 //	    State->StackSize=0;
+	    Assert(!"NOPE");
 	    break;
 	case COB_PUSH_CONSTANT:
 	    PushStack(State, PostData(Script,State));
@@ -801,32 +783,32 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    ScriptState * NewState = CreateNewScriptState(Script,State,Pool);
 	    NewState->ReturnTo = State;
 	    NewState->StackData = State->StackData;
-	    NewState->StackSizeN = State->StackSizeN;
+	    NewState->StackSize = State->StackSize;
 	    State->BlockedOn = BLOCK_SCRIPT;
-	    return;
+	    return -1;
 	}
 	break;
 	case COB_JUMP:
 	    //NOTE(Christof): This is unconditional, does NOT pull from the stack
-	    State->CurrentProgramCounter = PostData(Script,State);
+	    State->ProgramCounter = PostData(Script,State);
 	    break;
 	case COB_RETURN:
 	{
 	    State->BlockedOn=BLOCK_DONE;
+	    s32 Result = PopStack(State);
 	    if(State->ReturnTo)
 	    {
-		//PushStack(State->ReturnTo,PopStack(State));
-		State->ReturnTo->StackSizeN = State->StackSizeN;
+		State->ReturnTo->StackSize = State->StackSize;
 		State->ReturnTo->BlockedOn = BLOCK_NOT_BLOCKED;
 	    }
-	    return;
+	    return Result;
 	}
 	case COB_JUMP_IF_FALSE:
 	{
 	    s32 NewProgramCounter = PostData(Script,State);
 	    if(PopStack(State) == 0 )
 	    {
-		State->CurrentProgramCounter = NewProgramCounter;
+		State->ProgramCounter = NewProgramCounter;
 	    }
 	    break;
 	}
@@ -882,12 +864,17 @@ const char * Axes[]= {"X Axis","Y Axis","Z Axis"};
 
 s32 GetStack(ScriptState * State, s32 Offset)
 {
-    return State->StackData[State->StackSizeN - Offset];
+    return State->StackData[State->StackSize - Offset];
+}
+
+s32 GetNextData( UnitScript * Script,ScriptState * State, int Offset)
+{
+    return Script->ScriptData[State->ProgramCounter + Offset];
 }
 
 s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32 Y, Color TextColor, s32 Offset, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails)
 {
-    if(State->LastProgramCounter + Offset > Script->ScriptDataSize)
+    if(State->ProgramCounter + Offset > Script->ScriptDataSize)
 	return -1;
     if(State->BlockedOn == BLOCK_INIT)
 	return -1;
@@ -895,12 +882,12 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     char InstructionString[MAX_STRING_LEN] = "UNDER CONSTRUCTION";
    
        s32 Result =  1;
-    switch(Script->ScriptData[State->LastProgramCounter + Offset])
+    switch(Script->ScriptData[State->ProgramCounter + Offset])
     {
     case COB_MOVE:
     {
-	s32 PieceNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	s32 Axis = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
+	s32 Axis = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
 	if(Offset == 0 )
 	{
@@ -916,8 +903,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     break;
     case COB_TURN:
     {
-	s32 PieceNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	s32 Axis = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
+	s32 Axis = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
 	if(Offset == 0 )
 	{
@@ -933,8 +920,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     break;
     case COB_SPIN:
     {
-	s32 PieceNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	s32 Axis = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
+	s32 Axis = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
 
 	if(Offset == 0 )
@@ -957,8 +944,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     break;
     case COB_SPIN_STOP:
     {
-	s32 PieceNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	s32 Axis = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
+	s32 Axis = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
 
 	if(Offset == 0 )
@@ -981,36 +968,36 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     break;
     case COB_SHOW:
     {
-	s32 Piece = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Piece = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[Piece];
 	snprintf(InstructionString, MAX_STRING_LEN, "Show %s",PieceName);
     }
     break;
     case COB_HIDE:
     {
-	s32 Piece = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Piece = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[Piece];
 	snprintf(InstructionString, MAX_STRING_LEN, "Hide %s",PieceName);
     }
     break;
     case COB_CACHE:
     {
-	s32 Piece = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Piece = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[Piece];
 	snprintf(InstructionString, MAX_STRING_LEN, "Cache %s",PieceName);
     }
     break;
     case COB_DONT_CACHE:
     {
-	s32 Piece = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Piece = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[Piece];
 	snprintf(InstructionString, MAX_STRING_LEN, "Don't Cache %s",PieceName);
     }
     break;
     case COB_MOVE_NOW:
     {	
-	s32 PieceNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	s32 Axis = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
+	s32 Axis = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
 	if(Offset == 0 )
 	{
@@ -1025,8 +1012,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     break;
     case COB_TURN_NOW:
     {
-	s32 PieceNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	s32 Axis = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
+	s32 Axis = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
 	if(Offset == 0 )
 	{
@@ -1041,21 +1028,21 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     break;
     case COB_SHADE:
     {
-	s32 Piece = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Piece = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[Piece];
 	snprintf(InstructionString, MAX_STRING_LEN, "Shade %s",PieceName);
     }
     break;
     case COB_DONT_SHADE:
     {
-	s32 Piece = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Piece = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[Piece];
 	snprintf(InstructionString, MAX_STRING_LEN, "Don't Shade %s",PieceName);
     }
     break;
     case COB_EMIT_SPECIAL_EFFECTS:
     {
-	s32 PieceNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
 	if(Offset == 0 )
 	{
@@ -1070,8 +1057,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     break;
     case COB_WAIT_FOR_TURN:
     {
-	s32 PieceNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	s32 Axis = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
+	s32 Axis = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
 
 	snprintf(InstructionString, MAX_STRING_LEN, "Wait for %s to turn about %s",PieceName, Axes[Axis]);
@@ -1079,8 +1066,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
 	break;
     case COB_WAIT_FOR_MOVE:
     {
-	s32 PieceNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	s32 Axis = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
+	s32 Axis = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
 
 	snprintf(InstructionString, MAX_STRING_LEN, "Wait for %s to move along %s",PieceName, Axes[Axis]);
@@ -1104,29 +1091,29 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
 	snprintf(InstructionString, MAX_STRING_LEN,  "Flush Stack");
 	break;
     case COB_PUSH_CONSTANT:
-	snprintf(InstructionString, MAX_STRING_LEN, "Push %d",Script->ScriptData[State->LastProgramCounter + Offset + (Result++)]);
+	snprintf(InstructionString, MAX_STRING_LEN, "Push %d",GetNextData(Script,State, Offset + (Result++)));
 	break;
     case COB_PUSH_LOCAL_VARIABLE:
     {
-	s32 Index = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Index = GetNextData(Script,State, Offset + (Result++));
 	snprintf(InstructionString, MAX_STRING_LEN, "Push Local Variable %d",Index);
     }
     break;
     case COB_PUSH_STATIC_VARIABLE:
     {
-	s32 Index = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Index = GetNextData(Script,State, Offset + (Result++));
 	snprintf(InstructionString, MAX_STRING_LEN, "Push Static Variable %d",Index);
     }
     break;
     case COB_POP_LOCAL_VARIABLE:
     {
-	s32 Index = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Index = GetNextData(Script,State, Offset + (Result++));
 	snprintf(InstructionString, MAX_STRING_LEN, "Pop Local Variable %d",Index);
     }
     break;
     case COB_POP_STATIC_VARIABLE:
     {
-		s32 Index = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+		s32 Index = GetNextData(Script,State, Offset + (Result++));
 	snprintf(InstructionString, MAX_STRING_LEN, "Pop Static Variable %d",Index);
     }
     break;
@@ -1401,8 +1388,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
 	break;
     case COB_START_SCRIPT:
     {
-	 s32 FunctionNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	 s32 NumberOfArguments = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	 s32 FunctionNumber = GetNextData(Script,State, Offset + (Result++));
+	 s32 NumberOfArguments = GetNextData(Script,State, Offset + (Result++));
 	 char * FunctionName = Script->FunctionNames[FunctionNumber];
 	 //TODO(Christof): display arguments from stack if we can
 	 snprintf(InstructionString, MAX_STRING_LEN, "Start %s with %d arguments", FunctionName, NumberOfArguments);
@@ -1411,8 +1398,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     case COB_CALL_SCRIPT2:
     case COB_CALL_SCRIPT:
     {
-	s32 FunctionNumber = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	s32 NumberOfArguments = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 FunctionNumber = GetNextData(Script,State, Offset + (Result++));
+	s32 NumberOfArguments = GetNextData(Script,State, Offset + (Result++));
 	char * FunctionName = Script->FunctionNames[FunctionNumber];
 	//TODO(Christof): display arguments from stack if we can
 	snprintf(InstructionString, MAX_STRING_LEN, "Call %s with %d arguments", FunctionName, NumberOfArguments);
@@ -1421,9 +1408,9 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     case COB_JUMP:
     {
 	//NOTE(Christof): This is unconditional, does NOT pull from the stack
-	s32 JumpTo = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 JumpTo = GetNextData(Script,State, Offset + (Result++));
 	snprintf(InstructionString, MAX_STRING_LEN, "Jump to %d", JumpTo);
-	Result = JumpTo - (State->LastProgramCounter + Offset);
+	Result = JumpTo - (State->ProgramCounter + Offset);
     }
 	break;
     case COB_RETURN:
@@ -1434,8 +1421,15 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     break;
     case COB_JUMP_IF_FALSE:
     {
-	s32 JumpTo = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
-	snprintf(InstructionString, MAX_STRING_LEN, "Jump to if false %d", JumpTo);
+	s32 JumpTo = GetNextData(Script,State, Offset + (Result++));
+	if(Offset == 0)
+	{
+	    snprintf(InstructionString, MAX_STRING_LEN, "Jump to %d if %d false", JumpTo, GetStack(State, 0));
+	}
+	else
+	{
+	snprintf(InstructionString, MAX_STRING_LEN, "Jump to %d if ? false", JumpTo);
+	}
 	break;
     }
     case COB_SIGNAL:
@@ -1466,7 +1460,7 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     break;
     case COB_EXPLODE:
     {
-	s32 Piece = Script->ScriptData[State->LastProgramCounter + Offset + (Result++)];
+	s32 Piece = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[Piece];
 	if(Offset == 0)
 	{
@@ -1526,7 +1520,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
 	Assert(!"ERRR, what?");
 	break;
     }
-
-    DrawTextureFontText(InstructionString, X, Y, Font , ShaderDetails, 1.0f, TextColor);
+    char OutputString[MAX_STRING_LEN];
+    snprintf(OutputString, MAX_STRING_LEN, "%d) %s", State->ProgramCounter + Offset, InstructionString);
+    DrawTextureFontText(OutputString, X, Y, Font , ShaderDetails, 1.0f, TextColor);
     return Result;
 }

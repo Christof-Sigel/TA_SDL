@@ -54,7 +54,7 @@ void LoadCurrentModel(GameState * CurrentGameState)
 	    Load3DOFromBuffer(temp,&CurrentGameState->temp_model,&CurrentGameState->UnitTextures,&CurrentGameState->GameArena);
 	    InitTransformationDetails(&CurrentGameState->temp_model, &CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Create",0, 0, &CurrentGameState->UnitTransformationDetails);
-	    s32 Args[] ={s32(1*COB_ANGULAR_CONSTANT)};
+	    s32 Args[] ={s32(-1*COB_ANGULAR_CONSTANT)};
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Activate",1, Args, &CurrentGameState->UnitTransformationDetails);
 
 	    //if(!StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "AimPrimary",2, FireArgs, &CurrentGameState->UnitTransformationDetails))
@@ -97,7 +97,7 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 
     for(int i=SDLK_0;i<=SDLK_9;i++)
     {
-	if(Input->KeyIsDown[i])
+	if(Input->KeyIsDown[i] && ! Input->KeyWasDown[i])
 	{
 	    int ScriptNumber = i -SDLK_0;
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, ScriptNumber ,0, 0, &CurrentGameState->UnitTransformationDetails);
@@ -580,7 +580,7 @@ extern "C"
 		break;
 	    }
 	    char ScriptNameDeets[128];
-	    snprintf(ScriptNameDeets, 128, "%s - %s", CurrentGameState->CurrentUnitScript.FunctionNames[CurrentGameState->CurrentScriptPool.Scripts[i].ScriptNumber], ScriptBlockDeets);
+	    snprintf(ScriptNameDeets, 128, "%s - %s : %d", CurrentGameState->CurrentUnitScript.FunctionNames[CurrentGameState->CurrentScriptPool.Scripts[i].ScriptNumber], ScriptBlockDeets, CurrentGameState->CurrentScriptPool.Scripts[i].StackSize);
 	    DrawTextureFontText(ScriptNameDeets,i*350,  CurrentGameState->ScreenHeight -120 ,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
 
 	    
@@ -596,10 +596,10 @@ extern "C"
 	    }
 
 	    TextColor = {{0,1,0}};
-	    for(s32 StackIndex = 0; StackIndex < CurrentGameState->CurrentScriptPool.Scripts[i].StackSizeN; StackIndex++)
+	    for(s32 StackIndex = 0; StackIndex < CurrentGameState->CurrentScriptPool.Scripts[i].StackSize; StackIndex++)
 	    {
 		char StackString[24];
-		snprintf(StackString, 24, "%d", GetStack(&CurrentGameState->CurrentScriptPool.Scripts[i],0));
+		snprintf(StackString, 24, "%d", GetStack(&CurrentGameState->CurrentScriptPool.Scripts[i],StackIndex));
 		DrawTextureFontText(StackString,i*350 + 20,  CurrentGameState->ScreenHeight - 140 - StackIndex*20 ,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
 		TextColor = {{1,1,1}};
 	    }

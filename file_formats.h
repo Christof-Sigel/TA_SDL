@@ -476,15 +476,14 @@ struct UnitScript
 struct ScriptState
 {
     //TODO(Christof): determine if stack can contain floats? some docs seem to indicate they should?
-    s32 StackSizeN;
+    s32 StackSize;
     s32 * StackData;
     s32 StackStorage[UNIT_SCRIPT_MAX_STACK_SIZE];
     int NumberOfLocalVariables;
     s32 LocalVariables[UNIT_SCRIPT_MAX_STACK_SIZE];//NOTE(Christof): function parameters go at the beginning
     int NumberOfStaticVariables;
     s32 * StaticVariables;
-    int CurrentProgramCounter;
-    int LastProgramCounter;
+    int ProgramCounter;
     Block BlockedOn;
     int BlockTime;//NOTE(Christof): this is in milliseconds
     int BlockedOnPiece;
