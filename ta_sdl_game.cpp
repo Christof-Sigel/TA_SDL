@@ -589,10 +589,10 @@ extern "C"
 	    }
 
 	    TextColor = {{0,1,0}};
-	    for(s32 StackIndex = 0; StackIndex < CurrentGameState->CurrentScriptPool.Scripts[i].StackSizeN; StackIndex++)
+	    for(s32 StackIndex = 0; StackIndex < CurrentGameState->CurrentScriptPool.Scripts[i].StackSize; StackIndex++)
 	    {
 		char StackString[24];
-		snprintf(StackString, 24, "%d", GetStack(&CurrentGameState->CurrentScriptPool.Scripts[i],0));
+		snprintf(StackString, 24, "%d", GetStack(&CurrentGameState->CurrentScriptPool.Scripts[i],StackIndex));
 		DrawTextureFontText(StackString,i*350 + 20,  CurrentGameState->ScreenHeight - 140 - StackIndex*20 ,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
 		TextColor = {{1,1,1}};
 	    }
