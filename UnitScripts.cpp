@@ -439,28 +439,9 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	break;
 	case COB_SPIN_STOP:
 	{
-	    s32 Speed = PopStack(State);
 	    s32 Acceleration = PopStack(State);
 	    s32 PieceNumber = PostData(Script,State);
 	    s32 Axis = PostData(Script,State);
-	    switch(Axis)
-	    {
-	    case TA_AXIS_X:
-		Speed = Speed * RotationXAxisMod;
-		break;
-	    case TA_AXIS_Y:
-		Speed = Speed * RotationYAxisMod;
-		break;
-	    case TA_AXIS_Z:
-		Speed = Speed * RotationZAxisMod;
-		break;
-	    }
-
-	    if(Speed !=0)
-	    {
-		LogWarning("Spin stop called with non zero speed %d?",Speed);
-	    }
-	    //NOTE(Christof): if Acceleration is 0 Spin change is immediate
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
