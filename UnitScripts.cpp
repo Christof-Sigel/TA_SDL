@@ -266,23 +266,23 @@ ScriptState * CreateNewScriptState(UnitScript * Script, ScriptState * State, Scr
     return AddNewScript(Pool, Script, NumberOfArguments, Arguments, State->TransformationDetails, FunctionNumber,  State->SignalMask);
 }
 
-void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool, int InstructionsToRun = MAX_INSTRUCTIONS_PER_FRAME)
+s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool, const s32 InstructionsToRun = MAX_INSTRUCTIONS_PER_FRAME)
 {
     if(State->ScriptNumber < 0)
-	return;
+	return -1;
     switch(State->BlockedOn)
     {
     case BLOCK_SCRIPT:
 	//NOTE(christof): the called script will wake us on return (and kill by signal I guess?)
-	return;
+	return -1;
     case BLOCK_DONE:
-	return;
+	return -1;
     case BLOCK_SLEEP:
 	State->BlockTime -= MILLISECONDS_PER_FRAME;
 	if(State->BlockTime < 0)
 	    State->BlockedOn = BLOCK_NOT_BLOCKED;
 	else
-	    return;
+	    return -1;
 	break;
     case BLOCK_MOVE:
     {
@@ -292,7 +292,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	if(!PieceTransform)
 	{
 	    LogError("Could not find piece %s while waiting for move",PieceName);
-	    return;
+	    return -1;
 	}
 	else
 	{
@@ -302,7 +302,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    }
 	    else
 	    {
-		return;
+		return -1;
 	    }
 	}
     }
@@ -315,7 +315,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	if(!PieceTransform)
 	{
 	    LogError("Could not find piece %s while waiting for move",PieceName);
-	    return;
+	    return -1;
 
 	}
 	else
@@ -326,8 +326,8 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    }
 	    else
 	    {
-		return;
-	    }
+		return -1;
+	    } 
 	}
     }
     case BLOCK_NOT_BLOCKED:
@@ -343,9 +343,9 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
     //NOTE(Christof): in cob instructions doc, top of the stack is at the BOTTOM of the list
     for(;;)
     {
-	if(CurrentInstructionCount++ > InstructionsToRun)
+	if(++CurrentInstructionCount > InstructionsToRun)
 	{
-	    return;
+	    return -1;
 	}
 	switch(Script->ScriptData[State->ProgramCounter++])
 	{
@@ -452,7 +452,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    }
 	    else
 	    {
-		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT;
+		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT/64;
 		PieceTransform->SpinTarget[Axis].Speed = 0;
 	    }
 
@@ -574,18 +574,18 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    State->BlockedOn = BLOCK_TURN;
 	    State->BlockedOnPiece = PostData(Script,State);
 	    State->BlockedOnAxis = PostData(Script,State);
-	    return;
+	    return -1;
 	    break;
 	case COB_WAIT_FOR_MOVE:
 	    State->BlockedOn = BLOCK_MOVE;
 	    State->BlockedOnPiece = PostData(Script,State);
 	    State->BlockedOnAxis = PostData(Script,State);
-	    return;
+	    return -1;
 	    break;
 	case COB_SLEEP:
 	    State->BlockedOn = BLOCK_SLEEP;
 	    State->BlockTime = PopStack(State);
-	    return;
+	    return -1;
 	case COB_CREATE_LOCAL_VARIABLE:
 	    if(State->NumberOfParameters)
 		State->NumberOfParameters--;
@@ -595,6 +595,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	case COB_STACK_FLUSH:
 	    LogDebug("Flushing stack in %s",Script->FunctionNames[State->ScriptNumber]);
 //	    State->StackSize=0;
+	    Assert(!"NOPE");
 	    break;
 	case COB_PUSH_CONSTANT:
 	    PushStack(State, PostData(Script,State));
@@ -784,7 +785,7 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	    NewState->StackData = State->StackData;
 	    NewState->StackSize = State->StackSize;
 	    State->BlockedOn = BLOCK_SCRIPT;
-	    return;
+	    return -1;
 	}
 	break;
 	case COB_JUMP:
@@ -794,13 +795,13 @@ void RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scri
 	case COB_RETURN:
 	{
 	    State->BlockedOn=BLOCK_DONE;
+	    s32 Result = PopStack(State);
 	    if(State->ReturnTo)
 	    {
 		State->ReturnTo->StackSize = State->StackSize;
-		//PushStack(State->ReturnTo,PopStack(State));
 		State->ReturnTo->BlockedOn = BLOCK_NOT_BLOCKED;
 	    }
-	    return;
+	    return Result;
 	}
 	case COB_JUMP_IF_FALSE:
 	{
@@ -1519,7 +1520,8 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
 	Assert(!"ERRR, what?");
 	break;
     }
-
-    DrawTextureFontText(InstructionString, X, Y, Font , ShaderDetails, 1.0f, TextColor);
+    char OutputString[MAX_STRING_LEN];
+    snprintf(OutputString, MAX_STRING_LEN, "%d) %s", State->ProgramCounter + Offset, InstructionString);
+    DrawTextureFontText(OutputString, X, Y, Font , ShaderDetails, 1.0f, TextColor);
     return Result;
 }
