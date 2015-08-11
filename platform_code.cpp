@@ -285,6 +285,7 @@ inline u64  GetFileModifiedTime(const char * FileName)
 	return {0};
   
     return filestats.st_mtime;
+
 #endif
 }
 

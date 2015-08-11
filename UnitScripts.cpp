@@ -779,7 +779,6 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    LogDebug("Call Script NUMBER 2!!!!");
 	case COB_CALL_SCRIPT:
 	{
-	    //NOTE(Christof): this may need to reuse the same stack?
 	    ScriptState * NewState = CreateNewScriptState(Script,State,Pool);
 	    NewState->ReturnTo = State;
 	    NewState->StackData = State->StackData;
@@ -815,7 +814,15 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	case COB_SIGNAL:
 	{
 	    s32 Signal = PopStack(State);
-	    LogError("We do not currently handle signals %d",Signal);
+	    for(s32 i=0;i<Pool->NumberOfScripts;i++)
+	    {
+		if(Pool->Scripts[i].SignalMask == Signal)
+		{
+		    Pool->Scripts[i].BlockedOn = BLOCK_DONE;
+		}
+	    }
+	    if(State->BlockedOn == BLOCK_DONE)
+		return -1;
 	}
 	break;
 	case COB_SET_SIGNAL_MASK:
