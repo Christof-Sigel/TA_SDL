@@ -696,10 +696,10 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    switch(GetValue)
 	    {
 	    case UNIT_VAR_BUILD_PERCENT_LEFT:
-		Value =100;
+		Value = 0;
 		break;
 	    case UNIT_VAR_HEALTH:
-		Value = 50;
+		Value = 100;
 		break;
 	    default:
 		LogWarning("Putting bogus unit value %d (%s) on the stack",GetValue, UnitVariableNames[GetValue]);
@@ -730,6 +730,8 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    LogDebug("Pushing 0 onto the stack for unknown5/6");
 	    PushStack(State, 0);
 	    break;
+	    //TODO(Christof): investigate (TA Spring probably a good source) for the order of operands?
+	    //Cob reference might work too (probably just implemented without checking these)
 	case COB_LESS_THAN:
 	    PushStack(State, PopStack(State) < PopStack(State));
 	    break;

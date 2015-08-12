@@ -113,7 +113,6 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 
     if(Input->KeyIsDown[SDLK_g]&& !Input->KeyWasDown[SDLK_g])
     {
-	s32 FireArgs[] ={s32(-1*COB_ANGULAR_CONSTANT), s32(-0.25*COB_ANGULAR_CONSTANT)};
 	StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Deactivate", 0, 0, &CurrentGameState->UnitTransformationDetails);
     }
     
@@ -408,9 +407,9 @@ extern "C"
 
 	UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f, Animate);
 	
-	for(int x=0;x<20;x++)
+	for(int x=0;x<5;x++)
 	{
-	    for(int y=0;y<20;y++)
+	    for(int y=0;y<10;y++)
 	    {
 		ModelMatrix.SetTranslation(30.5f+x*50,44.5f,23.4f+y*50);
 		RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->UnitShaderDetails.ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,&CurrentGameState->TempArena,Matrix(),ModelMatrix);

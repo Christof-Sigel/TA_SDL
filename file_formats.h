@@ -488,7 +488,7 @@ struct ScriptState
     int BlockTime;//NOTE(Christof): this is in milliseconds
     int BlockedOnPiece;
     int BlockedOnAxis;
-    u32 SignalMask;
+    s32 SignalMask;
     ScriptState * ReturnTo;
     int ScriptNumber;
     int NumberOfParameters;
