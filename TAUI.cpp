@@ -1,5 +1,3 @@
-
-
 char * GetStringValue(FILE_UIElement * Element, const char * Name)
 {
     FILE_UINameValue * NameValue = Element->Value;
@@ -186,23 +184,23 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     Element->Visible = GetIntValue(Common, "active");
 
     char * Name = GetStringValue(Common, "name");
-    size_t len = strlen(Name);
-    Element->Name = PushArray(Arena, len+1, char);
+    size_t name_len = strlen(Name);
+    Element->Name = PushArray(Arena, name_len+1, char);
     if(Element->Name)
     {
-	memcpy(Element->Name, Name, len);
-	Element->Name[len]=0;
+	memcpy(Element->Name, Name, name_len);
+	Element->Name[name_len]=0;
     }
        
     char * Help = GetStringValue(Common, "help");
     if(Help)
     {
-	len = strlen(Help);
-	Element->Help = PushArray(Arena, len+1, char);
+	size_t help_len = strlen(Help);
+	Element->Help = PushArray(Arena, help_len+1, char);
 	if(Element->Help)
 	{
-	    memcpy(Element->Help, Help, len);
-	    Element->Help[len]=0;
+	    memcpy(Element->Help, Help, help_len);
+	    Element->Help[help_len]=0;
 	}
     }
 
@@ -231,12 +229,12 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	char * Text = GetStringValue(Tree, "text");
 	if(Text)
 	{
-	    size_t len = strlen(Text);
-	    Element->Button.Text = PushArray(Arena, len+1, char);
+	    size_t text_len = strlen(Text);
+	    Element->Button.Text = PushArray(Arena, text_len+1, char);
 	    if(Element->Button.Text)
 	    {
-		memcpy(Element->Button.Text, Text, len);
-		Element->Button.Text[len]=0;
+		memcpy(Element->Button.Text, Text, text_len);
+		Element->Button.Text[text_len]=0;
 	    }
 	}
 	Element->Button.Disabled = b8(GetIntValue(Tree, "grayedout"));

@@ -1,14 +1,6 @@
-
 #include "Logging.h"
 
-
-
-
-#ifdef __WINDOWS__
-s64  PerformaceCounterFrequency;
-#endif
-
-s64  GetTimeMillis(u64  PerformaceCounterFrequency)
+s64  GetTimeMillis(u64 PerformaceCounterFrequency)
 {
     return SDL_GetPerformanceCounter()/(PerformaceCounterFrequency/1000);
 }

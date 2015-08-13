@@ -36,11 +36,11 @@ struct Matrix
     {
 	SetIdentity();
 	float vector[]={x,y,z};
-	float vleninv=1/sqrt(x*x+y*y+z*z);
+	float vleninv=1/(float)sqrt(x*x+y*y+z*z);
 	for(int i=0;i<3;i++)
 	    vector[i]/=vleninv;
-	float cosine=cos(rad);
-	float sine=sin(rad);
+	float cosine=(float)cos(rad);
+	float sine=(float)sin(rad);
 
     
 	Contents[0]=cosine+vector[0]*vector[0]*(1-cosine);

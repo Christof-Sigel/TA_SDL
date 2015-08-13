@@ -77,11 +77,6 @@ extern "C"{
 	{
 	    InitialiseGame(GameMemory);
 	}
-#ifdef __WINDOWS__
-	LARGE_INTEGER PerfCountFrequencyResult;
-	QueryPerformanceFrequency(&PerfCountFrequencyResult);
-	PerformaceCounterFrequency = PerfCountFrequencyResult.QuadPart;
-#endif
 	ReloadShaders(GameMemory);
         
 	LoadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->GameArena, &CurrentGameState->TempArena);	

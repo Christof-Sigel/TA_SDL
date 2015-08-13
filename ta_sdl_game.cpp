@@ -339,10 +339,10 @@ float dot3(float * v1, float * v2)
 
 Matrix FPSViewMatrix(float * eye, float pitch, float yaw)
 {
-    float cosPitch = cos(pitch);
-    float sinPitch = sin(pitch);
-    float cosYaw = cos(yaw);
-    float sinYaw = sin(yaw);
+    float cosPitch = (float)cos(pitch);
+    float sinPitch = (float)sin(pitch);
+    float cosYaw = (float)cos(yaw);
+    float sinYaw = (float)sin(yaw);
  
     float xaxis[3] = { cosYaw, 0, -sinYaw };
     float yaxis[3] = { sinYaw * sinPitch, cosPitch, cosYaw * sinPitch };
@@ -486,8 +486,8 @@ extern "C"
 	int Index=CurrentGameState->UnitIndex;
 	char * Name=CurrentGameState->Units.Details[Index].GetString("Name");
 	const char * SideName;
-	UnitSide Side=CurrentGameState->Units.Details[Index].GetSide();
-	switch(Side)
+	UnitSide UnitSide=CurrentGameState->Units.Details[Index].GetSide();
+	switch(UnitSide)
 	{
 	case SIDE_ARM:
 	    SideName = "ARM";
@@ -527,7 +527,7 @@ extern "C"
 	char FPS[32];
 	const float FramesToCount = 30.0f;
 	CurrentFPS = (CurrentFPS*(FramesToCount-1) + 1.0f/((CurrentFrameTime - LastFrameTime)/1000.0f))/FramesToCount;
-	snprintf(FPS, 32, "%0.2f, %ld", CurrentFPS, CurrentFrameTime - LastFrameTime);
+	snprintf(FPS, 32, "%0.2f, %lld", CurrentFPS, CurrentFrameTime - LastFrameTime);
 	DrawTextureFontText(FPS, 0,0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
 	LastFrameTime = CurrentFrameTime;
 

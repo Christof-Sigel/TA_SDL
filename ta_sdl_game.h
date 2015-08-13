@@ -1,9 +1,8 @@
-
 //TODO(Christof): Proper snprintf wrapper for MSVC
 //NOTE(Christof): This will only work for the specific cases we use it for, i.e. calc length with 0,NULL
 // _snprintf return value for buffer size too small IS NOT WHAT WE EXPECT!!!
 #ifdef _MSC_VER
-#define snprintf _snprintf
+
 #define Assert(Expression) if(!(Expression)) {__debugbreak();}
 #else
 #define Assert(Expression) if(!(Expression)) {__builtin_trap();}
@@ -12,14 +11,14 @@
 
 typedef int64_t s64;
 typedef int32_t s32;
-typedef int16_t  s16;
-typedef int8_t  s8;
+typedef int16_t s16;
+typedef int8_t s8;
 
 
-typedef uint64_t  u64;
-typedef uint32_t  u32;
-typedef uint16_t  u16;
-typedef uint8_t  u8;
+typedef uint64_t u64;
+typedef uint32_t u32;
+typedef uint16_t u16;
+typedef uint8_t u8;
 
 typedef s64 b64;
 typedef s32 b32;
