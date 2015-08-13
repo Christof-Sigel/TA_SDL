@@ -369,7 +369,6 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 		break;
 	    }
 
-
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
 	    PieceTransform->MovementTarget[Axis].Destination = Target/COB_LINEAR_CONSTANT;
@@ -421,7 +420,6 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 		Speed = Speed * RotationZAxisMod;
 		break;
 	    }
-	    
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
@@ -455,7 +453,6 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT/64;
 		PieceTransform->SpinTarget[Axis].Speed = 0;
 	    }
-
 	}
 	break;
 	case COB_SHOW:
@@ -536,8 +533,6 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 		Target = Target * RotationZAxisMod;
 		break;
 	    }
-
-
 
 	    char * PieceName = Script->PieceNames[PieceNumber];
 	    Object3dTransformationDetails * PieceTransform = State->TransformationDetails;
@@ -656,26 +651,54 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    
 	break;
 	case COB_ADD:
-	    PushStack(State, PopStack(State)+PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 + Val2);
+	}
+	break;
 	case COB_SUBTRACT:
-	    PushStack(State, PopStack(State)-PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 - Val2);
+	}
+	break;
 	case COB_MULTIPLY:
-	    PushStack(State, PopStack(State) * PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 * Val2);
+	}
+	break;
 	case COB_DIVIDE:
-	    PushStack(State, PopStack(State) / PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 / Val2);
+	}
+	break;
 	case COB_BITWISE_AND:
-	    PushStack(State, PopStack(State) & PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val2 & Val1);
+	}
+	break;
 	case COB_BITWISE_OR:
-	    PushStack(State, PopStack(State) | PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val2 | Val1);
+	}
+	break;
 	case COB_BITWISE_XOR:
-	    PushStack(State, PopStack(State) ^ PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val2 ^ Val1 );
+	}
+	break;
 	case COB_BITWISE_NOT:
 	    PushStack(State, ~PopStack(State));
 	    break;
@@ -733,23 +756,47 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    //TODO(Christof): investigate (TA Spring probably a good source) for the order of operands?
 	    //Cob reference might work too (probably just implemented without checking these)
 	case COB_LESS_THAN:
-	    PushStack(State, PopStack(State) < PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 < Val2);
+	}
+	break;
 	case COB_LESS_THAN_OR_EQUAL:
-	    PushStack(State, PopStack(State) <= PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 <= Val2);
+	}
+	break;
 	case COB_GREATER_THAN:
-	    PushStack(State, PopStack(State) > PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 > Val2);
+	}
+	break;
 	case COB_GREATER_THAN_OR_EQUAL:
-	    PushStack(State, PopStack(State) >= PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 > Val2);
+	}
+	break;
 	case COB_EQUAL:
-	    PushStack(State, PopStack(State) == PopStack(State));
-	    break;
+	{	
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 == Val2);
+	}
+	break;
 	case COB_NOT_EQUAL:
-	    PushStack(State, PopStack(State) != PopStack(State));
-	    break;
+	{
+	    s32 Val2 = PopStack(State);
+	    s32 Val1 = PopStack(State);
+	    PushStack(State, Val1 != Val2);
+	}
+	break;
 	case COB_AND:
 	{
 	    s32 Val1 = PopStack(State);
@@ -818,7 +865,7 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    s32 Signal = PopStack(State);
 	    for(s32 i=0;i<Pool->NumberOfScripts;i++)
 	    {
-		if(Pool->Scripts[i].SignalMask == Signal)
+		if(Pool->Scripts[i].SignalMask & Signal)
 		{
 		    Pool->Scripts[i].BlockedOn = BLOCK_DONE;
 		}
