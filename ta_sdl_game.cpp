@@ -33,26 +33,29 @@ void LoadCurrentModel(GameState * CurrentGameState)
     const int MAX_MODEL_NAME=64;
     char Name[MAX_MODEL_NAME];
     snprintf(Name,MAX_MODEL_NAME,"objects3d/%s.3do",UnitName);
+  
     
     HPIEntry Entry=FindEntryInAllFiles(Name,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-    //u8 temp[Entry.File.FileSize];
     u8 * temp = PushArray(&CurrentGameState->TempArena,Entry.File.FileSize,u8 );
     if(LoadHPIFileEntryData(Entry,temp,&CurrentGameState->TempArena))
     {
+	if(CurrentGameState->temp_model.Vertices)
+	{
+	    UnloadTransfomationDetails(&CurrentGameState->UnitTransformationDetails, &CurrentGameState->temp_model);
+	    Unload3DO(&CurrentGameState->temp_model);
+	}
+	Load3DOFromBuffer(temp,&CurrentGameState->temp_model,&CurrentGameState->UnitTextures,&CurrentGameState->GameArena);
+	InitTransformationDetails(&CurrentGameState->temp_model, &CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
+	
 	snprintf(Name,MAX_MODEL_NAME,"scripts/%s.cob",UnitName);
 	HPIEntry ScriptEntry=FindEntryInAllFiles(Name,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-	//u8 ScriptBuffer[ScriptEntry.File.FileSize];
 	u8 * ScriptBuffer = PushArray(&CurrentGameState->TempArena, ScriptEntry.File.FileSize, u8 );
 	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer,&CurrentGameState->TempArena))
 	{
 	    LoadUnitScriptFromBuffer(&CurrentGameState->CurrentUnitScript, ScriptBuffer,&CurrentGameState->GameArena);
 	    CurrentGameState->CurrentScriptPool={};
-	    
 
-	    if(CurrentGameState->temp_model.Vertices)
-		Unload3DO(&CurrentGameState->temp_model);
-	    Load3DOFromBuffer(temp,&CurrentGameState->temp_model,&CurrentGameState->UnitTextures,&CurrentGameState->GameArena);
-	    InitTransformationDetails(&CurrentGameState->temp_model, &CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
+	    
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Create",0, 0, &CurrentGameState->UnitTransformationDetails);
 	    s32 Args[] ={s32(-1*COB_ANGULAR_CONSTANT)};
 	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Activate",1, Args, &CurrentGameState->UnitTransformationDetails);

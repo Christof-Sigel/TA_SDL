@@ -115,7 +115,7 @@ v3 add(v3 v1, v3 v2)
 
 float length(v3 v)
 {
-    return sqrt(v.x*v.x+ v.y*v.y + v.z*v.z);
+    return (float)sqrt(v.x*v.x+ v.y*v.y + v.z*v.z);
 }
 
 b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 ObjectTextureOffset, MemoryArena * TempArena, Object3dTransformationDetails * TransformationDetails)
@@ -289,10 +289,9 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	glGenVertexArrays(1,&Object->VertexBuffer);
 	glBindVertexArray(Object->VertexBuffer);
 
-	GLuint VertexBuffer;
-	glGenBuffers(1,&VertexBuffer);
+	glGenBuffers(1,&Object->TriangleVertexBuffer);
 
-	glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER,Object->TriangleVertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumTriangles*(3+3)*3,Data,GL_STATIC_DRAW);
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+3),0);
 	glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+3),(GLvoid*)(sizeof(GLfloat)*3));
@@ -312,15 +311,14 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 
 	glBindVertexArray(0);
 
-	glDeleteBuffers(1, &VertexBuffer);
 
 	//LINES
 	glGenVertexArrays(1,&Object->LineBuffer);
 	glBindVertexArray(Object->LineBuffer);
 
-	glGenBuffers(1,&VertexBuffer);
+	glGenBuffers(1,&Object->LineVertexBuffer);
 
-	glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER,Object->LineVertexBuffer);
 	glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*Object->NumLines*(3+4+3)*2,LineData,GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),0);
 	glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(3+4+3),(GLvoid*)(sizeof(GLfloat)*3));
@@ -332,7 +330,6 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
-	glDeleteBuffers(1, &VertexBuffer);
 
 	if(TextureData)
 	    PopArray(TempArena,TextureData ,Object->NumTriangles * (4)*3, GLfloat);
@@ -470,7 +467,7 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 
 void InitTransformationDetails(Object3d * Object, Object3dTransformationDetails *  TransformationDetails, MemoryArena * GameArena)
 {
-    memset(TransformationDetails, 0, sizeof(Object3dTransformationDetails));
+    *TransformationDetails = {};
     TransformationDetails->Children = PushArray(GameArena, Object->NumberOfChildren,Object3dTransformationDetails);
     for(int i=0;i<Object->NumberOfChildren;i++)
 	InitTransformationDetails(& Object->Children[i], &TransformationDetails->Children[i], GameArena);
@@ -764,6 +761,7 @@ b32 Load3DOFromBuffer(u8 * Buffer, Object3d * Object, TextureContainer * Texture
     int ChildOffset=header->OffsetToChildObject;
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
+	Object->Children[i] = {};
 	Load3DOFromBuffer(Buffer, &(Object->Children[i]),TextureContainer,GameArena,ChildOffset);
 	header = (FILE_Object3dHeader *)(Buffer+ChildOffset);
 	ChildOffset=header->OffsetToSiblingObject;
@@ -777,13 +775,33 @@ void Unload3DO(Object3d * Object)
 	return;
     if(Object->VertexBuffer)
     {
+	glBindVertexArray(0);
 	glDeleteBuffers(1,&Object->VertexBuffer);	
 	glDeleteBuffers(1,&Object->LineBuffer);
+	glDeleteBuffers(1,&Object->LineVertexBuffer);
+	glDeleteBuffers(1,&Object->TriangleVertexBuffer);
 	Object->LineBuffer = Object->VertexBuffer = 0;
     }
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
 	Unload3DO(&Object->Children[i]);
     }
-    *Object ={};
+    *Object = {};
+}
+
+void UnloadTransfomationDetails(Object3dTransformationDetails * TransformationDetails, Object3d * Object)
+{
+    if(!TransformationDetails)
+	return;
+    glBindVertexArray(0);
+    if(TransformationDetails->TextureCoordBuffer)
+    {
+	glDeleteBuffers(1,&TransformationDetails->TextureCoordBuffer);
+	TransformationDetails->TextureCoordBuffer =  0;
+    }
+    for(int i=0;i<Object->NumberOfChildren;i++)
+    {
+	UnloadTransfomationDetails(&TransformationDetails->Children[i], &Object->Children[i]);
+    }
+    *TransformationDetails = {};
 }
