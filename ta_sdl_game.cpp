@@ -193,6 +193,9 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	    CurrentGameState->CameraTranslation[i]-=DY[i];
     }
 
+
+    TAUIElementName ElementName = ProcessMouseClick(&CurrentGameState->MainMenu, Input->MouseX, Input->MouseY,Input->MouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT));
+    
 }
 
 void SetupDebugAxisBuffer(GLuint * DebugAxisBuffer)
@@ -517,6 +520,8 @@ extern "C"
 	    GUIIndex =0;
 		
 	//RenderTAUIElement(&CurrentGameState->GUIs[GUIIndex],&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures);
+
+	RenderTAUIElement(&CurrentGameState->MainMenu,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures);
 
 	static u64 CurrentFrameTime = 0;
 	static u64 LastFrameTime =0;

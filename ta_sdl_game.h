@@ -71,6 +71,8 @@ struct InputState
 {
     u32 KeyIsDown[256];
     u32 KeyWasDown[256];
+    s32 MouseButtons;
+    s32 MouseX, MouseY;
 };
 
 struct Memory
@@ -269,5 +271,8 @@ struct GameState
     TextureContainer CommonGUITextures;
     TAUIElement *GUIs;
     int NumberOfGuis;
+
+
+    TAUIElement MainMenu;
 };
 

@@ -241,6 +241,8 @@ struct Object3d
     GLuint LineBuffer;
     b32 Animates;
     s32 SelectionPrimitive;
+    GLuint LineVertexBuffer;
+    GLuint TriangleVertexBuffer;
 };
 
 struct Object3dPrimitive
@@ -422,8 +424,17 @@ struct TAUILabelFont
     FNTFont * Font;//from filename
 };
 
+enum TAUIElementName
+{
+    UNKNOWN,
+    SINGLEPLAYER,
+    MULTIPLAYER,
+    DEBUGSTRING,
+};
+
 struct TAUIElement
 {
+    TAUIElementName ElementName;
     char * Name;
     TagType ElementType;
     int Association,X,Y,Width,Height,ColorFore,ColorBack,TextureNumber,FontNumber;

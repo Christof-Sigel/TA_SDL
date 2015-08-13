@@ -288,11 +288,21 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	break;
 	
     }
-   
-    
+    if(CaseInsensitiveMatch("single",Name))
+    {
+	Element->ElementName = SINGLEPLAYER;
+    }
+    else if(CaseInsensitiveMatch("multi",Name))
+    {
+	Element->ElementName = SINGLEPLAYER;
+    }
+    else if(CaseInsensitiveMatch("debugstring",Name))
+    {
+	Element->ElementName = DEBUGSTRING;
+    }
 }
 
-TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, char * FileName, HPIFileCollection * GlobalArchiveCollection, u8 * PaletteData, FontContainer * FontContainer)
+TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, const char * FileName, HPIFileCollection * GlobalArchiveCollection, u8 * PaletteData, FontContainer * FontContainer)
 {
     TextureContainer * Textures =PushStruct(Arena, TextureContainer);
     //TODO(Christof): Better texture memory allocation needed, perhaps on Temp and only full size when initially loading gafs?
@@ -338,8 +348,6 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
 	    LogError("First UI element is not a container (%d)!",GetIntValue(GetSubElement(First,"common"),"ID"));
 	    return {};
 	}
-
-
 	LoadElementFromTree(&Container, First, Arena, Textures, TempArena, GlobalArchiveCollection, FontContainer);
 
 	TAUIContainer * ContainerDetails = &Container.Container;
@@ -357,6 +365,22 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
     return Container;
 }
 
+TAUIElement LoadGUI(const char * FileName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, MemoryArena * GameArena , u8* PaletteData, FontContainer * FontContainer )
+{
+    TAUIElement Result={};
+    const int MAX_STRING = 128;
+    char FullFileName[MAX_STRING];
+    snprintf(FullFileName, MAX_STRING, "guis/%s", FileName);
+    HPIEntry GUIFile = FindEntryInAllFiles(FullFileName,GlobalArchiveCollection, TempArena);
+    if(!GUIFile.IsDirectory)
+    {
+	u8 * GUIBuffer = PushArray(TempArena, GUIFile.File.FileSize,u8 );
+	LoadHPIFileEntryData(GUIFile,GUIBuffer,TempArena);
+	Result = LoadGUIFromBuffer((char*)GUIBuffer, (char*)GUIBuffer + GUIFile.File.FileSize, GameArena, TempArena, FileName, GlobalArchiveCollection, PaletteData, FontContainer);
+	PopArray(TempArena, GUIBuffer,  GUIFile.File.FileSize, u8 );
+    }
+    return Result;
+}
 
 void LoadCommonUITextures(GameState * CurrentGameState)
 {
@@ -374,7 +398,6 @@ void LoadCommonUITextures(GameState * CurrentGameState)
     {
 	LoadAllTexturesFromHPIEntry(&CommonUI, &CurrentGameState->CommonGUITextures, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
     }
-
 }
 
 void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDetails, TextureContainer * ButtonFont, TextureContainer * CommonUIElements, TAUIContainer * Container = 0)
@@ -396,8 +419,6 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
     break;
     case TAG_BUTTON:
     {
-	//TODO(Christof): Button States
-	int ButtonState =0;
 	TAUIButton * Button = &Element->Button;
 	Texture * ButtonBackground = GetTexture(Element->Name, Element->Textures);
 	TextureContainer * ButtonTextureContainer = Element->Textures;
@@ -412,7 +433,7 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 		float ElementHeightInUV = (float)Element->Height / CommonUIElements->TextureHeight;
 		float BestMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
 		Texture * BestMatch = ButtonBackground;
-		for(int i=1;i<ButtonBackground->NumberOfFrames;i++)
+		for(int i=1;i<ButtonBackground->NumberOfFrames;i+=4)
 		{
 		    ButtonBackground = GetTexture(ButtonBackground, i);
 		    float CurrentMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
@@ -423,16 +444,19 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 		    }
 		}
 		ButtonBackground = BestMatch;
+		Element->Width = ButtonBackground->Width * CommonUIElements->TextureWidth;
+		Element->Height = ButtonBackground->Height * CommonUIElements->TextureHeight;
 	    }
 	}
 	Assert(ButtonBackground);
+	ButtonBackground = GetTexture(ButtonBackground, ButtonBackground->FrameNumber + Button->CurrentStatus);
 	float U = ButtonBackground->U;
 	float V = ButtonBackground->V;
 	DrawTexture2D(ButtonTextureContainer->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Width, ButtonBackground->Height);
 	if(Button->Text)
 	{
-	    int Width = TextSizeInPixels(Button->Text, ButtonFont).Width;
-	    DrawTextureFontText(Button->Text, Element->X+((Element->Width - Width)/2), Element->Y, ButtonFont, ShaderDetails);
+	    FontDimensions TD = TextSizeInPixels(Button->Text, ButtonFont);
+	    DrawTextureFontText(Button->Text, Element->X+((Element->Width - TD.Width)/2), Element->Y+((Element->Height - TD.Height)/2), ButtonFont, ShaderDetails);
 	}
     }
     break;
@@ -463,3 +487,29 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
     break;
     }
 }
+
+TAUIElementName ProcessMouseClick(TAUIElement * Root, s32 MouseX, s32 MouseY, b32 Down)
+{
+    Assert(Root->ElementType == TAG_UI_CONTAINER);
+    TAUIElementName Result = UNKNOWN;
+
+    for(s32 i=0;i<Root->Container.NumberOfElements;i++)
+    {
+	TAUIElement * Element = &Root->Container.Elements[i];
+	if(MouseX < Element->X + Element->Width && MouseX > Element->X
+	   && MouseY < Element->Y + Element->Width && MouseY > Element->Y)
+	{
+	    switch(Element->ElementType)
+	    {
+	    case TAG_BUTTON:
+		Element->Button.CurrentStatus = Down?4:0;
+		break;
+	    }
+	    return Element->ElementName;
+	}
+    }
+
+
+    return Result;
+}
+    

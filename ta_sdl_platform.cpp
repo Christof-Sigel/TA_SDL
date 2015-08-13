@@ -139,6 +139,8 @@ int main(int argc, char * argv[])
 		HandleKeyUp(e.key.keysym,&GameInputState);
 	    }
 	}
+
+	GameInputState.MouseButtons = SDL_GetMouseState(&GameInputState.MouseX,&GameInputState.MouseY);
 	
 
 	GameUpdateAndRender(&GameInputState,&GameMemory);

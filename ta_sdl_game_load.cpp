@@ -156,6 +156,8 @@ extern "C"{
 		}
 	    }
 	}
+
+	CurrentGameState->MainMenu = LoadGUI("MainMenu.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
     }
 
     void GameTeardown(Memory * GameMemory)
