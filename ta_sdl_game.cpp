@@ -86,8 +86,8 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
      b32 Down = Input->MouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT);
     switch(CurrentGameState->State)
     {
-    case RUNNING:
-    case PAUSED:
+    case STATE_RUNNING:
+    case STATE_PAUSED:
 	{
     Matrix ViewRotation = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
 //    ViewRotation.Rotate(1,0,0, CurrentGameState->CameraXRotation);
@@ -124,13 +124,13 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 
     if(Input->KeyIsDown[SDLK_p]&& !Input->KeyWasDown[SDLK_p])
     {
-	if(CurrentGameState->State == RUNNING)
+	if(CurrentGameState->State == STATE_RUNNING)
 	{
-	    CurrentGameState->State = PAUSED;
+	    CurrentGameState->State = STATE_PAUSED;
 	}
-	else if(CurrentGameState->State == PAUSED)
+	else if(CurrentGameState->State == STATE_PAUSED)
 	{
-	    CurrentGameState->State = RUNNING;
+	    CurrentGameState->State = STATE_RUNNING;
 	}
     }
 
@@ -146,10 +146,10 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 
     if(Input->KeyIsDown[SDLK_ESCAPE] && !Input->KeyWasDown[SDLK_ESCAPE]  )
     {
-	if(CurrentGameState->State == RUNNING || CurrentGameState->State == PAUSED)
-	CurrentGameState->State = MAIN_MENU;
+	if(CurrentGameState->State == STATE_RUNNING || CurrentGameState->State == STATE_PAUSED)
+	CurrentGameState->State = STATE_MAIN_MENU;
 	else
-	    CurrentGameState->State = RUNNING;
+	    CurrentGameState->State = STATE_RUNNING;
     }
     if(Input->KeyIsDown[SDLK_o] && !Input->KeyWasDown[SDLK_o])
     {
@@ -225,22 +225,95 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 break;
 
 
-    case MAIN_MENU:
+    case STATE_MAIN_MENU:
+    {
 	TAUIElementName ElementName = ProcessMouseClick(&CurrentGameState->MainMenu, Input->MouseX, Input->MouseY, Down,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
 	if(Down)
 	{
 	    switch(ElementName)
 	    {
-	    case MAIN_MENU_EXIT:
-		CurrentGameState->State = QUIT;
+	    case ELEMENT_NAME_EXIT:
+		CurrentGameState->State = STATE_QUIT;
 		break;
-	    case SINGLEPLAYER:
-		CurrentGameState->State = RUNNING;
+	    case ELEMENT_NAME_SINGLEPLAYER:
+		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
 		break;
 	    }
 
 	}
-	break;
+    }
+    break;
+    case STATE_SINGLEPLAYER_MENU:
+    {
+	TAUIElementName ElementName = ProcessMouseClick(&CurrentGameState->SinglePlayerMenu, Input->MouseX, Input->MouseY, Down,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if(Down)
+	{
+	    switch(ElementName)
+	    {
+	    case ELEMENT_NAME_PREVIOUS_MENU:
+		CurrentGameState->State = STATE_MAIN_MENU;
+		break;
+	    case ELEMENT_NAME_OPTIONS:
+		CurrentGameState->State = STATE_OPTIONS_MENU;
+		break;
+	    case ELEMENT_NAME_NEW_CAMPAIGN:
+		CurrentGameState->State = STATE_CAMPAIGN_MENU;
+		break;
+	    case ELEMENT_NAME_SKIRMISH:
+		CurrentGameState->State = STATE_SKIRMISH_MENU;
+		break;
+	    case ELEMENT_NAME_LOAD_GAME:
+		CurrentGameState->State = STATE_LOAD_GAME_MENU;
+		break;
+	    }
+
+	}
+    }
+    break;
+    case STATE_OPTIONS_MENU:
+    {
+	TAUIElementName ElementName = ProcessMouseClick(&CurrentGameState->OptionsMenu, Input->MouseX, Input->MouseY, Down,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if(Down)
+	{
+	    switch(ElementName)
+	    {
+	    case ELEMENT_NAME_OK:
+		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
+		break;
+	    }
+	}
+    }
+    break;
+
+     case STATE_CAMPAIGN_MENU:
+    {
+	TAUIElementName ElementName = ProcessMouseClick(&CurrentGameState->CampaignMenu, Input->MouseX, Input->MouseY, Down,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if(Down)
+	{
+	    switch(ElementName)
+	    {
+	    case ELEMENT_NAME_PREVIOUS_MENU:
+		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
+		break;
+	    }
+	}
+    }
+    break;
+
+     case STATE_SKIRMISH_MENU:
+    {
+	TAUIElementName ElementName = ProcessMouseClick(&CurrentGameState->SkirmishMenu, Input->MouseX, Input->MouseY, Down,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if(Down)
+	{
+	    switch(ElementName)
+	    {
+	    case ELEMENT_NAME_PREVIOUS_MENU:
+		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
+		break;
+	    }
+	}
+    }
+    break;
     }
 
     CurrentGameState->MouseX = Input->MouseX;
@@ -495,7 +568,7 @@ extern "C"
 
 	switch(CurrentGameState->State)
 	{
-	case RUNNING:
+	case STATE_RUNNING:
 	{
 	    for(int i=0;i<CurrentGameState->CurrentScriptPool.NumberOfScripts;i++)
 	    {
@@ -506,7 +579,7 @@ extern "C"
 
 	    UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f, Animate);
 	}
-	case PAUSED:
+	case STATE_PAUSED:
 	{
 	    glUseProgram(CurrentGameState->UnitShaderDetails.Shader->ProgramID);
 	    glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTextures.Texture);
@@ -552,8 +625,8 @@ extern "C"
 
 	switch(CurrentGameState->State)
 	{
-	case PAUSED:
-	case RUNNING:
+	case STATE_PAUSED:
+	case STATE_RUNNING:
 	    //Debug draw unit details (name + desc)
 #if DEBUG_DRAW_UNIT_DETAILS
 	    {
@@ -706,10 +779,26 @@ extern "C"
 
 #endif
 
-	    break;
-	    case MAIN_MENU:
-		RenderTAUIElement(&CurrentGameState->MainMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
 		break;
+	case STATE_MAIN_MENU:
+	    RenderTAUIElement(&CurrentGameState->MainMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
+	    break;
+
+	case STATE_SINGLEPLAYER_MENU:
+	    RenderTAUIElement(&CurrentGameState->SinglePlayerMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
+	    break;
+	case STATE_CAMPAIGN_MENU:
+	    RenderTAUIElement(&CurrentGameState->CampaignMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
+	    break;
+	case STATE_LOAD_GAME_MENU:
+	    RenderTAUIElement(&CurrentGameState->LoadGameMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
+	    break;
+	case STATE_SKIRMISH_MENU:
+	    RenderTAUIElement(&CurrentGameState->SkirmishMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
+	    break;
+	case STATE_OPTIONS_MENU:
+	    RenderTAUIElement(&CurrentGameState->OptionsMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
+	    break;
 	}
 
 

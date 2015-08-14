@@ -47,7 +47,7 @@ CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation
 	FDetails->PositionLocation=GetUniformLocation(FDetails->Program,"Position");
 	FDetails->SizeLocation=GetUniformLocation(FDetails->Program,"Size");
 	FDetails->TextureOffsetLocation=GetUniformLocation(FDetails->Program,"TextureOffset");
-    
+
 	glUniform1i(GetUniformLocation(FDetails->Program,"Texture"), 0);
 	glUniform2iv(GetUniformLocation(FDetails->Program,"Viewport"),1,viewport+2);
     }
@@ -62,7 +62,7 @@ CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation
 	TDetails->SizeLocation=GetUniformLocation(TDetails->Program,"Size");
 	TDetails->TextureOffsetLocation=GetUniformLocation(TDetails->Program,"TextureOffset");
 	TDetails->TextureSizeLocation=GetUniformLocation(TDetails->Program,"TextureSize");
-    
+
 	glUniform1i(GetUniformLocation(TDetails->Program,"Texture"), 0);
 	glUniform2iv(GetUniformLocation(TDetails->Program,"Viewport"),1,viewport+2);
     }
@@ -77,7 +77,7 @@ CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation
 	RDetails->SizeLocation=GetUniformLocation(RDetails->Program,"Size");
 	RDetails->BorderWidthLocation=GetUniformLocation(RDetails->Program,"BorderWidth");
 	RDetails->BorderColorLocation=GetUniformLocation(RDetails->Program,"BorderColor");
-    
+
 	glUniform2iv(GetUniformLocation(RDetails->Program,"Viewport"),1,viewport+2);
     }
 }
@@ -94,25 +94,25 @@ extern "C"{
 	    InitialiseGame(GameMemory);
 	}
 	ReloadShaders(GameMemory);
-        
-	LoadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->GameArena, &CurrentGameState->TempArena);	
+
+	LoadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->GameArena, &CurrentGameState->TempArena);
 	LoadPalette(CurrentGameState);
-	
+
 	SetupTextureContainer(&CurrentGameState->UnitTextures, UNIT_TEXTURE_WIDTH, UNIT_TEXTURE_HEIGHT, UNIT_MAX_TEXTURES, &CurrentGameState->GameArena);
 	LoadCommonUITextures(CurrentGameState);
 	LoadGafFonts(CurrentGameState);
-	
+
 
 	LoadAllUnitTextures(&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->UnitTextures, CurrentGameState->PaletteData);
 
 	SetupFontRendering(&CurrentGameState->Draw2DVertexBuffer);
 	CurrentGameState->DrawTextureShaderDetails.VertexBuffer = CurrentGameState->Draw2DVertexBuffer;
-	
+
 	HPIEntry Map = FindEntryInAllFiles("maps/Metal Maze.tnt",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(Map.Name)
 	{
 	    u8 * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,u8 );
-    
+
 	    if(LoadHPIFileEntryData(Map,temp,&CurrentGameState->TempArena))
 	    {
 		LoadTNTFromBuffer(temp,&CurrentGameState->TestMap,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
@@ -123,7 +123,7 @@ extern "C"{
 	}
 	else
 	    LogDebug("failed to load map");
-    
+
 	HPIEntry Entry=FindEntryInAllFiles("units",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	if(Entry.IsDirectory)
 	{
@@ -154,6 +154,14 @@ extern "C"{
 	LoadCurrentModel(CurrentGameState);
 
 	CurrentGameState->MainMenu = LoadGUI("MainMenu.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+	CurrentGameState->SinglePlayerMenu = LoadGUI("Single.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+
+	CurrentGameState->CampaignMenu = LoadGUI("NewGame.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+	CurrentGameState->LoadGameMenu = LoadGUI("LoadGame.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+	CurrentGameState->SkirmishMenu = LoadGUI("Skirmish.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+	CurrentGameState->OptionsMenu = LoadGUI("gameoptions.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+
+
 
 	SetupDebugRectBuffer(&CurrentGameState->DebugRectDetails.VertexBuffer);
     }

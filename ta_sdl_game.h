@@ -222,10 +222,16 @@ struct DebugRectShaderDetails
 
 enum State
 {
-    MAIN_MENU,
-    RUNNING,
-    PAUSED,
-    QUIT
+    STATE_RUNNING,
+    STATE_PAUSED,
+    STATE_QUIT,
+    STATE_MAIN_MENU,
+    STATE_SINGLEPLAYER_MENU,
+    STATE_OPTIONS_MENU,
+    STATE_CAMPAIGN_MENU,
+    STATE_LOAD_GAME_MENU,
+    STATE_SKIRMISH_MENU,
+    
 };
 
 struct GameState
@@ -271,6 +277,11 @@ struct GameState
     //Test data
 
     TAUIElement MainMenu;
+    TAUIElement SinglePlayerMenu;
+    TAUIElement CampaignMenu;
+    TAUIElement LoadGameMenu;
+    TAUIElement SkirmishMenu;
+    TAUIElement OptionsMenu;
 
     Object3d temp_model;
     TAMap TestMap;

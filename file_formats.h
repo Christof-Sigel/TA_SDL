@@ -214,7 +214,8 @@ struct TextureContainer
     int MaximumTextures;
     int NumberOfTextures;
     u8 * FreeSquares;
-    int TextureWidth, TextureHeight, HeightInSquares, WidthInSquares;
+    s32 TextureWidth, TextureHeight, HeightInSquares, WidthInSquares;
+    s32 RequestedHeight, RequestedWidth;
     GLuint Texture;
     TexturePosition FirstFreeTexture;
 };
@@ -426,11 +427,17 @@ struct TAUILabelFont
 
 enum TAUIElementName
 {
-    UNKNOWN,
-    SINGLEPLAYER,
-    MULTIPLAYER,
-    DEBUGSTRING,
-    MAIN_MENU_EXIT
+    ELEMENT_NAME_UNKNOWN,
+    ELEMENT_NAME_SINGLEPLAYER,
+    ELEMENT_NAME_MULTIPLAYER,
+    ELEMENT_NAME_DEBUGSTRING,
+    ELEMENT_NAME_EXIT,
+    ELEMENT_NAME_NEW_CAMPAIGN,
+    ELEMENT_NAME_LOAD_GAME,
+    ELEMENT_NAME_SKIRMISH,
+    ELEMENT_NAME_PREVIOUS_MENU,
+    ELEMENT_NAME_OPTIONS,
+    ELEMENT_NAME_OK
 };
 
 struct TAUIElement

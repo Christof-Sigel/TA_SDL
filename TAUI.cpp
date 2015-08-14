@@ -17,7 +17,7 @@ int GetIntValue(FILE_UIElement * Element, const char * Name)
 	return atoi(Value);
     return -1;
 }
-    
+
 float GetFloat(FILE_UIElement * Element, const char * Name)
 {
     char * Value= GetStringValue(Element,Name);
@@ -80,7 +80,7 @@ FILE_UINameValue * LoadUINameValueFromBuffer(char ** InBuffer, char * End, Memor
     *Buffer =0;
     strncpy(Result->Value, Start, FILE_UI_MAX_STRING_LENGTH);
     Buffer++;
-    
+
     *InBuffer = Buffer;
     return Result;
 }
@@ -94,7 +94,7 @@ FILE_UIElement * LoadUIElementFromBuffer(char ** InBuffer, char * End, MemoryAre
     while(*Buffer != ']' && Buffer <=End) {  Buffer++;  }
     if(Buffer == End){	return 0; }
     *Buffer =0;
-    
+
     FILE_UIElement * Result = PushStruct(Arena, FILE_UIElement);
     *Result={};
     strncpy(Result->Name, Start, FILE_UI_MAX_STRING_LENGTH);
@@ -144,7 +144,7 @@ FILE_UIElement * LoadUIElementFromBuffer(char ** InBuffer, char * End, MemoryAre
 		Result->Value=LoadUINameValueFromBuffer(&Buffer, End, Arena);
 	    }
 	}
-	    
+
     }
     *InBuffer = Buffer;
     return 0;
@@ -165,7 +165,7 @@ FILE_UIElement * LoadUIElementsFromBuffer(char ** InBuffer, char * End, MemoryAr
     return First;
 }
 
-void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryArena * Arena, TextureContainer * Textures, MemoryArena * TempArena, HPIFileCollection * GlobalArchiveCollection, FontContainer * FontContainer)
+void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryArena * Arena, TextureContainer * Textures, MemoryArena * TempArena, HPIFileCollection * GlobalArchiveCollection, FontContainer * FontContainer, const char * FileName)
 {
     FILE_UIElement * Common = GetSubElement(Tree,"common");
     Element->ElementType = (TagType)GetIntValue(Common, "ID");
@@ -191,7 +191,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	memcpy(Element->Name, Name, name_len);
 	Element->Name[name_len]=0;
     }
-       
+
     char * Help = GetStringValue(Common, "help");
     if(Help)
     {
@@ -212,9 +212,17 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	{
 	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/FrontEndX.pcx", GlobalArchiveCollection, TempArena);
 	}
-	else if(CaseInsensitiveMatch(Name, "header"))
+	else if(CaseInsensitiveMatch(FileName, "Single.gui"))
 	{
-	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/GameSettings.pcx", GlobalArchiveCollection, TempArena);
+	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/SingleBG.pcx", GlobalArchiveCollection, TempArena);
+	}
+	else if(CaseInsensitiveMatch(FileName, "NewGame.gui"))
+	{
+	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/newcampaign4x.pcx", GlobalArchiveCollection, TempArena);
+	}
+	else if(CaseInsensitiveMatch(Name, "Skirmish.gui"))
+	{
+	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/skirmsetup4x.pcx", GlobalArchiveCollection, TempArena);
 	}
 	else
 	{
@@ -267,7 +275,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	    }
 	}
     }
-	break;
+    break;
     case TAG_DYNAMIC_IMAGE:
     {
 	Element->DynamicImage.DisplaySelectionRectangle = (b8)GetIntValue(Tree, "hotornot");
@@ -286,23 +294,47 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     default:
 	Assert(!"NUH UH!");
 	break;
-	
+
     }
     if(CaseInsensitiveMatch("single",Name))
     {
-	Element->ElementName = SINGLEPLAYER;
+	Element->ElementName = ELEMENT_NAME_SINGLEPLAYER;
     }
     else if(CaseInsensitiveMatch("multi",Name))
     {
-	Element->ElementName = MULTIPLAYER;
+	Element->ElementName = ELEMENT_NAME_MULTIPLAYER;
     }
     else if(CaseInsensitiveMatch("debugstring",Name))
     {
-	Element->ElementName = DEBUGSTRING;
+	Element->ElementName = ELEMENT_NAME_DEBUGSTRING;
     }
     else if(CaseInsensitiveMatch("Exit",Name))
     {
-	Element->ElementName = MAIN_MENU_EXIT;
+	Element->ElementName = ELEMENT_NAME_EXIT;
+    }
+    else if(CaseInsensitiveMatch("NewCamp",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_NEW_CAMPAIGN;
+    }
+    else if(CaseInsensitiveMatch("LoadGame",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_LOAD_GAME;
+    }
+    else if(CaseInsensitiveMatch("Skirmish",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SKIRMISH;
+    }
+    else if(CaseInsensitiveMatch("PrevMenu",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_PREVIOUS_MENU;
+    }
+    else if(CaseInsensitiveMatch("Options",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_OPTIONS;
+    }
+    else if(CaseInsensitiveMatch("OK",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_OK;
     }
 }
 
@@ -312,14 +344,14 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
     //TODO(Christof): Better texture memory allocation needed, perhaps on Temp and only full size when initially loading gafs?
     SetupTextureContainer(Textures, 1024,1024, 40, Arena);
 
-    
+
     int len=snprintf(0,0,"anims/%s",FileName)+1;
     char * GafFileName = PushArray(TempArena,len,char);
     snprintf(GafFileName,len,"anims/%s",FileName);
     GafFileName[len-4]='g';
     GafFileName[len-3]='a';
     GafFileName[len-2]='f';
-    
+
     HPIEntry UITextures = FindEntryInAllFiles(GafFileName, GlobalArchiveCollection, TempArena);
     PopArray(TempArena, GafFileName, len, char);
     if(UITextures.IsDirectory)
@@ -329,14 +361,14 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
     else if(!UITextures.Name)
     {
 	//NOTE(Christof): just silently fail here, most guis don't have a .gaf
-	 glGenTextures(1,&Textures->Texture);
-	 glBindTexture(GL_TEXTURE_2D,Textures->Texture);
-	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glGenTextures(1,&Textures->Texture);
+	glBindTexture(GL_TEXTURE_2D,Textures->Texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	 u8* TextureData = PushArray(TempArena, Textures->TextureWidth * Textures->TextureHeight *4, u8);
-	 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,Textures->TextureWidth,Textures->TextureHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
-	 PopArray(TempArena, TextureData, Textures->TextureWidth * Textures->TextureHeight *4, u8);
+	u8* TextureData = PushArray(TempArena, Textures->TextureWidth * Textures->TextureHeight *4, u8);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,Textures->TextureWidth,Textures->TextureHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
+	PopArray(TempArena, TextureData, Textures->TextureWidth * Textures->TextureHeight *4, u8);
     }
     else
     {
@@ -352,7 +384,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
 	    LogError("First UI element is not a container (%d)!",GetIntValue(GetSubElement(First,"common"),"ID"));
 	    return {};
 	}
-	LoadElementFromTree(&Container, First, Arena, Textures, TempArena, GlobalArchiveCollection, FontContainer);
+	LoadElementFromTree(&Container, First, Arena, Textures, TempArena, GlobalArchiveCollection, FontContainer,FileName );
 
 	TAUIContainer * ContainerDetails = &Container.Container;
 	ContainerDetails->NumberOfElements = CountElements(First)-1;
@@ -361,7 +393,7 @@ TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, Me
 
 	for(int i=0;i<ContainerDetails->NumberOfElements;i++)
 	{
-	    LoadElementFromTree(&ContainerDetails->Elements[i], GetNthElement(First, i+1), Arena, Textures, TempArena, GlobalArchiveCollection, FontContainer);
+	    LoadElementFromTree(&ContainerDetails->Elements[i], GetNthElement(First, i+1), Arena, Textures, TempArena, GlobalArchiveCollection, FontContainer,0);
 	    ContainerDetails->Elements[i].Textures = Textures;
 	}
     }
@@ -382,6 +414,10 @@ TAUIElement LoadGUI(const char * FileName, HPIFileCollection * GlobalArchiveColl
 	LoadHPIFileEntryData(GUIFile,GUIBuffer,TempArena);
 	Result = LoadGUIFromBuffer((char*)GUIBuffer, (char*)GUIBuffer + GUIFile.File.FileSize, GameArena, TempArena, FileName, GlobalArchiveCollection, PaletteData, FontContainer);
 	PopArray(TempArena, GUIBuffer,  GUIFile.File.FileSize, u8 );
+    }
+    if(!Result.Name)
+    {
+	LogError("Failed to load %s", FileName);
     }
     return Result;
 }
@@ -462,7 +498,7 @@ void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2
 	if(Button->Text)
 	{
 	    FontDimensions TD = TextSizeInPixels(Button->Text, ButtonFont);
-	    DrawTextureFontText(Button->Text, X+((Element->Width - TD.Width)/2), Y+((Element->Height - TD.Height)/2), ButtonFont, ShaderDetails);
+	    DrawTextureFontText(Button->Text, X+((Element->Width - TD.Width)/2), Y+((Element->Height - ButtonFont->RequestedHeight)/2), ButtonFont, ShaderDetails);
 	}
 	//DrawDebugRect(DebugRectDetails, Element->X , Element->Y, Element->Width, Element->Height, {1,1,1} , 2.0f );
     }
@@ -482,7 +518,7 @@ void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2
 		}
 	    }
 	    char * Text= Element->Label.Text;
-	    if(Element->ElementName == DEBUGSTRING)
+	    if(Element->ElementName == ELEMENT_NAME_DEBUGSTRING)
 	    {
 		Text = "V 0.1";
 		X = (Container->Width - Element->Width)/2 + XOffset;
@@ -505,7 +541,7 @@ void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2
 TAUIElementName ProcessMouseClick(TAUIElement * Root, s32 MouseX, s32 MouseY, b32 Down, s32 XOffset, s32 YOffset)
 {
     Assert(Root->ElementType == TAG_UI_CONTAINER);
-    TAUIElementName Result = UNKNOWN;
+    TAUIElementName Result = ELEMENT_NAME_UNKNOWN;
 
     for(s32 i=0;i<Root->Container.NumberOfElements;i++)
     {
@@ -523,7 +559,6 @@ TAUIElementName ProcessMouseClick(TAUIElement * Root, s32 MouseX, s32 MouseY, b3
 	    return Element->ElementName;
 	}
     }
-    
+
     return Result;
 }
-    

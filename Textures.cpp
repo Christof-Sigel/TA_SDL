@@ -4,6 +4,8 @@ void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int He
 {
     *TextureContainer = {};
     TextureContainer->MaximumTextures = MaxTextures;
+    TextureContainer->RequestedWidth = Width;
+    TextureContainer->RequestedHeight = Height;
     TextureContainer->TextureWidth = Align(Width, PIXELS_PER_SQUARE_SIDE);
     TextureContainer->TextureHeight = Align(Height, PIXELS_PER_SQUARE_SIDE);
     TextureContainer->Textures = PushArray(Arena, MaxTextures, Texture);
@@ -329,7 +331,7 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	FILE_PCXHeader * Header = (FILE_PCXHeader*)PCXBuffer;
 	int Width = Header->XMax - Header->XMin +1;
 	int Height = Header->YMax - Header->YMin +1;
-	if(Header->BitsPerPlane != 8 || Header->Encoding != 1 || Header->ColorPlanes != 1 || Header->PalletteType != 1 || Header->BytesPerPlaneLine != Width || Header->YMin != 0 || Header->XMin !=0 || Header->Version != 5)
+	if(Header->BitsPerPlane != 8 || Header->Encoding != 1 || Header->ColorPlanes != 1 || Header->BytesPerPlaneLine != Width || Header->YMin != 0 || Header->XMin !=0 || Header->Version != 5)
 	{
 	    LogError("Unsupported PCX %s not loaded.", FileName);
 	    PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, u8 );
