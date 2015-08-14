@@ -399,6 +399,9 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    PieceTransform = FindTransformationForPiece(Object, PieceTransform, PieceName);
 	    PieceTransform->RotationTarget[Axis].Heading = Target/COB_ANGULAR_CONSTANT;
 	    PieceTransform->RotationTarget[Axis].Speed = Speed/COB_ANGULAR_FRAME_CONSTANT;
+	    PieceTransform->SpinTarget[Axis].Acceleration = 0;
+	    PieceTransform->SpinTarget[Axis].Speed = 0;
+	    PieceTransform->Spin[Axis] = 0;
 	}
 	break;
 	case COB_SPIN:
@@ -431,7 +434,7 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    else
 	    {
 		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT;
-		PieceTransform->SpinTarget[Axis].Speed = Speed/COB_ANGULAR_FRAME_CONSTANT/4;
+		PieceTransform->SpinTarget[Axis].Speed = Speed/COB_ANGULAR_FRAME_CONSTANT/64;
 	    }
 	}
 	break;
@@ -450,7 +453,7 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    }
 	    else
 	    {
-		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT/64;
+		PieceTransform->SpinTarget[Axis].Acceleration = Acceleration/COB_ANGULAR_FRAME_CONSTANT;
 		PieceTransform->SpinTarget[Axis].Speed = 0;
 	    }
 	}
@@ -877,7 +880,7 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	case COB_SET_SIGNAL_MASK:
 	{
 	    //TODO(Christof): Determine the exact usage of this, does is straight set, flip bits, bitwise or?
-	    State->SignalMask=PopStack(State);
+	    State->SignalMask = PopStack(State);
 	}
 	break;
 	case COB_EXPLODE:

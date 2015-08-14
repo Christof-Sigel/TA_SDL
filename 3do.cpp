@@ -197,14 +197,11 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	    break;
 	    case 4:
 	    {
-		//GLfloat UVCoords1[]={0,0, 1,0,  1,1 };
 		int Vertexes[][3]={{0,3,2},{0,2,1}};
-//	    Object->Vertices[Primitive->VertexIndexes[VertexIndices
 		v3 P0 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[0][0]]*3]);
 		v3 P1 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[1][2]]*3]);
 		v3 P2 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[0][2]]*3]);
 		v3 P3 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[0][1]]*3]);
-
 	    
 		v3 P03 = sub(P0, P3);
 		v3 P20 = sub(P2, P0);
@@ -218,25 +215,20 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		d[3] = length(sub(P3,Center));
 	    
 		float mod[4]= {1,1,1,1};
-#if 1
 		mod[0] = (d[0]+d[2])/d[2];
 		mod[1] = (d[1]+d[3])/d[3];
 		mod[2] = (d[2]+d[0])/d[0];
 		mod[3] = (d[3]+d[1])/d[1];
-#endif
 
 
-	    
 		GLfloat NormalUVCoords[][9]={{1,0,mod[0],  1,1,mod[3],   0,1,mod[2] },{1,0,mod[0],  0,1,mod[2],  0,0,mod[1]}};
 		GLfloat AirPadUVCoords[][9]={{0,0,mod[0],  1,0,mod[3],   1,1,mod[2] },{0,0,mod[0],  1,1,mod[2],  0,1,mod[1]}};
-
 	    
 		if(IsAirPadTexture(Texture))
 		{
 		    FillObject3dData(Data,CurrentTriangle,Vertexes[0],Object,CurrentPrimitive,PaletteData);
 		    FillTextureData(TextureData, CurrentTriangle, AirPadUVCoords[0], Texture);
 		    CurrentTriangle++;
-		    //GLfloat UVCoords2[]={0,0, 1,1, 0,1};
 		    FillObject3dData(Data,CurrentTriangle,Vertexes[1],Object,CurrentPrimitive,PaletteData);
 		    FillTextureData(TextureData, CurrentTriangle, AirPadUVCoords[1], Texture);
 		    CurrentTriangle++;
@@ -246,15 +238,10 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		    FillObject3dData(Data,CurrentTriangle,Vertexes[0],Object,CurrentPrimitive,PaletteData);
 		    FillTextureData(TextureData, CurrentTriangle, NormalUVCoords[0], Texture);
 		    CurrentTriangle++;
-		    //GLfloat UVCoords2[]={0,0, 1,1, 0,1};
 		    FillObject3dData(Data,CurrentTriangle,Vertexes[1],Object,CurrentPrimitive,PaletteData);
 		    FillTextureData(TextureData, CurrentTriangle, NormalUVCoords[1], Texture);
 		    CurrentTriangle++;
 		}
-
-
-	   
-	    
 	    }
 	    break;
 	    default:
@@ -284,7 +271,6 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	    }
 	}
 
-
 	//VERTEX DATA
 	glGenVertexArrays(1,&Object->VertexBuffer);
 	glBindVertexArray(Object->VertexBuffer);
@@ -310,7 +296,6 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	glEnableVertexAttribArray(1);
 
 	glBindVertexArray(0);
-
 
 	//LINES
 	glGenVertexArrays(1,&Object->LineBuffer);
@@ -381,7 +366,6 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		v3 P2 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[0][2]]*3]);
 		v3 P3 = v3_from_array(&Object->Vertices[CurrentPrimitive->VertexIndexes[Vertexes[0][1]]*3]);
 
-	    
 		v3 P03 = sub(P0, P3);
 		v3 P20 = sub(P2, P0);
 		v3 P31 = sub(P3, P1);
@@ -399,11 +383,8 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		mod[2] = (d[2]+d[0])/d[0];
 		mod[3] = (d[3]+d[1])/d[1];
 
-
-	    
 		GLfloat NormalUVCoords[][9]={{1,0,mod[0],  1,1,mod[3],   0,1,mod[2] },{1,0,mod[0],  0,1,mod[2],  0,0,mod[1]}};
 		GLfloat AirPadUVCoords[][9]={{0,0,mod[0],  1,0,mod[3],   1,1,mod[2] },{0,0,mod[0],  1,1,mod[2],  0,1,mod[1]}};
-
 	    
 		if(IsAirPadTexture(Texture))
 		{
@@ -421,10 +402,6 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 		    FillTextureData(TextureData, CurrentTriangle, NormalUVCoords[1], Texture);
 		    CurrentTriangle++;
 		}
-
-
-	   
-	    
 	    }
 	    break;
 	    default:
@@ -457,10 +434,6 @@ b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, s32 Objec
 	if(TextureData)
 	    PopArray(TempArena,TextureData ,Object->NumTriangles * (4)*3, GLfloat);
     }
-
-
-  
-
     return 1;
 }
 
@@ -592,6 +565,14 @@ void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails
 	    }
 	}
 	TransformationDetails->Rotation[i] += TransformationDetails->Spin[i];
+	if(TransformationDetails->Rotation[i] >= 2*PI)
+	{
+	    TransformationDetails->Rotation[i] -= 2*PI;
+	}
+	if(TransformationDetails->Rotation[i] <  -2*PI)
+	{
+	    TransformationDetails->Rotation[i] += 2*PI;
+	}
     }
     for(int i=0;i<Object->NumberOfChildren;i++)
     {
