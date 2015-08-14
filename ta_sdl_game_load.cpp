@@ -66,7 +66,23 @@ CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation
 	glUniform1i(GetUniformLocation(TDetails->Program,"Texture"), 0);
 	glUniform2iv(GetUniformLocation(TDetails->Program,"Viewport"),1,viewport+2);
     }
+
+
+    DebugRectShaderDetails * RDetails = &CurrentGameState->DebugRectDetails;
+    RDetails->Program = LoadShaderProgram("shaders/DebugRect.vs.glsl","shaders/DebugRect.fs.glsl",&CurrentGameState->ShaderGroup);
+    if(RDetails->Program->ProgramID)
+    {
+	RDetails->ColorLocation=GetUniformLocation(RDetails->Program,"Color");
+	RDetails->PositionLocation=GetUniformLocation(RDetails->Program,"Position");
+	RDetails->SizeLocation=GetUniformLocation(RDetails->Program,"Size");
+	RDetails->BorderWidthLocation=GetUniformLocation(RDetails->Program,"BorderWidth");
+	RDetails->BorderColorLocation=GetUniformLocation(RDetails->Program,"BorderColor");
+    
+	glUniform2iv(GetUniformLocation(RDetails->Program,"Viewport"),1,viewport+2);
+    }
 }
+
+void SetupDebugRectBuffer(GLuint * DebugRectBuffer);
 
 void SetupGameState( GameState * CurrentGameState);
 extern "C"{
@@ -137,27 +153,9 @@ extern "C"{
 
 	LoadCurrentModel(CurrentGameState);
 
-	Entry = FindEntryInAllFiles("guiss", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-	if(Entry.IsDirectory)
-	{
-	    CurrentGameState->GUIs = PushArray(&CurrentGameState->GameArena, Entry.Directory.NumberOfEntries, TAUIElement);
-	    CurrentGameState->NumberOfGuis = Entry.Directory.NumberOfEntries;
-	    for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
-	    {
-		HPIEntry * GUIFile = &Entry.Directory.Entries[i];
-		if(NameEndsWith(GUIFile->Name,".gui"))
-		{
-		    u8 * temp = PushArray(&CurrentGameState->TempArena, GUIFile->File.FileSize, u8 );
-		    if(LoadHPIFileEntryData(*GUIFile, temp, &CurrentGameState->TempArena))
-		    {
-			CurrentGameState->GUIs[i] = LoadGUIFromBuffer((char*)temp, (char*)temp+GUIFile->File.FileSize, &CurrentGameState->GameArena, &CurrentGameState->TempArena,GUIFile->Name, &CurrentGameState->GlobalArchiveCollection, CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
-		    }
-		    PopArray(&CurrentGameState->TempArena,temp,  GUIFile->File.FileSize, u8 );
-		}
-	    }
-	}
-
 	CurrentGameState->MainMenu = LoadGUI("MainMenu.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+
+	SetupDebugRectBuffer(&CurrentGameState->DebugRectDetails.VertexBuffer);
     }
 
     void GameTeardown(Memory * GameMemory)

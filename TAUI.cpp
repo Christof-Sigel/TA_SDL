@@ -294,11 +294,15 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     }
     else if(CaseInsensitiveMatch("multi",Name))
     {
-	Element->ElementName = SINGLEPLAYER;
+	Element->ElementName = MULTIPLAYER;
     }
     else if(CaseInsensitiveMatch("debugstring",Name))
     {
 	Element->ElementName = DEBUGSTRING;
+    }
+    else if(CaseInsensitiveMatch("Exit",Name))
+    {
+	Element->ElementName = MAIN_MENU_EXIT;
     }
 }
 
@@ -400,8 +404,10 @@ void LoadCommonUITextures(GameState * CurrentGameState)
     }
 }
 
-void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDetails, TextureContainer * ButtonFont, TextureContainer * CommonUIElements, TAUIContainer * Container = 0)
+void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2DShaderDetails * ShaderDetails, TextureContainer * ButtonFont, TextureContainer * CommonUIElements, DebugRectShaderDetails * DebugRectDetails, TAUIElement * Container = 0)
 {
+    s32 X= Element->X + XOffset;
+    s32 Y = Element->Y + YOffset;
     switch(Element->ElementType)
     {
     case TAG_UI_CONTAINER:
@@ -409,11 +415,11 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	Texture * Background =  Element->Container.Background;
 	if(Background)
 	{
-	    DrawTexture2D(Element->Textures->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, Background->U, Background->V, Background->Width, Background->Height);
+	    DrawTexture2D(Element->Textures->Texture, float(X), float(Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, Background->U, Background->V, Background->Width, Background->Height);
 	}
 	for(int i=0;i<Element->Container.NumberOfElements;i++)
 	{
-	    RenderTAUIElement(&Element->Container.Elements[i], ShaderDetails, ButtonFont, CommonUIElements, &Element->Container);
+	    RenderTAUIElement(&Element->Container.Elements[i], XOffset, YOffset, ShaderDetails, ButtonFont, CommonUIElements, DebugRectDetails, Element);
 	}
     }
     break;
@@ -452,12 +458,13 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	ButtonBackground = GetTexture(ButtonBackground, ButtonBackground->FrameNumber + Button->CurrentStatus);
 	float U = ButtonBackground->U;
 	float V = ButtonBackground->V;
-	DrawTexture2D(ButtonTextureContainer->Texture, float(Element->X), float(Element->Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Width, ButtonBackground->Height);
+	DrawTexture2D(ButtonTextureContainer->Texture, float(X), float(Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Width, ButtonBackground->Height);
 	if(Button->Text)
 	{
 	    FontDimensions TD = TextSizeInPixels(Button->Text, ButtonFont);
-	    DrawTextureFontText(Button->Text, Element->X+((Element->Width - TD.Width)/2), Element->Y+((Element->Height - TD.Height)/2), ButtonFont, ShaderDetails);
+	    DrawTextureFontText(Button->Text, X+((Element->Width - TD.Width)/2), Y+((Element->Height - TD.Height)/2), ButtonFont, ShaderDetails);
 	}
+	//DrawDebugRect(DebugRectDetails, Element->X , Element->Y, Element->Width, Element->Height, {1,1,1} , 2.0f );
     }
     break;
     case TAG_LABEL:
@@ -465,30 +472,37 @@ void RenderTAUIElement(TAUIElement * Element, Texture2DShaderDetails * ShaderDet
 	//TODO(Christof): update text for specially named labels here
 	if(Element->Label.Text)
 	{
-	FNTFont * LabelFont = 0;
-	for(int i=0;i<Container->NumberOfElements;i++)
-	{
-	    if(Container->Elements[i].ElementType == TAG_LABEL_FONT)
+	    FNTFont * LabelFont = 0;
+	    for(int i=0;i<Container->Container.NumberOfElements;i++)
 	    {
-		LabelFont = Container->Elements[i].LabelFont.Font;
-		break;
+		if(Container->Container.Elements[i].ElementType == TAG_LABEL_FONT)
+		{
+		    LabelFont = Container->Container.Elements[i].LabelFont.Font;
+		    break;
+		}
 	    }
-	}
-	if(LabelFont)
-	{
-	}
-	else
-	{
-	    FontDimensions Size = TextSizeInPixels(Element->Label.Text, ButtonFont);
-	    DrawTextureFontText(Element->Label.Text, Element->X+((Element->Width - Size.Width)/2), Element->Y+((Element->Height - Size.Height)/2), ButtonFont, ShaderDetails);
-	}
+	    char * Text= Element->Label.Text;
+	    if(Element->ElementName == DEBUGSTRING)
+	    {
+		Text = "V 0.1";
+		X = (Container->Width - Element->Width)/2 + XOffset;
+	    }
+	    if(LabelFont)
+	    {
+		//TODO(Christof): FNT font label rendering here
+	    }
+	    else
+	    {
+		FontDimensions Size = TextSizeInPixels(Text, ButtonFont);
+		DrawTextureFontText(Text,X+((Element->Width - Size.Width)/2), Y+((Element->Height - Size.Height)/2), ButtonFont, ShaderDetails);
+	    }
 	}
     }
     break;
     }
 }
 
-TAUIElementName ProcessMouseClick(TAUIElement * Root, s32 MouseX, s32 MouseY, b32 Down)
+TAUIElementName ProcessMouseClick(TAUIElement * Root, s32 MouseX, s32 MouseY, b32 Down, s32 XOffset, s32 YOffset)
 {
     Assert(Root->ElementType == TAG_UI_CONTAINER);
     TAUIElementName Result = UNKNOWN;
@@ -496,20 +510,20 @@ TAUIElementName ProcessMouseClick(TAUIElement * Root, s32 MouseX, s32 MouseY, b3
     for(s32 i=0;i<Root->Container.NumberOfElements;i++)
     {
 	TAUIElement * Element = &Root->Container.Elements[i];
-	if(MouseX < Element->X + Element->Width && MouseX > Element->X
-	   && MouseY < Element->Y + Element->Width && MouseY > Element->Y)
+	s32 X = XOffset + Element->X, Y = YOffset + Element->Y;
+	if(MouseX < X + Element->Width && MouseX > X
+	   && MouseY < Y + Element->Height && MouseY > Y)
 	{
 	    switch(Element->ElementType)
 	    {
 	    case TAG_BUTTON:
-		Element->Button.CurrentStatus = Down?4:0;
+		Element->Button.CurrentStatus = Down?1:0;
 		break;
 	    }
 	    return Element->ElementName;
 	}
     }
-
-
+    
     return Result;
 }
     

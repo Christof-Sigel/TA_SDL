@@ -144,6 +144,10 @@ union Color
     {
 	float Red,Green,Blue;
     };
+     struct
+    {
+	float R,G,B;
+    };
     float Contents[3];
 };
 
@@ -173,6 +177,31 @@ void DrawTexture2D(GLuint Texture, float X, float Y, float Width, float Height, 
 	{
 	    Once=0;
 	    LogWarning("2D Texture shader not loaded, ignoring font rendering calls");
+	}
+    }
+}
+
+void DrawDebugRect(DebugRectShaderDetails * Details,int X, int Y, int Width, int Height, Color BorderColor , float BorderWidth , float BorderAlpha = 1.0f, Color Color ={{1,1,1}}, float InnerAlpha = 0.0f)
+{
+     if(Details->Program->ProgramID)
+    {
+	glUseProgram(Details->Program->ProgramID);
+	glUniform4f(Details->ColorLocation,Color.R, Color.G, Color.B, InnerAlpha);
+	glUniform2f(Details->PositionLocation,X,Y);
+	glUniform1f(Details->BorderWidthLocation, BorderWidth);
+	glUniform4f(Details->BorderColorLocation, BorderColor.R, BorderColor.G, BorderColor.B, BorderAlpha);
+	glUniform2f(Details->SizeLocation,Width, Height);
+		 
+	glBindVertexArray(Details->VertexBuffer);
+	glDrawArrays(GL_TRIANGLES,0,6);
+    }
+    else
+    {
+	static u8 Once = 1;
+	if(Once)
+	{
+	    Once=0;
+	    LogWarning("Debug Rect shader not loaded, ignoring debug rect drawing calls");
 	}
     }
 }

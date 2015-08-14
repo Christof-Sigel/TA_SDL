@@ -134,7 +134,7 @@ enum Block
 const int SCRIPT_NAME_STORAGE_SIZE=64;
 const int UNIT_SCRIPT_MAX_STACK_SIZE = 128;
 const int UNIT_SCRIPT_MAX_LOCAL_VARS = 64;
-const int MAX_INSTRUCTIONS_PER_FRAME = 2000;
+const int MAX_INSTRUCTIONS_PER_FRAME = 10000;
 const int SCRIPT_POOL_SIZE = 64;
 
 enum UnitVariable
@@ -430,6 +430,7 @@ enum TAUIElementName
     SINGLEPLAYER,
     MULTIPLAYER,
     DEBUGSTRING,
+    MAIN_MENU_EXIT
 };
 
 struct TAUIElement

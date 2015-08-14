@@ -115,7 +115,7 @@ int main(int argc, char * argv[])
     
     GameSetup(&GameMemory);
     SDL_Event e;
-    while( !CurrentGameState->Quit )
+    while( CurrentGameState->State != QUIT )
     {
 	CheckResources(&GameMemory);
 	if(HasGameLibraryBeenUpdated())
@@ -128,7 +128,7 @@ int main(int argc, char * argv[])
 	{
 	    if( e.type == SDL_QUIT )
 	    {
-		CurrentGameState->Quit=1;
+		CurrentGameState->State = QUIT;
 	    }
 	    else if( e.type == SDL_KEYDOWN)
 	    {

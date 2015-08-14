@@ -212,14 +212,30 @@ struct UnitBuildShaderDetails
     GLuint BuildPercentLocation;
 };
 
+struct DebugRectShaderDetails
+{
+    ShaderProgram * Program;
+    GLuint PositionLocation, SizeLocation;
+    GLuint BorderColorLocation, ColorLocation, BorderWidthLocation;
+    GLuint VertexBuffer;
+};
+
+enum State
+{
+    MAIN_MENU,
+    RUNNING,
+    PAUSED,
+    QUIT
+};
 
 struct GameState
 {
     b32 IsInitialised;
     MemoryArena GameArena;
     MemoryArena TempArena;
-    b32 Quit;
-
+    State State;
+    int NumberOfFrames;
+    
 
     Matrix ProjectionMatrix;
     Matrix ModelMatrix;
@@ -228,10 +244,33 @@ struct GameState
     UnitShaderDetails UnitShaderDetails;
     UnitBuildShaderDetails UnitBuildShaderDetails;
     ShaderProgram * MapShader;
-    ShaderProgram * UIElementShaderProgram;
+    FontShaderDetails FontShaderDetails;
+    Texture2DShaderDetails DrawTextureShaderDetails;
+    ShaderGroup ShaderGroup;
     
-    int NumberOfFrames;
-   
+    
+    GLuint DebugAxisBuffer;
+    DebugRectShaderDetails DebugRectDetails;
+    GLuint DebugRectBuffer;
+    
+    FontContainer LoadedFonts;
+    GLuint Draw2DVertexBuffer;
+
+    TextureContainer UnitTextures;
+    TextureContainer Font11;
+    TextureContainer Font12;
+    TextureContainer CommonGUITextures;
+    
+    int ScreenWidth,ScreenHeight;
+    SDL_Window * MainSDLWindow;
+
+    HPIFileCollection GlobalArchiveCollection;
+    u8 PaletteData[1024];
+    u64  PerformanceCounterFrequency;
+
+    //Test data
+
+    TAUIElement MainMenu;
 
     Object3d temp_model;
     TAMap TestMap;
@@ -239,40 +278,13 @@ struct GameState
     int UnitIndex;
 
     TempUnitList Units;
-
-    int ScreenWidth,ScreenHeight;
-    SDL_Window * MainSDLWindow;
-
-    HPIFileCollection GlobalArchiveCollection;
-    
-    TextureContainer UnitTextures;
-    TextureContainer Font11;
-    TextureContainer Font12;
-
-    u8 PaletteData[1024];
-
     UnitScript CurrentUnitScript;
-    u64  PerformanceCounterStart;
-    u64  PerformanceCounterFrequency;
-
     float CameraXRotation;
     float CameraYRotation;
 
     float CameraTranslation[3];
     ScriptStatePool CurrentScriptPool;
-    GLuint DebugAxisBuffer;
-    FontShaderDetails FontShaderDetails;
-    FontContainer LoadedFonts;
-    GLuint Draw2DVertexBuffer;
-    Texture2DShaderDetails DrawTextureShaderDetails;
 
-
-    ShaderGroup ShaderGroup;
-    TextureContainer CommonGUITextures;
-    TAUIElement *GUIs;
-    int NumberOfGuis;
-
-
-    TAUIElement MainMenu;
+    s32 MouseX, MouseY;
 };
 
