@@ -1,7 +1,7 @@
-void LoadCurrentModel(GameState * CurrentGameState);
-void InitialiseGame(Memory * GameMemory);
+internal void LoadCurrentModel(GameState * CurrentGameState);
+internal void InitialiseGame(Memory * GameMemory);
 
-void ReloadShaders(Memory * GameMemory)
+internal void ReloadShaders(Memory * GameMemory)
 {
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     UnloadAllShaders(&CurrentGameState->ShaderGroup);
@@ -82,10 +82,15 @@ CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation
     }
 }
 
-void SetupDebugRectBuffer(GLuint * DebugRectBuffer);
+internal void SetupDebugRectBuffer(GLuint * DebugRectBuffer);
 
-void SetupGameState( GameState * CurrentGameState);
+
+
+internal void SetupGameState( GameState * CurrentGameState);
 extern "C"{
+
+    void GameSetup(Memory * GameMemory);
+    
     void GameSetup(Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
@@ -166,6 +171,7 @@ extern "C"{
 	SetupDebugRectBuffer(&CurrentGameState->DebugRectDetails.VertexBuffer);
     }
 
+    void GameTeardown(Memory * GameMemory);
     void GameTeardown(Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
@@ -173,7 +179,7 @@ extern "C"{
 	UnloadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection);
 	Unload3DO(&CurrentGameState->temp_model);
     }
-
+    void CheckResources(Memory * GameMemory);
     void CheckResources(Memory * GameMemory)
     {
 	//return;

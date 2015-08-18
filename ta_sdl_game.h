@@ -28,6 +28,8 @@ typedef s8 b8;
 typedef float r32;
 typedef double r64;
 
+#define internal static
+
 const int UNIT_TEXTURE_WIDTH=1024;
 const int UNIT_TEXTURE_HEIGHT=1400;
 const int UNIT_MAX_TEXTURES=1024;
@@ -38,7 +40,7 @@ const int COMMONUI_MAX_TEXTURES=1024;
 
 
 const float TA_TO_GL_SCALE=1.0f/168340.0f;
-const float PI = 3.14159265358979323846;
+const float PI = 3.14159265358979323846f;
 const int FONT_BITMAP_SIZE=256;
 
 const int NUMBER_OF_UNIT_DETAILS=35;
@@ -52,7 +54,7 @@ const float COB_ANGULAR_FRAME_CONSTANT = COB_ANGULAR_CONSTANT ;
 const int MAX_TA_FONT_NUMBER = 32;
 const int MAX_SHADER_NUMBER = 32;
 const int MAX_SHADER_FILENAME = 50;
-#include "platform_code.cpp"
+#include "Logging.h"
 #include "GL.h"
 #include "file_formats.h"
 
@@ -71,8 +73,8 @@ struct InputState
 {
     u32 KeyIsDown[256];
     u32 KeyWasDown[256];
-    s32 MouseButtons;
-    s32 LastMouseButtons;
+    u32 MouseButtons;
+    u32 LastMouseButtons;
     s32 MouseX, MouseY;
 };
 
@@ -91,8 +93,6 @@ struct MemoryArena
     memory_index Size;
     u8 *Base;
     memory_index Used;
-
-    s32 TempCount;
 };
 
 inline void
@@ -101,7 +101,6 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
     Arena->Size = Size;
     Arena->Base = (u8 *)Base;
     Arena->Used = 0;
-    Arena->TempCount = 0;
 }
 
 #define VERBOSE_ALLOCATIONS 0
@@ -151,9 +150,9 @@ void PopSubArena_(MemoryArena * Arena, MemoryArena * SubArena ,const char * call
 #else
 
 #define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type))
-#define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (Count)*sizeof(type))
+#define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (u64)(Count)*sizeof(type))
 #define PushSize(Arena, Size) PushSize_(Arena, Size)
-#define PopArray(Arena, Memory, Count, type) PopSize_(Arena,Memory,(Count)*sizeof(type))
+#define PopArray(Arena, Memory, Count, type) PopSize_(Arena,Memory,(u64)(Count)*sizeof(type))
 
 inline void *
 PushSize_(MemoryArena *Arena, memory_index Size)
@@ -167,7 +166,7 @@ PushSize_(MemoryArena *Arena, memory_index Size)
     return(Result);
 }
 
-MemoryArena * PushSubArena(MemoryArena * Arena, memory_index Size)
+inline MemoryArena * PushSubArena(MemoryArena * Arena, memory_index Size)
 {
     MemoryArena * Result = (MemoryArena*)PushSize_(Arena, Size+sizeof(MemoryArena));
     InitializeArena(Result, Size, Result+sizeof(MemoryArena));
@@ -181,7 +180,7 @@ inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
     Arena->Used -=Size;
 }
 
-void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
+inline void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
 {
     PopSize_(Arena, SubArena, SubArena->Size+sizeof(MemoryArena));
 }
@@ -193,31 +192,33 @@ void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
 struct TempUnitList
 {
     UnitDetails Details[MAX_UNITS_LOADED];
-    int Size;
+    s32 Size;
+    s32 PAD;
 };
 
 struct UnitShaderDetails
 {
     ShaderProgram * Shader;
-    GLuint ProjectionMatrixLocation;
-    GLuint ModelMatrixLocation;
-    GLuint ViewMatrixLocation;
+    GLint ProjectionMatrixLocation;
+    GLint ModelMatrixLocation;
+    GLint ViewMatrixLocation;
+    s32 PAD;
 };
 
 struct UnitBuildShaderDetails
 {
     ShaderProgram * Shader;
-    GLuint ProjectionMatrixLocation;
-    GLuint ModelMatrixLocation;
-    GLuint ViewMatrixLocation;
-    GLuint BuildPercentLocation;
+    GLint ProjectionMatrixLocation;
+    GLint ModelMatrixLocation;
+    GLint ViewMatrixLocation;
+    GLint BuildPercentLocation;
 };
 
 struct DebugRectShaderDetails
 {
     ShaderProgram * Program;
-    GLuint PositionLocation, SizeLocation;
-    GLuint BorderColorLocation, ColorLocation, BorderWidthLocation;
+    GLint PositionLocation, SizeLocation;
+    GLint BorderColorLocation, ColorLocation, BorderWidthLocation;
     GLuint VertexBuffer;
 };
 
@@ -238,23 +239,40 @@ enum State
 
 struct GameState
 {
-    b32 IsInitialised;
-    MemoryArena GameArena;
-    MemoryArena TempArena;
-    State State;
-    int NumberOfFrames;
-
-
-    Matrix ProjectionMatrix;
-    Matrix ModelMatrix;
-    Matrix ViewMatrix;
-
     UnitShaderDetails UnitShaderDetails;
     UnitBuildShaderDetails UnitBuildShaderDetails;
     ShaderProgram * MapShader;
     FontShaderDetails FontShaderDetails;
     Texture2DShaderDetails DrawTextureShaderDetails;
     ShaderGroup ShaderGroup;
+
+    TextureContainer UnitTextures;
+    TextureContainer Font11;
+    TextureContainer Font12;
+    TextureContainer CommonGUITextures;
+
+ SDL_Window * MainSDLWindow;
+
+    HPIFileCollection GlobalArchiveCollection;
+    u8 PaletteData[1024];
+    u64  PerformanceCounterFrequency;
+
+    
+    MemoryArena GameArena;
+    MemoryArena TempArena;
+    State State;
+      
+   
+
+    b32 IsInitialised;
+    s32 NumberOfFrames;
+  
+    Matrix ProjectionMatrix;
+    Matrix ModelMatrix;
+    Matrix ViewMatrix;
+
+    
+   
 
 
     GLuint DebugAxisBuffer;
@@ -264,18 +282,13 @@ struct GameState
     FontContainer LoadedFonts;
     GLuint Draw2DVertexBuffer;
 
-    TextureContainer UnitTextures;
-    TextureContainer Font11;
-    TextureContainer Font12;
-    TextureContainer CommonGUITextures;
+   
 
     int ScreenWidth,ScreenHeight;
-    SDL_Window * MainSDLWindow;
+   
 
-    HPIFileCollection GlobalArchiveCollection;
-    u8 PaletteData[1024];
-    u64  PerformanceCounterFrequency;
 
+    s32 PAD;
     //Test data
 
     TAUIElement MainMenu;
@@ -285,15 +298,17 @@ struct GameState
     TAUIElement SkirmishMenu;
     TAUIElement OptionsMenu;
 
+     TempUnitList Units;
+    UnitScript CurrentUnitScript;
+    float CameraXRotation;
+    float CameraYRotation;
+
     Object3d temp_model;
     TAMap TestMap;
     Object3dTransformationDetails UnitTransformationDetails;
     int UnitIndex;
 
-    TempUnitList Units;
-    UnitScript CurrentUnitScript;
-    float CameraXRotation;
-    float CameraYRotation;
+   
 
     float CameraTranslation[3];
     ScriptStatePool CurrentScriptPool;

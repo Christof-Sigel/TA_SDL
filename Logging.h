@@ -17,4 +17,4 @@ const int LOG_LEVEL=LOG_DEBUG; //controls up to what level of errors is logged
 #define LogInformation(fmt,...) __LOG(LOG_INFORMATION,fmt,__func__,__LINE__,__FILE__,##__VA_ARGS__)
 #define LogDebug(fmt,...) __LOG(LOG_DEBUG,fmt,__func__,__LINE__,__FILE__,##__VA_ARGS__)
 
-void __LOG(int loglevel,const char * fmt, const char* caller , int line,const char * file,...);
+extern void __LOG(int loglevel,const char * fmt, const char* caller , int line,const char * file,...);

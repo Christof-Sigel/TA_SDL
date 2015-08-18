@@ -5,25 +5,33 @@
 #include "ta_sdl_platform.h"
 #include "ta_sdl_game.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#include "platform_code.cpp"
+#pragma clang diagnostic pop
+
+
 
 #include "sdl.cpp"
 #define QUOTE2(X) #X
 #define QUOTE(X) QUOTE2(X)
 #define GAME_LIBRARY_OBJECT QUOTE(DLL_NAME)
+#ifdef __WINDOWS__
 #define TEMP_GAME_LIBRARY_OBJECT QUOTE(DLL_TEMP_NAME)
+#endif
 
-void (*GameSetup)(Memory * GameMemory) = NULL;
-void (*CheckResources)(Memory * GameMemory) = NULL;
-void (*GameUpdateAndRender)(InputState * Input, Memory* GameMemory) = NULL;
-void (*GameTeardown)(Memory * GameMemory) = NULL;
-void * GameLibraryObject=NULL;
-s64  GameLibraryObjectModifyTime=0;
+internal void (*GameSetup)(Memory * GameMemory) = NULL;
+internal void (*CheckResources)(Memory * GameMemory) = NULL;
+internal void (*GameUpdateAndRender)(InputState * Input, Memory* GameMemory) = NULL;
+internal void (*GameTeardown)(Memory * GameMemory) = NULL;
+internal void * GameLibraryObject=NULL;
+internal u64  GameLibraryObjectModifyTime=0;
 
 #ifdef __WINDOWS__
 #include <windows.h>
 #endif
 
-void LoadGameLibrary()
+internal void LoadGameLibrary()
 {
 
     GameLibraryObjectModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
@@ -65,7 +73,7 @@ void LoadGameLibrary()
     }
 }
 
-void UnloadGameLibrary()
+internal void UnloadGameLibrary()
 {
     GameSetup=0;
     CheckResources=0;
@@ -74,14 +82,14 @@ void UnloadGameLibrary()
     SDL_UnloadObject(GameLibraryObject);
 }
 
-inline b32 HasGameLibraryBeenUpdated()
+internal inline b32 HasGameLibraryBeenUpdated()
 {
 #ifdef __WINDOWS__
     WIN32_FILE_ATTRIBUTE_DATA Ignored;
     if(GetFileAttributesEx("lock.tmp", GetFileExInfoStandard, &Ignored))
 	return 0;
 #endif
-    s64  CurrentModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
+    u64 CurrentModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
     return CurrentModifyTime > GameLibraryObjectModifyTime;
 }
 
@@ -158,7 +166,10 @@ int main(int argc, char * argv[])
     return 0;
 }
 
+#ifdef __WINDOWS__
+int wmain(int argc, char * argv[]);
 int wmain(int argc, char * argv[])
 {
     return  main(argc, argv);
 }
+#endif

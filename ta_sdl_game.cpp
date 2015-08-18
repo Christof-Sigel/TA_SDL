@@ -13,7 +13,7 @@
 
 #include <GL/glew.h>
 #include "ta_sdl_game.h"
-
+#include "platform_code.cpp"
 
 #include "GL.cpp"
 #include "file_formats.cpp"
@@ -22,7 +22,7 @@
 #include "ta_sdl_game_load.cpp"
 
 
-void LoadCurrentModel(GameState * CurrentGameState)
+internal void LoadCurrentModel(GameState * CurrentGameState)
 {
     if(CurrentGameState->UnitIndex>(int)CurrentGameState->Units.Size-1)
 	CurrentGameState->UnitIndex=0;
@@ -79,10 +79,9 @@ void LoadCurrentModel(GameState * CurrentGameState)
 
 static s32 Side=0;
 
-Matrix FPSViewMatrix(float * eye, float pitch, float yaw);
-void HandleInput(InputState * Input, GameState * CurrentGameState)
+internal Matrix FPSViewMatrix(float * eye, float pitch, float yaw);
+internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 {
-
     b32 MouseButtonDown = Input->MouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT);
     b32 MouseButtonClicked = Input->LastMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT) && !(Input->MouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT));
     switch(CurrentGameState->State)
@@ -231,6 +230,8 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	TAUIElement * Element = ProcessMouse(&CurrentGameState->MainMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
 	if(MouseButtonClicked && Element)
 	{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wswitch"
 	    switch(Element->ElementName)
 	    {
 	    case ELEMENT_NAME_EXIT:
@@ -239,8 +240,14 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	    case ELEMENT_NAME_SINGLEPLAYER:
 		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
 		break;
+	    case ELEMENT_NAME_MULTIPLAYER:
+		//TODO
+		break;
+	    case ELEMENT_NAME_INTRO:
+		//TODO
+		break;
 	    }
-
+#pragma clang diagnostic pop
 	}
     }
     break;
@@ -249,6 +256,8 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	TAUIElement * Element = ProcessMouse(&CurrentGameState->SinglePlayerMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
 	if(MouseButtonClicked && Element)
 	{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wswitch"
 	    switch(Element->ElementName)
 	    {
 	    case ELEMENT_NAME_PREVIOUS_MENU:
@@ -267,7 +276,7 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 		CurrentGameState->State = STATE_LOAD_GAME_MENU;
 		break;
 	    }
-
+#pragma clang diagnostic pop
 	}
     }
     break;
@@ -276,6 +285,8 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	TAUIElement * Element = ProcessMouse(&CurrentGameState->OptionsMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
 	if(MouseButtonClicked && Element)
 	{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wswitch"
 	    switch(Element->ElementName)
 	    {
 	    case ELEMENT_NAME_PREVIOUS_MENU:
@@ -285,6 +296,7 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
 		break;
 	    }
+#pragma clang diagnostic pop
 	}
     }
     break;
@@ -294,12 +306,18 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	TAUIElement * Element = ProcessMouse(&CurrentGameState->CampaignMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
 	if(MouseButtonClicked && Element)
 	{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wswitch"
 	    switch(Element->ElementName)
 	    {
 	    case ELEMENT_NAME_PREVIOUS_MENU:
 		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
 		break;
+	    case ELEMENT_NAME_START:
+		CurrentGameState->State = STATE_RUNNING;
+		break;
 	    }
+#pragma clang diagnostic pop
 	}
     }
     break;
@@ -309,12 +327,15 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	TAUIElement * Element = ProcessMouse(&CurrentGameState->SkirmishMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
 	if(MouseButtonClicked  && Element)
 	{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wswitch"
 	    switch(Element->ElementName)
 	    {
 	    case ELEMENT_NAME_PREVIOUS_MENU:
 		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
 		break;
 	    }
+#pragma clang diagnostic pop
 	}
     }
     break;
@@ -323,6 +344,8 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 	TAUIElement * Element = ProcessMouse(&CurrentGameState->LoadGameMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
 	if(MouseButtonClicked  && Element)
 	{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wswitch"
 	    switch(Element->ElementName )
 	    {
 	    case ELEMENT_NAME_LOAD:
@@ -332,10 +355,15 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
 		break;
 	    }
+#pragma clang diagnostic pop
 	}
     }
     break;
+    case STATE_QUIT:
+	//NOTE(Christof): nothing to do, simply to silence warning
+	break;
     }
+
 
     CurrentGameState->MouseX = Input->MouseX;
     CurrentGameState->MouseY = Input->MouseY;
@@ -343,7 +371,7 @@ void HandleInput(InputState * Input, GameState * CurrentGameState)
 }
 
 
-void SetupDebugRectBuffer(GLuint * DebugRectBuffer)
+internal void SetupDebugRectBuffer(GLuint * DebugRectBuffer)
 {
     GLfloat RenderData[6*(2+4)];//6 Vert (2 triangles) each 2 position coords and 4 distance to edge "coords"
 
@@ -395,7 +423,7 @@ void SetupDebugRectBuffer(GLuint * DebugRectBuffer)
     glDeleteBuffers(1,&VertexBuffer);
 }
 
-void SetupDebugAxisBuffer(GLuint * DebugAxisBuffer)
+internal void SetupDebugAxisBuffer(GLuint * DebugAxisBuffer)
 {
     //Setup Debug axis buffer details:
     GLfloat LineData[3*2 * (3+2+3)];
@@ -494,7 +522,7 @@ void SetupDebugAxisBuffer(GLuint * DebugAxisBuffer)
     glDeleteBuffers(1,&VertexBuffer);
 }
 
-void SetupGameState( GameState * CurrentGameState)
+internal void SetupGameState( GameState * CurrentGameState)
 {
     CurrentGameState->ProjectionMatrix.SetProjection(60,float(CurrentGameState->ScreenWidth)/CurrentGameState->ScreenHeight,1.0,10000.0);
 
@@ -523,7 +551,7 @@ void SetupGameState( GameState * CurrentGameState)
 
 }
 
-void InitialiseGame(Memory * GameMemory)
+internal void InitialiseGame(Memory * GameMemory)
 {
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     CurrentGameState->IsInitialised=1;
@@ -532,12 +560,12 @@ void InitialiseGame(Memory * GameMemory)
     SetupGameState(CurrentGameState);
 }
 
-float dot3(float * v1, float * v2)
+internal float dot3(float * v1, float * v2)
 {
     return v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2];
 }
 
-Matrix FPSViewMatrix(float * eye, float pitch, float yaw)
+internal Matrix FPSViewMatrix(float * eye, float pitch, float yaw)
 {
     float cosPitch = (float)cos(pitch);
     float sinPitch = (float)sin(pitch);
@@ -569,6 +597,7 @@ Matrix FPSViewMatrix(float * eye, float pitch, float yaw)
 
 extern "C"
 {
+    void GameUpdateAndRender(InputState * Input, Memory * GameMemory);
     void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
@@ -600,6 +629,7 @@ extern "C"
 
 	    UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f, Animate);
 	}
+	[[clang::fallthrough]];
 	case STATE_PAUSED:
 	{
 	    glUseProgram(CurrentGameState->UnitShaderDetails.Shader->ProgramID);
@@ -663,19 +693,17 @@ extern "C"
 	    case SIDE_CORE:
 		SideName = "CORE";
 		break;
-	    default:
+	    case SIDE_UNKNOWN:
 		SideName="UNKNOWN";
 		break;
 	    }
 	    char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
-	    int size=snprintf(NULL, 0, "%s: %s\n%s",SideName,Name,Desc)+1;
-	    //char tmp[size];
-	    char * tmp = PushArray(&CurrentGameState->TempArena, size, char);
+	    const int MAX_STRING=128;
+	    char tmp[MAX_STRING];
 	    float Alpha = 1.0f ;
 
-	    snprintf(tmp,size,"%s: %s\n%s",SideName, Name,Desc);
+	    snprintf(tmp,MAX_STRING,"%s: %s\n%s",SideName, Name,Desc);
 	    DrawTextureFontText(tmp, 15, 54, &CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, Alpha);
-	    PopArray(&CurrentGameState->TempArena, tmp, size, char);
 	}
 #endif
 
@@ -823,6 +851,10 @@ extern "C"
 	case STATE_OPTIONS_MENU:
 	    RenderTAUIElement(&CurrentGameState->OptionsMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails,  &CurrentGameState->Font11,&CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
 	    break;
+
+	case STATE_QUIT:
+	    //NOTE(Christof): nothing to do, simply to silence warning
+	    break;
 	}
 
 
@@ -838,7 +870,7 @@ extern "C"
 	char FPS[32];
 	const float FramesToCount = 30.0f;
 	CurrentFPS = (CurrentFPS*(FramesToCount-1) + 1.0f/((CurrentFrameTime - LastFrameTime)/1000.0f))/FramesToCount;
-	snprintf(FPS, 32, "%0.2f, %lld", CurrentFPS, CurrentFrameTime - LastFrameTime);
+	snprintf(FPS, 32, "%0.2f, %lu", CurrentFPS, CurrentFrameTime - LastFrameTime);
 	DrawTextureFontText(FPS, 0,0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
 	LastFrameTime = CurrentFrameTime;
 

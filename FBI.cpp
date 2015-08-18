@@ -1,5 +1,3 @@
-
-
 int UnitDetails::GetInt(const char * Name)
 {
     char * Value=GetString(Name);
@@ -107,7 +105,7 @@ UnitSide UnitDetails::GetSide()
 }
 
 
-void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, MemoryArena * GameArena)
+internal void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, MemoryArena * GameArena)
 {
     //TODO(Christof): Bounds checking?
     //[UNITINFO]
@@ -151,11 +149,11 @@ void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, MemoryArena *
 	*Start++ = 0;
 
 	UnitKeyValue temp;
-	int length=(int)strlen(Name)+1;
+	size_t length=strlen(Name)+1;
 	temp.Name=PushArray(GameArena,length,char);
 	memcpy(temp.Name,Name,length);
 
-	length=(int)strlen(Value)+1;
+	length=strlen(Value)+1;
 	temp.Value=PushArray(GameArena,length,char);
 	memcpy(temp.Value,Value,length);
 

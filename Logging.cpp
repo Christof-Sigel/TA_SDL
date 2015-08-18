@@ -7,6 +7,9 @@
 #include "windows.h"
 #endif
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-macros"
+#pragma clang diagnostic ignored "-Wformat-nonliteral"
 #ifdef __LINUX__
 #define CONSOLE_COLOR_NORMAL  "\x1B[0m"
 #define CONSOLE_COLOR_RED  "\x1B[31m"
@@ -33,12 +36,14 @@
 #define CONSOLE_COLOR_WHITE_BOLD
 #endif
 
-const char * LogError[]={CONSOLE_COLOR_BOLD CONSOLE_COLOR_RED "ERROR" ,
+#define internal static
+
+internal const char * LogError[]={CONSOLE_COLOR_BOLD CONSOLE_COLOR_RED "ERROR" ,
 			 CONSOLE_COLOR_YELLOW "WARNING" ,
 			 CONSOLE_COLOR_BLUE "INFORMATION",
 			 CONSOLE_COLOR_GREEN "DEBUG"};
 
-void __LOG(int loglevel,const char * fmt, const char* caller , int line,const char * file,...)
+extern void __LOG(int loglevel,const char * fmt, const char* caller , int line,const char * file,...)
 {
     const int MAX_LOG_STRING = 256;
     if (loglevel>LOG_LEVEL)
@@ -54,3 +59,4 @@ void __LOG(int loglevel,const char * fmt, const char* caller , int line,const ch
     printf("%s:" CONSOLE_COLOR_WHITE_BOLD " %s " CONSOLE_COLOR_RESET "line " CONSOLE_COLOR_WHITE_BOLD "%d" CONSOLE_COLOR_RESET " - %s : %s\n",LogError[loglevel],file,line,caller,tmp);
     va_end(argptr);
 }
+#pragma clang diagnostic pop

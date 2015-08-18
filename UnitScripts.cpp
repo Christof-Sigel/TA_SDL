@@ -1,4 +1,4 @@
-b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryArena * GameArena)
+internal b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryArena * GameArena)
 {
     FILE_CobHeader * Header = (FILE_CobHeader *)Buffer;
     Script->NumberOfPieces = Header->NumberOfPieces;
@@ -14,7 +14,7 @@ b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryArena * Gam
     s32 * NameOffsetArray = (s32  *)(Buffer + Header->OffsetToScriptNameOffsetArray);
     for(int i=0;i<Script->NumberOfFunctions;i++)
     {
-	int Length = (int)strlen((char*)Buffer + NameOffsetArray[i]);
+	size_t Length = strlen((char*)Buffer + NameOffsetArray[i]);
 	Length = Length<SCRIPT_NAME_STORAGE_SIZE?Length:SCRIPT_NAME_STORAGE_SIZE-1;
 	memcpy(Script->FunctionNames[i],Buffer + NameOffsetArray[i], Length);
 	Script->FunctionNames[i][Length]=0;
@@ -31,7 +31,7 @@ b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryArena * Gam
 	NameOffsetArray = (s32  *)(Buffer + Header->OffsetToPieceNameOffsetArray);
 	for(int i=0;i<Script->NumberOfPieces;i++)
 	{
-	    int Length = (int)strlen((char*)Buffer + NameOffsetArray[i]);
+	    size_t Length = strlen((char*)Buffer + NameOffsetArray[i]);
 	    Length= Length<SCRIPT_NAME_STORAGE_SIZE?Length:SCRIPT_NAME_STORAGE_SIZE-1;
 	    memcpy(Script->PieceNames[i],Buffer + NameOffsetArray[i], Length);
 	    Script->PieceNames[i][Length]=0;
@@ -47,7 +47,7 @@ b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryArena * Gam
     {
 	Script->FunctionOffsets[i] = ScriptOffsetArray[i];
     }
-    memcpy(Script->ScriptData, Buffer+Header->OffsetToScriptCode, Script->ScriptDataSize);
+    memcpy(Script->ScriptData, Buffer+Header->OffsetToScriptCode, (size_t)Script->ScriptDataSize);
     
     return 1;
 }
@@ -140,21 +140,21 @@ enum CobCommands
 
 
 
-inline void PushStack(ScriptState * State, s32 Value)
+internal inline void PushStack(ScriptState * State, s32 Value)
 {
     Assert(State->StackSize < UNIT_SCRIPT_MAX_STACK_SIZE);
     State->StackData[State->StackSize++] = Value;
 }
 
-inline s32 PopStack(ScriptState * State)
+internal inline s32 PopStack(ScriptState * State)
 {
     Assert(State->StackSize > 0)
     return State->StackData[--State->StackSize];
 }
 
-int MILLISECONDS_PER_FRAME = 1000/60;
+const int MILLISECONDS_PER_FRAME = 1000/60;
 
-Object3dTransformationDetails * FindTransformationForPiece(Object3d * Object, Object3dTransformationDetails * TransformationDetails, char * PieceName)
+internal Object3dTransformationDetails * FindTransformationForPiece(Object3d * Object, Object3dTransformationDetails * TransformationDetails, char * PieceName)
 {
     if(CaseInsensitiveMatch(Object->Name,PieceName))
 	return TransformationDetails;
@@ -169,13 +169,13 @@ Object3dTransformationDetails * FindTransformationForPiece(Object3d * Object, Ob
     return 0;
 }
 
-inline s32 PostData(UnitScript * Script,ScriptState * State)
+internal inline s32 PostData(UnitScript * Script,ScriptState * State)
 {
     return Script->ScriptData[State->ProgramCounter++];
 }
 
 
-int GetScriptNumberForFunction(UnitScript * Script, const char * FunctionName)
+internal int GetScriptNumberForFunction(UnitScript * Script, const char * FunctionName)
 {
     for(int i=0;i<Script->NumberOfFunctions;i++)
     {
@@ -185,7 +185,7 @@ int GetScriptNumberForFunction(UnitScript * Script, const char * FunctionName)
     return -1;
 }
 
-void CompactScriptPool(ScriptStatePool * Pool)
+internal void CompactScriptPool(ScriptStatePool * Pool)
 {
     for(int i=Pool->NumberOfScripts - 2 ; i>=0;i--)
     {
@@ -205,7 +205,7 @@ void CompactScriptPool(ScriptStatePool * Pool)
     }
 }
 
-void CleanUpScriptPool(ScriptStatePool * Pool)
+internal void CleanUpScriptPool(ScriptStatePool * Pool)
 {
     int i;
     for(i=Pool->NumberOfScripts - 1 ; i>=0;i--)
@@ -219,7 +219,7 @@ void CleanUpScriptPool(ScriptStatePool * Pool)
     CompactScriptPool(Pool);
 }
 
-ScriptState * AddNewScript(ScriptStatePool * Pool, UnitScript * Script, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails, s32 FunctionNumber, s32 SignalMask =0)
+internal ScriptState * AddNewScript(ScriptStatePool * Pool, UnitScript * Script, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails, s32 FunctionNumber, s32 SignalMask =0)
 {
     if(Pool->NumberOfScripts >= SCRIPT_POOL_SIZE)
 	return 0;
@@ -241,7 +241,7 @@ ScriptState * AddNewScript(ScriptStatePool * Pool, UnitScript * Script, s32 Numb
     return NewState;
 }
 
-ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, const char * FunctionName, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
+internal ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, const char * FunctionName, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
 {
     s32 FunctionNumber =  GetScriptNumberForFunction( Script, FunctionName);
     if(FunctionNumber < 0)
@@ -249,14 +249,14 @@ ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, co
     return AddNewScript(Pool,Script, NumberOfArguments, Arguments, TransformationDetails, FunctionNumber);
 }
 
-ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, s32 FunctionNumber, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
+internal ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, s32 FunctionNumber, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
 {
     if(FunctionNumber < 0)
 	return 0;
     return AddNewScript(Pool,Script, NumberOfArguments, Arguments, TransformationDetails, FunctionNumber);
 }
 
-ScriptState * CreateNewScriptState(UnitScript * Script, ScriptState * State, ScriptStatePool * Pool)
+internal ScriptState * CreateNewScriptState(UnitScript * Script, ScriptState * State, ScriptStatePool * Pool)
 {
     s32 FunctionNumber = PostData(Script,State);
     s32 NumberOfArguments = PostData(Script,State);
@@ -266,7 +266,7 @@ ScriptState * CreateNewScriptState(UnitScript * Script, ScriptState * State, Scr
     return AddNewScript(Pool, Script, NumberOfArguments, Arguments, State->TransformationDetails, FunctionNumber,  State->SignalMask);
 }
 
-s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool, const s32 InstructionsToRun = MAX_INSTRUCTIONS_PER_FRAME)
+internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, ScriptStatePool * Pool, const s32 InstructionsToRun = MAX_INSTRUCTIONS_PER_FRAME)
 {
     if(State->ScriptNumber < 0)
 	return -1;
@@ -296,7 +296,7 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	}
 	else
 	{
-	    if(PieceTransform->MovementTarget[State->BlockedOnAxis].Speed == 0)
+	    if(PieceTransform->MovementTarget[State->BlockedOnAxis].Speed == 0.0f)
 	    {
 		State->BlockedOn=BLOCK_NOT_BLOCKED;
 	    }
@@ -320,7 +320,7 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	}
 	else
 	{
-	    if(PieceTransform->RotationTarget[State->BlockedOnAxis].Speed == 0)
+	    if(PieceTransform->RotationTarget[State->BlockedOnAxis].Speed == 0.0f)
 	    {
 		State->BlockedOn=BLOCK_NOT_BLOCKED;
 	    }
@@ -330,6 +330,7 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    } 
 	}
     }
+    break;
     case BLOCK_NOT_BLOCKED:
 	break;
     case BLOCK_INIT:
@@ -593,7 +594,7 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	case COB_STACK_FLUSH:
 	    LogDebug("Flushing stack in %s",Script->FunctionNames[State->ScriptNumber]);
 //	    State->StackSize=0;
-	    Assert(!"NOPE");
+	    Assert(0);
 	    break;
 	case COB_PUSH_CONSTANT:
 	    PushStack(State, PostData(Script,State));
@@ -829,6 +830,7 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 	    break;
 	case COB_CALL_SCRIPT2:
 	    LogDebug("Call Script NUMBER 2!!!!");
+	    [[clang::fallthrough]];
 	case COB_CALL_SCRIPT:
 	{
 	    ScriptState * NewState = CreateNewScriptState(Script,State,Pool);
@@ -916,22 +918,22 @@ s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Object, Scrip
 }
 
 
-const char * Axes[]= {"X Axis","Y Axis","Z Axis"};
+static const char * Axes[]= {"X Axis","Y Axis","Z Axis"};
 #define PushStack(a,b) ASASAKLSJD
 #define PopStack (a) ASD:LAKSD:
 #define PostData(a,b) AS:DLASKD
 
-s32 GetStack(ScriptState * State, s32 Offset)
+internal s32 GetStack(ScriptState * State, s32 Offset)
 {
     return State->StackData[State->StackSize - Offset];
 }
 
-s32 GetNextData( UnitScript * Script,ScriptState * State, int Offset)
+internal s32 GetNextData( UnitScript * Script,ScriptState * State, int Offset)
 {
     return Script->ScriptData[State->ProgramCounter + Offset];
 }
 
-s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32 Y, Color TextColor, s32 Offset, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails)
+internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32 Y, Color TextColor, s32 Offset, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails)
 {
     if(State->ProgramCounter + Offset > Script->ScriptDataSize)
 	return -1;
@@ -1576,7 +1578,7 @@ s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s32 X, s32
     }
     break;
     default:
-	Assert(!"ERRR, what?");
+	Assert(0);
 	break;
     }
     char OutputString[MAX_STRING_LEN];

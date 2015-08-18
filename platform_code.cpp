@@ -1,26 +1,11 @@
-#include "Logging.h"
-
-s64  GetTimeMillis(u64 PerformaceCounterFrequency)
+internal u64 GetTimeMillis(u64 PerformaceCounterFrequency)
 {
     return SDL_GetPerformanceCounter()/(PerformaceCounterFrequency/1000);
 }
 
-
-struct MemoryMappedFile
-{
-#ifdef __WINDOWS__
-    HANDLE MMFile;
-    HANDLE File;
-#else
-    int File;
-#endif
-    unsigned char * MMapBuffer;
-    s64  FileSize;
-    u64  ModifiedTime;
-};
 inline u64  GetFileModifiedTime(const char * FileName);
 
-MemoryMappedFile MemoryMapFile(const char * FileName)
+internal MemoryMappedFile MemoryMapFile(const char * FileName)
 {
     MemoryMappedFile MMFile={};
 #ifdef __LINUX__
@@ -28,9 +13,9 @@ MemoryMappedFile MemoryMapFile(const char * FileName)
 
     if(stat64(FileName,&filestats)==-1)
 	return {};
-    MMFile.FileSize=filestats.st_size;
-    MMFile.ModifiedTime=filestats.st_mtime;
-
+    MMFile.FileSize=(u64)filestats.st_size;
+    MMFile.ModifiedTime=(u64)filestats.st_mtime;
+    
     MMFile.File=open(FileName,O_RDONLY);
     if(MMFile.File==-1)
 	return {};
@@ -61,7 +46,7 @@ MemoryMappedFile MemoryMapFile(const char * FileName)
     return MMFile;
 }
 
-void UnMapFile(MemoryMappedFile MMFile)
+internal void UnMapFile(MemoryMappedFile MMFile)
 {
 #ifdef __WINDOWS__
     UnmapViewOfFile(MMFile.MMapBuffer);
@@ -73,59 +58,8 @@ void UnMapFile(MemoryMappedFile MMFile)
 #endif
 }
 
-#ifdef __LINUX__
-#include <png.h>
-#endif
-#include "zlib.h"
 
-#ifdef __LINUX__
-void SaveDataToPng(char * ImageData, char * FileName, int Width, int Height)
-{
-    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,NULL, NULL);
-    if (!png_ptr)
-    {
-        LogError("Could not create PNG write stucture for %s",FileName);
-	return;
-    }
-    png_infop info_ptr = png_create_info_struct(png_ptr);
-    if (!info_ptr)
-    {
-        png_destroy_write_struct(&png_ptr,(png_infopp)NULL);
-        LogError("Could not create PNG info stucture for %s",FileName);
-	return;
-    }
-    if (setjmp(png_jmpbuf(png_ptr)))
-    {
-        png_destroy_write_struct(&png_ptr, &info_ptr);
-        LogError("Could not set PNG jmp ptr for %s",FileName);
-	return;
-    }
-    FILE *fp = fopen(FileName, "wb");
-    if (!fp)
-    {
-        LogError("Failed to open %s",FileName);
-	return;
-    }
-    png_init_io(png_ptr, fp);
-    png_set_filter(png_ptr, 0,PNG_ALL_FILTERS);
-    png_set_compression_level(png_ptr,Z_DEFAULT_COMPRESSION);
-    png_set_compression_strategy(png_ptr,Z_DEFAULT_STRATEGY);
-    png_set_IHDR(png_ptr, info_ptr, Width, Height,8,PNG_COLOR_TYPE_RGB , PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT) ;
-    png_write_info(png_ptr, info_ptr);
-    png_write_flush(png_ptr);
 
-    unsigned char ** row_pointers =new unsigned char*[Height];
-    for (int i=0; i<Height; i++)
-        row_pointers[i]=(unsigned char *)&(ImageData[(Height-1-i)*Width*3]);
-    png_write_image(png_ptr, row_pointers);
-    png_write_end(png_ptr, NULL);
-    png_destroy_write_struct(&png_ptr, &info_ptr);
-    fclose(fp);
-
-    delete[] row_pointers;
-
-}
-#endif
 
 #ifdef __LINUX__
 #include <dirent.h>
@@ -149,7 +83,8 @@ struct UFOSearchResult
     int NumberOfFiles;
     char FileNames[MAX_UFO_FILES][MAX_UFO_NAME_LENGTH];
 };
-UFOSearchResult GetUfoFiles()
+
+internal UFOSearchResult GetUfoFiles()
 {
     UFOSearchResult Result={};
 #ifdef __WINDOWS__
@@ -163,7 +98,7 @@ UFOSearchResult GetUfoFiles()
 
     do
     {
-	int length=(int)strlen(ffd.cFileName)+1;
+	size_t length=strlen(ffd.cFileName)+1;
 	Assert(length <= MAX_UFO_NAME_LENGTH);
 
 	memcpy(&Result.FileNames[Result.NumberOfFiles],ffd.cFileName,length);
@@ -181,7 +116,7 @@ UFOSearchResult GetUfoFiles()
     {
 	for(int i=0;i<Result.NumberOfFiles;i++)
 	{
-	    int length=strlen(eps[i]->d_name)+1;
+	    size_t length=strlen(eps[i]->d_name)+1;
 	    Assert(length <= MAX_UFO_NAME_LENGTH);
 
 	    memcpy(&Result.FileNames[i],eps[i]->d_name,length);
@@ -231,7 +166,7 @@ inline b32 NameEndsWith(const char * Name, const char * EndsWith)
     return test<EndsWith;
 }
 
-inline u64  GetCurrentFileTime()
+inline u64 GetCurrentFileTime()
 {
 #ifdef __WINDOWS__
     FILETIME CurrentFileTime;
@@ -244,7 +179,7 @@ inline u64  GetCurrentFileTime()
 #ifdef __LINUX__
     struct timespec time;
     clock_gettime(CLOCK_REALTIME,&time);
-    return (time.tv_sec)+(time.tv_nsec/1000/1000/1000);
+    return (u64)(time.tv_sec)+(u64)(time.tv_nsec/1000/1000/1000);
 #endif
 }
 
@@ -273,9 +208,8 @@ inline u64  GetFileModifiedTime(const char * FileName)
     struct stat64 filestats;
 
     if(stat64(FileName,&filestats)==-1)
-	return {0};
-
-    return filestats.st_mtime;
-
+	return {};
+  
+    return (u64)filestats.st_mtime;
 #endif
 }

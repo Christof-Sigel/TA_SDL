@@ -56,7 +56,7 @@ struct Matrix
 	Contents[10]=cosine+vector[2]*vector[2]*(1-cosine);
     }
 
-    bool Upload(GLuint Location)
+    bool Upload(GLint Location)
     {
 	glUniformMatrix4fv(Location,1,GL_TRUE,Contents);
 #ifdef __CSGL_DEBUG__
@@ -144,27 +144,26 @@ struct Matrix
 };
 
 
-
-
-
-
 struct ShaderProgram
 {
     GLuint ProgramID, VertexID, PixelID;
-    u64  VertexFileModifiedTime, PixelFileModifiedTime;
+
     char PixelFileName[MAX_SHADER_FILENAME];
     char VertexFileName[MAX_SHADER_FILENAME];
+    u64  VertexFileModifiedTime, PixelFileModifiedTime;
 };
 
 struct Texture2DShaderDetails
 {
-    GLuint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation, TextureSizeLocation;
+    GLint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation, TextureSizeLocation;
     ShaderProgram * Program;
     GLuint VertexBuffer;
+    s32 PAD;
 };
 
 struct ShaderGroup
 {
- ShaderProgram Shaders[MAX_SHADER_NUMBER];
+    ShaderProgram Shaders[MAX_SHADER_NUMBER];
     int NumberOfShaders;
+    s32 PAD;
 };

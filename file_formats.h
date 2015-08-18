@@ -161,7 +161,7 @@ enum UnitVariable
     UNIT_VAR_ARMORED
 };
 
-const char * UnitVariableNames[]=
+internal const char * UnitVariableNames[]=
 {
     "NONE",
     "UNIT_VAR_ACTIVATION",
@@ -190,6 +190,20 @@ const int TNT_HEADER_ID=0x2000;
 
 
 ////////// Structs ////////
+//MMAP STUFF
+struct MemoryMappedFile
+{
+    unsigned char * MMapBuffer;
+    u64  FileSize;
+    u64  ModifiedTime;
+#ifdef __WINDOWS__
+    HANDLE MMFile;
+    HANDLE File;
+#else
+    s32 File;
+    s32 PAD;
+#endif
+};
 
 //Textures
 struct TexturePosition
@@ -218,6 +232,7 @@ struct TextureContainer
     s32 RequestedHeight, RequestedWidth;
     GLuint Texture;
     TexturePosition FirstFreeTexture;
+    s32 PAD;
 };
 
 //3DO
@@ -228,12 +243,13 @@ struct Position3d
 
 struct Object3d
 {
+    struct Object3dPrimitive * Primitives;
     char Name[MAX_3DO_NAME_LENGTH];
     Object3d * Children;
     int NumberOfChildren;
     Position3d Position;
     int NumberOfPrimitives;
-    struct Object3dPrimitive * Primitives;
+
     int NumberOfVertices;
     GLfloat * Vertices;
     GLuint VertexBuffer;
@@ -274,6 +290,7 @@ struct SpinDetails
 
 struct Object3dTransformationDetails
 {
+    Object3dTransformationDetails * Children;
     RotationDetails RotationTarget[TA_AXIS_NUM];
     MovementDetails MovementTarget[TA_AXIS_NUM];
     SpinDetails SpinTarget[TA_AXIS_NUM];
@@ -282,7 +299,7 @@ struct Object3dTransformationDetails
     r32 Movement[TA_AXIS_NUM];
     r32 Spin[TA_AXIS_NUM];
 
-    Object3dTransformationDetails * Children;
+
     int TextureOffset;
     GLuint TextureCoordBuffer;
 
@@ -305,6 +322,7 @@ struct UnitDetails
     char * GetString(const char * Name);
     s64  GetUnitCategories();
     UnitSide GetSide();
+    s32 PAD;
 };
 
 //HPI
@@ -317,35 +335,39 @@ struct HPIFileEntry
 
 struct HPIDirectoryEntry
 {
-    int NumberOfEntries;
     struct HPIEntry * Entries;
+    s32 NumberOfEntries;
+    s32 PAD;
 };
 
 struct HPIEntry
 {
     char * Name;
-    b32 IsDirectory;
     struct HPIFile * ContainedInFile;
     union
     {
 	HPIFileEntry File;
 	HPIDirectoryEntry Directory;
     };
+    b32 IsDirectory;
+    s32 PAD;
 };
 
 struct HPIFile
 {
     MemoryMappedFile MMFile;
     HPIDirectoryEntry Root;
-    s32 DecryptionKey;
     char Name[MAX_HPI_FILE_NAME];
+    s32 DecryptionKey;
+    s32 PAD;
 };
 
 struct HPIFileCollection
 {
     //TODO(Christof): track directory(s?) as well
-    int NumberOfFiles;
     HPIFile * Files;
+    s32 NumberOfFiles;
+    s32 PAD;
 };
 
 //Font
@@ -373,8 +395,9 @@ struct FontContainer
 
 struct FontShaderDetails
 {
-    GLuint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation;
     ShaderProgram * Program;
+    GLint ColorLocation, AlphaLocation, PositionLocation, SizeLocation, TextureOffsetLocation;
+    s32 PAD;
 };
 
 //TAUI
@@ -383,9 +406,9 @@ struct TAUIContainer
 {
     Texture * Background;//Name is in Panel
     struct TAUIElement * DefaultFocus;
-    int NumberOfElements;
     TAUIElement * Elements;
-
+    s32 NumberOfElements;
+    s32 PAD;
 };
 
 struct TAUIButton
@@ -393,9 +416,10 @@ struct TAUIButton
     int StartingFrame;//pulls from status
     int Stages;
     char * Text;// | seperator for multistage buttons, center aligned for simple (single stage) buttons, right aligned otherwise
-    b8 Disabled;//pulls from grayedout
+    b32 Disabled;//pulls from grayedout
     b32 Pressed;
     s32 CurrentStage;
+    s32 PAD;
 };
 
 struct TAUITextBox
@@ -485,17 +509,17 @@ enum TAUIElementName
     ELEMENT_NAME_UNDO,
     ELEMENT_NAME_MAIN_MENU_GUI,
     ELEMENT_NAME_ANY_MISSION,
-
 };
 
 struct TAUIElement
 {
-    TAUIElementName ElementName;
     char * Name;
+    char * Help;
+    TAUIElementName ElementName;
     TagType ElementType;
     int Association,X,Y,Width,Height,ColorFore,ColorBack,TextureNumber,FontNumber;
     int Attributes, CommonAttributes;
-    char * Help;
+
     b32 Visible;//Pulls from active
     TextureContainer * Textures;
     union
@@ -529,13 +553,14 @@ struct FILE_UIElement
 //UnitScripts
 struct UnitScript
 {
+    s32 * ScriptData;
+    s32 * FunctionOffsets;
     int NumberOfFunctions;
     int NumberOfPieces;
     char ** FunctionNames;
     char ** PieceNames;
     int ScriptDataSize;
-    s32 * ScriptData;
-    s32 * FunctionOffsets;
+
     s32 NumberOfStatics;
     //TODO(Christof): Make this part of the unit struct?
 };
@@ -544,22 +569,23 @@ struct ScriptState
 {
     //TODO(Christof): determine if stack can contain floats? some docs seem to indicate they should?
     s32 StackSize;
+    s32 NumberOfLocalVariables;
     s32 * StackData;
     s32 StackStorage[UNIT_SCRIPT_MAX_STACK_SIZE];
-    int NumberOfLocalVariables;
     s32 LocalVariables[UNIT_SCRIPT_MAX_STACK_SIZE];//NOTE(Christof): function parameters go at the beginning
-    int NumberOfStaticVariables;
+    s32 NumberOfStaticVariables;
+    s32 ProgramCounter;
     s32 * StaticVariables;
-    int ProgramCounter;
     Block BlockedOn;
-    int BlockTime;//NOTE(Christof): this is in milliseconds
-    int BlockedOnPiece;
-    int BlockedOnAxis;
+    s32 BlockTime;//NOTE(Christof): this is in milliseconds
+    s32 BlockedOnPiece;
+    s32 BlockedOnAxis;
     s32 SignalMask;
+    s32 ScriptNumber;
     ScriptState * ReturnTo;
-    int ScriptNumber;
-    int NumberOfParameters;
     struct Object3dTransformationDetails * TransformationDetails;
+    s32 NumberOfParameters;
+    s32 PAD;
 };
 
 struct ScriptStatePool
@@ -567,6 +593,7 @@ struct ScriptStatePool
     ScriptState Scripts[SCRIPT_POOL_SIZE];
     int NumberOfScripts;
     s32 StaticVariables[UNIT_SCRIPT_MAX_STACK_SIZE];
+    s32 PAD;
 };
 
 //TNT

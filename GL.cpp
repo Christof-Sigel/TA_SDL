@@ -1,9 +1,9 @@
 
-static ShaderProgram NullShader
-= {0,0,0,0,0,{0},{0}};
+internal ShaderProgram NullShader
+= {};
 
 
-inline GLuint LoadShader(GLenum Type,MemoryMappedFile ShaderFile, const
+internal inline GLuint LoadShader(GLenum Type,MemoryMappedFile ShaderFile, const
 			 char * FileName)
 {
     GLuint ShaderID = glCreateShader(Type);
@@ -28,7 +28,7 @@ inline GLuint LoadShader(GLenum Type,MemoryMappedFile ShaderFile, const
     return ShaderID;
 }
 
-void UnloadShaderProgram(ShaderProgram * Program)
+internal void UnloadShaderProgram(ShaderProgram * Program)
 {
     if(Program->ProgramID)
     {
@@ -46,7 +46,7 @@ void UnloadShaderProgram(ShaderProgram * Program)
     }
 }
 
-void UnloadAllShaders(ShaderGroup * ShaderGroup)
+internal void UnloadAllShaders(ShaderGroup * ShaderGroup)
 {
     for(int i=0;i<ShaderGroup->NumberOfShaders;i++)
     {
@@ -55,7 +55,7 @@ void UnloadAllShaders(ShaderGroup * ShaderGroup)
     ShaderGroup->NumberOfShaders=0;
 }
 
-ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char * PixelShaderFileName, ShaderGroup * ShaderGroup)
+internal ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char * PixelShaderFileName, ShaderGroup * ShaderGroup)
 {
     ShaderProgram * Shader = &ShaderGroup->Shaders[ShaderGroup->NumberOfShaders++];
     *Shader = {};
@@ -154,7 +154,7 @@ union Color
 
 
 
-void DrawTexture2D(GLuint Texture, float X, float Y, float Width, float Height, Color Color, float Alpha, Texture2DShaderDetails * ShaderDetails, float U, float V, float TextureWidth, float TextureHeight)
+internal void DrawTexture2D(GLuint Texture, float X, float Y, float Width, float Height, Color Color, float Alpha, Texture2DShaderDetails * ShaderDetails, float U, float V, float TextureWidth, float TextureHeight)
 {
     if(ShaderDetails->Program->ProgramID)
     {
@@ -181,7 +181,7 @@ void DrawTexture2D(GLuint Texture, float X, float Y, float Width, float Height, 
     }
 }
 
-void DrawDebugRect(DebugRectShaderDetails * Details,float X, float Y, float Width, float Height, Color BorderColor , float BorderWidth , float BorderAlpha = 1.0f, Color Color ={{1,1,1}}, float InnerAlpha = 0.0f)
+internal void DrawDebugRect(DebugRectShaderDetails * Details,float X, float Y, float Width, float Height, Color BorderColor , float BorderWidth , float BorderAlpha = 1.0f, Color Color ={{1,1,1}}, float InnerAlpha = 0.0f)
 {
      if(Details->Program->ProgramID)
     {

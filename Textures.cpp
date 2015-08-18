@@ -1,6 +1,6 @@
 #define Align(Val, Align) (Val +((Align) -1) & ~((Align)-1))
 
-void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int Height, int MaxTextures, MemoryArena * Arena)
+internal void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int Height, int MaxTextures, MemoryArena * Arena)
 {
     *TextureContainer = {};
     TextureContainer->MaximumTextures = MaxTextures;
@@ -11,12 +11,12 @@ void SetupTextureContainer(TextureContainer * TextureContainer,int Width, int He
     TextureContainer->Textures = PushArray(Arena, MaxTextures, Texture);
     TextureContainer->WidthInSquares = Align(Width,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
     TextureContainer->HeightInSquares = Align(Height, PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
-    int FreeSquareSize = TextureContainer->HeightInSquares * TextureContainer->WidthInSquares / 8;
+    size_t FreeSquareSize = (size_t)(TextureContainer->HeightInSquares * TextureContainer->WidthInSquares / 8);
     TextureContainer->FreeSquares = PushArray(Arena, FreeSquareSize , u8 );
     memset(TextureContainer->FreeSquares, 0, FreeSquareSize);
 }
 
-Texture * GetTexture(const char * Name, TextureContainer * TextureContainer)
+internal Texture * GetTexture(const char * Name, TextureContainer * TextureContainer)
 {
     //TODO(Christof): some better storage/retrieval mechanism for texture lookup?
     for(int i=0;i<TextureContainer->NumberOfTextures;i++)
@@ -29,7 +29,7 @@ Texture * GetTexture(const char * Name, TextureContainer * TextureContainer)
     return 0;
 }
 
-Texture * GetTexture(Texture * Texture, s32 FrameNumber)
+internal Texture * GetTexture(Texture * Texture, s32 FrameNumber)
 {
     if(Texture)
     {
@@ -45,7 +45,7 @@ Texture * GetTexture(Texture * Texture, s32 FrameNumber)
     return 0;
 }
 
-b32 SquareIsFree(TextureContainer * TextureContainer, int x, int y)
+internal b32 SquareIsFree(TextureContainer * TextureContainer, int x, int y)
 {
      int Offset = y*TextureContainer->WidthInSquares + x;
      int Index = Offset / 8;
@@ -53,7 +53,7 @@ b32 SquareIsFree(TextureContainer * TextureContainer, int x, int y)
      return !((TextureContainer->FreeSquares[Index]>>BitOffset)&1);
 }
 
-TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContainer * TextureContainer)
+internal TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContainer * TextureContainer)
 {
     int WidthInSquares = Align(Width,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
     int HeightInSquares = Align(Height,PIXELS_PER_SQUARE_SIDE) / PIXELS_PER_SQUARE_SIDE;
@@ -95,7 +95,7 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContai
     return {-1,-1};
 }
 
-void LoadGafTextureData(u8 * Buffer, FILE_GafFrameData * Frame, TexturePosition OriginalPosition, TexturePosition PositionToStore, TextureContainer * TextureContainer, u8 * PaletteData, u8 * TextureData)
+internal void LoadGafTextureData(u8 * Buffer, FILE_GafFrameData * Frame, TexturePosition OriginalPosition, TexturePosition PositionToStore, TextureContainer * TextureContainer, u8 * PaletteData, u8 * TextureData)
 {
         u8 * FrameData= (u8 *)(Buffer + Frame->FrameDataOffset);
     if(Frame->Compressed)
@@ -172,7 +172,7 @@ void LoadGafTextureData(u8 * Buffer, FILE_GafFrameData * Frame, TexturePosition 
 
 }
 
-void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContainer, u8 * PaletteData, u8 * TextureData)
+internal void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContainer, u8 * PaletteData, u8 * TextureData)
 {
     FILE_GafEntry * Entry = (FILE_GafEntry*)(Buffer +Offset);
     FILE_GafFrameEntry * FrameEntries=(FILE_GafFrameEntry *)(Buffer + Offset + sizeof(*Entry));
@@ -228,7 +228,7 @@ void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContai
 
 }
 
-void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureContainer, u8 * PalletteData, u8 * TextureData)
+internal void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureContainer, u8 * PalletteData, u8 * TextureData)
 {
     FILE_GafHeader * header= (FILE_GafHeader *)Buffer;
     if(header->IDVersion != GAF_IDVERSION)
@@ -245,7 +245,7 @@ void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureContainer, 
 
 
 #include <math.h>
-void LoadPalette(GameState * CurrentGameState)
+internal void LoadPalette(GameState * CurrentGameState)
 {
 
     HPIEntry Palette = FindEntryInAllFiles("palettes/PALETTE.PAL",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
@@ -263,10 +263,10 @@ void LoadPalette(GameState * CurrentGameState)
     }
 }
 
-void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * TextureContainer, MemoryArena * TempArena,u8 * PaletteData)
+internal void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * TextureContainer, MemoryArena * TempArena,u8 * PaletteData)
 {
     u8* TextureData = PushArray(TempArena, TextureContainer->TextureWidth * TextureContainer->TextureHeight *4, u8);
-    memset(TextureData, 0, TextureContainer->TextureWidth * TextureContainer->TextureHeight *4);
+    memset(TextureData, 0, (size_t)(TextureContainer->TextureWidth * TextureContainer->TextureHeight *4));
     if(!Textures->IsDirectory)
     {
 	u8 * GafBuffer = PushArray(TempArena, Textures->File.FileSize,u8 );
@@ -299,7 +299,7 @@ void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * Texture
     PopArray(TempArena, TextureData, TextureContainer->TextureWidth * TextureContainer->TextureHeight *4, u8);
 }
 
-void LoadAllUnitTextures(HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, TextureContainer * UnitTextures, u8 * PaletteData)
+internal void LoadAllUnitTextures(HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, TextureContainer * UnitTextures, u8 * PaletteData)
 {
     HPIEntry Textures = FindEntryInAllFiles("textures",GlobalArchiveCollection, TempArena);
     if(!Textures.Name)
@@ -315,7 +315,7 @@ void LoadAllUnitTextures(HPIFileCollection * GlobalArchiveCollection, MemoryAren
     UnloadCompositeEntry(&Textures,TempArena);
 }
 
-Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * FileName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena)
+internal Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * FileName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena)
 {
     Assert(Textures->Texture != 0);
     HPIEntry PCX = FindEntryInAllFiles(FileName, GlobalArchiveCollection, TempArena);

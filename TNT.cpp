@@ -1,32 +1,25 @@
-
-
-
-float GetTileXTex(int TileIndex, float Offset, int TextureSide)
+internal float GetTileXTex(int TileIndex, float Offset, int TextureSide)
 {
     int X = TileIndex % (TextureSide/32);
     return (X + Offset)/(TextureSide/32);
 }
 
-float GetTileYTex(int TileIndex, float Offset, int TextureSide)
+internal float GetTileYTex(int TileIndex, float Offset, int TextureSide)
 {
     int Y = TileIndex / (TextureSide/32);
     return (Y + Offset)/(TextureSide/32);
 }
 
-float GetHeightFor(int X, int Y, FILE_TNTAttribute * Attributes, int Width,int Height)
+internal float GetHeightFor(u32 X, u32 Y, FILE_TNTAttribute * Attributes, u32 Width,u32 Height)
 {
-    const float HEIGHT_MOD = 1/25.50;
+    const float HEIGHT_MOD = 1/25.50f;
     float result=0;
-    for(int i=0;i<2;i++)
+    for(u32 i=0;i<2;i++)
     {
-	for(int j=0;j<2;j++)
+	for(u32 j=0;j<2;j++)
 	{
-	    int x=X+i;
-	    int y=Y+j;
-	    if(x<0)
-		x=0;
-	    if(y<0)
-		y=0;
+	    u32 x=X+i;
+	    u32 y=Y+j;
 	    if(y>=Height)
 		y=Height-1;
 	    if(x>=Width)
@@ -37,7 +30,7 @@ float GetHeightFor(int X, int Y, FILE_TNTAttribute * Attributes, int Width,int H
     return result;
 }
 
- b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, MemoryArena * TempArena)
+internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, MemoryArena * TempArena)
 {
     FILE_TNTHeader * Header = (FILE_TNTHeader *)Buffer;
     if(Header->IDVersion != TNT_HEADER_ID)
@@ -46,22 +39,22 @@ float GetHeightFor(int X, int Y, FILE_TNTAttribute * Attributes, int Width,int H
     }
     LogDebug("%dx%d",Header->Width,Header->Height);
     u16  * TileIndices = (u16 *)(Buffer + Header->MapDataOffset);//these map to 32x32 tiles NOT 16x16 half tiles
-    int NumberOfHalfTiles = Header->Width*Header->Height;
+    u32 NumberOfHalfTiles = Header->Width*Header->Height;
     FILE_TNTAttribute * Attributes=(FILE_TNTAttribute *)(Buffer + Header->MapAttributeOffset);//half tiles
     FILE_TNTTile * Tiles=(FILE_TNTTile *)(Buffer + Header->TileGraphicsOffset);
     //TODO(Christof): Figure out how to deal with the features (upright billboard perhaps?) FILE_TNTFeature * Features=(FILE_TNTFeature*)(Buffer + Header->FeaturesOffset);
 
-    int MinimapWidth, MinimapHeight;
+    u32 MinimapWidth, MinimapHeight;
     MinimapWidth = *(u32 *)(Buffer + Header->MiniMapOffset);
     MinimapHeight = *(u32 *)(Buffer + Header->MiniMapOffset+4);
     //Not using Minimap Data at the moment - silence some compiler warnings u8 * MinimapData = (u8 *)(Buffer + Header->MiniMapOffset + 8);
 
     //TODO(Christof): TA Apparently uses 0xDD to denote transparency, need to deal with this here
 
-    int TileTextureSide = (int)ceil(sqrt(Header->NumberOfTiles *32*32.0f));
+    s32 TileTextureSide = (s32)ceil(sqrt(Header->NumberOfTiles *32*32.0f));
     TileTextureSide += 32-(TileTextureSide%32);
     u8 * TileTextureData = PushArray(TempArena,TileTextureSide*TileTextureSide*4,u8 );
-    memset(TileTextureData, 0, TileTextureSide*TileTextureSide*4);
+    memset(TileTextureData, 0, (size_t)(TileTextureSide*TileTextureSide*4));
     int i=0;
 
     for(int Y=0;Y<TileTextureSide;Y+=32)
@@ -181,7 +174,7 @@ texture_done:
 
     glBindVertexArray(0);
     // glDeleteBuffers(1,&VertexBuffer);
-    Result->NumTriangles = NumberOfHalfTiles*2;
+    Result->NumTriangles = (s32)NumberOfHalfTiles*2;
     PopArray(TempArena,PositionAndTexture,NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,GLfloat);
 
     return 1;

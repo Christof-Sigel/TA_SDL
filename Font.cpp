@@ -1,5 +1,4 @@
-
-void LoadCharacter(s16  CharacterOffset, u8 * FileBuffer, u8 * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
+internal void LoadCharacter(s16  CharacterOffset, u8 * FileBuffer, u8 * TextureBuffer, int XOffset, int YOffset, int Height, int TextureWidth)
 {
     if(CharacterOffset ==0)
 	return;
@@ -31,13 +30,11 @@ void LoadCharacter(s16  CharacterOffset, u8 * FileBuffer, u8 * TextureBuffer, in
 }
 
 
-void LoadFNTFont(u8 * Buffer, FNTFont * Font, MemoryArena * TempArena)
+internal void LoadFNTFont(u8 * Buffer, FNTFont * Font, MemoryArena * TempArena)
 {
     FILE_FNT * Header = (FILE_FNT*)Buffer;
     Font->Height = Header->Height;
     int TextureWidth = 0;
-
-   
 
     for(int i=0;i<255;i++)
     {
@@ -66,14 +63,7 @@ void LoadFNTFont(u8 * Buffer, FNTFont * Font, MemoryArena * TempArena)
     PopArray(TempArena, TextureData,TextureWidth*Font->Height*4, u8 );
 }
 
-
-void DrawCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, float X, float Y, Color Color, float Alpha, FNTFont * Font )
-{
-    DrawTexture2D(Font->Texture, X,Y, (float)Font->Characters[Character].Width, (float)Font->Height, Color, Alpha, ShaderDetails, Font->Characters[Character].U, 0.0f,  Font->Characters[Character].TextureWidth, 1.0f);
-}
-
-
-void SetupFontRendering(GLuint * Draw2DVertexBuffer)
+internal void SetupFontRendering(GLuint * Draw2DVertexBuffer)
 {
     GLfloat RenderData[6*(2+2)];//6 Vert (2 triangles) each 2 position coords and 2 texture coords
     
@@ -118,13 +108,11 @@ void SetupFontRendering(GLuint * Draw2DVertexBuffer)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    glBindVertexArray(0);
-    
-
+    glBindVertexArray(0); 
 }
 
 
-void LoadGafFonts(GameState * CurrentGameState)
+internal void LoadGafFonts(GameState * CurrentGameState)
 {
     SetupTextureContainer(&CurrentGameState->Font11, 2120, 15, 256, &CurrentGameState->GameArena);
     SetupTextureContainer(&CurrentGameState->Font12, 2880, 18, 256, &CurrentGameState->GameArena);
@@ -151,7 +139,7 @@ void LoadGafFonts(GameState * CurrentGameState)
 }
 
 
-void DrawBitmapCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, TextureContainer * TextureContainer, float X, float Y, Color Color, float Alpha, int * oWidth, int *oHeight)
+internal void DrawBitmapCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, TextureContainer * TextureContainer, float X, float Y, Color Color, float Alpha, int * oWidth, int *oHeight)
 {
     Texture * tex = GetTexture(&TextureContainer->Textures[0], Character);
     float Width = tex->Width * TextureContainer->TextureWidth;
@@ -163,7 +151,7 @@ void DrawBitmapCharacter(u8 Character, Texture2DShaderDetails * ShaderDetails, T
     DrawTexture2D(TextureContainer->Texture, X, Y-Height, Width, Height, Color, Alpha, ShaderDetails, U, V, tex->Width, tex->Height);
 }
 
-int FontHeightInPixels(char * Text, TextureContainer * Font)
+internal int FontHeightInPixels(const char * Text, TextureContainer * Font)
 {
     int Result =0;
     u8 * Char = (u8*)Text;
@@ -188,7 +176,7 @@ struct FontDimensions
     s32 Height;
 };
 
-FontDimensions TextSizeInPixels(char * Text, TextureContainer * Font)
+internal FontDimensions TextSizeInPixels(const char * Text, TextureContainer * Font)
 {
     FontDimensions Result = {};
     u8 * Char = (u8*)Text;
@@ -233,7 +221,7 @@ FontDimensions TextSizeInPixels(char * Text, TextureContainer * Font)
     return Result;
 }
 
-void DrawTextureFontText(char * Text, int InitialX, int InitialY, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0, Color Color ={{1,1,1}})
+internal void DrawTextureFontText(const char * Text, int InitialX, int InitialY, TextureContainer * Font, Texture2DShaderDetails * ShaderDetails, float Alpha = 1.0, Color Color ={{1,1,1}})
 {
     int TextHeight = FontHeightInPixels(Text, Font);
     u8* Char = (u8*)Text;
@@ -264,7 +252,7 @@ void DrawTextureFontText(char * Text, int InitialX, int InitialY, TextureContain
     }
 }
 
-FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCollection * FileCollection, MemoryArena * TempArena)
+internal FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCollection * FileCollection, MemoryArena * TempArena)
 {
     for(int i=0;i<FontContainer->NumberOfFonts;i++)
     {

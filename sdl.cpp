@@ -1,11 +1,11 @@
-void HandleKeyDown(SDL_Keysym key, InputState * GameInputState)
+internal void HandleKeyDown(SDL_Keysym key, InputState * GameInputState)
 {
     u8 Index = key.sym&255;
     GameInputState->KeyWasDown[Index]=GameInputState->KeyIsDown[Index];
     GameInputState->KeyIsDown[Index]=1;
 }
 
-void HandleKeyUp(SDL_Keysym key, InputState * GameInputState)
+internal void HandleKeyUp(SDL_Keysym key, InputState * GameInputState)
 {
     u8 Index = key.sym & 255;
     GameInputState->KeyWasDown[Index]=GameInputState->KeyIsDown[Index];
@@ -16,7 +16,7 @@ void HandleKeyUp(SDL_Keysym key, InputState * GameInputState)
 const int DEFAULT_SCREEN_WIDTH=1280;
 const int DEFAULT_SCREEN_HEIGHT=1024;
 
- b32 SetupSDLWindow(GameState * CurrentGameState)
+internal b32 SetupSDLWindow(GameState * CurrentGameState)
 {
 
     if(CurrentGameState->ScreenWidth == 0)
