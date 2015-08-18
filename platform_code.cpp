@@ -22,28 +22,27 @@ inline u64  GetFileModifiedTime(const char * FileName);
 
 MemoryMappedFile MemoryMapFile(const char * FileName)
 {
-    MemoryMappedFile MMFile={0};
+    MemoryMappedFile MMFile={};
 #ifdef __LINUX__
     struct stat64 filestats;
-    
+
     if(stat64(FileName,&filestats)==-1)
-	return {0};
+	return {};
     MMFile.FileSize=filestats.st_size;
     MMFile.ModifiedTime=filestats.st_mtime;
-    
+
     MMFile.File=open(FileName,O_RDONLY);
     if(MMFile.File==-1)
-	return {0};
+	return {};
 
     MMFile.MMapBuffer=static_cast<unsigned char *>(mmap(MMFile.MMapBuffer,MMFile.FileSize,PROT_READ,MAP_SHARED,MMFile.File,0));
 #else
 #ifdef __WINDOWS__
-    OFSTRUCT of;
-    MMFile.File=(HANDLE)OpenFile(FileName,&of,OF_READ);
-    if(MMFile.File==(HANDLE)HFILE_ERROR)
+    MMFile.File=CreateFileA(FileName,GENERIC_READ,0,0,OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,0);
+    if(MMFile.File == INVALID_HANDLE_VALUE)
     {
 	LogError("Could not get file handle for %s",FileName);
-	return {0};
+	return {};
     }
 
     DWORD high=0;
@@ -53,7 +52,7 @@ MemoryMappedFile MemoryMapFile(const char * FileName)
     MMFile.MMFile=CreateFileMapping(MMFile.File,NULL,PAGE_READONLY,0,0,NULL);
     if(!MMFile.MMFile)
     {
-	return {0};
+	return {};
     }
     MMFile.MMapBuffer=static_cast<unsigned char *>(MapViewOfFile(MMFile.MMFile,FILE_MAP_READ,0,0,0));
 #endif
@@ -209,7 +208,7 @@ inline b32 CaseInsensitiveMatch(const char * String1, const char * String2)
 	    dcomp+='A'-'a';
 	if(dcomp!=pcomp)
 	    return 0;
-	
+
 	String2++;
 	String1++;
     }
@@ -272,12 +271,11 @@ inline u64  GetFileModifiedTime(const char * FileName)
 #endif
 #ifdef __LINUX__
     struct stat64 filestats;
-    
+
     if(stat64(FileName,&filestats)==-1)
 	return {0};
-  
+
     return filestats.st_mtime;
 
 #endif
 }
-
