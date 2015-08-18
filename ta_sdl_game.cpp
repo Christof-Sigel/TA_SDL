@@ -22,62 +22,6 @@
 #include "ta_sdl_game_load.cpp"
 
 
-internal void LoadCurrentModel(GameState * CurrentGameState)
-{
-    if(CurrentGameState->UnitIndex>(int)CurrentGameState->Units.Size-1)
-	CurrentGameState->UnitIndex=0;
-    if(CurrentGameState->UnitIndex<0)
-	CurrentGameState->UnitIndex=CurrentGameState->Units.Size-1;
-
-    char * UnitName=CurrentGameState->Units.Details[CurrentGameState->UnitIndex].GetString("UnitName");
-    const int MAX_MODEL_NAME=64;
-    char Name[MAX_MODEL_NAME];
-    snprintf(Name,MAX_MODEL_NAME,"objects3d/%s.3do",UnitName);
-
-
-    HPIEntry Entry=FindEntryInAllFiles(Name,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-    u8 * temp = PushArray(&CurrentGameState->TempArena,Entry.File.FileSize,u8 );
-    if(LoadHPIFileEntryData(Entry,temp,&CurrentGameState->TempArena))
-    {
-	if(CurrentGameState->temp_model.Vertices)
-	{
-	    UnloadTransfomationDetails(&CurrentGameState->UnitTransformationDetails, &CurrentGameState->temp_model);
-	    Unload3DO(&CurrentGameState->temp_model);
-	}
-	Load3DOFromBuffer(temp,&CurrentGameState->temp_model,&CurrentGameState->UnitTextures,&CurrentGameState->GameArena);
-	InitTransformationDetails(&CurrentGameState->temp_model, &CurrentGameState->UnitTransformationDetails, &CurrentGameState->GameArena);
-
-	snprintf(Name,MAX_MODEL_NAME,"scripts/%s.cob",UnitName);
-	HPIEntry ScriptEntry=FindEntryInAllFiles(Name,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-	u8 * ScriptBuffer = PushArray(&CurrentGameState->TempArena, ScriptEntry.File.FileSize, u8 );
-	if(LoadHPIFileEntryData(ScriptEntry,ScriptBuffer,&CurrentGameState->TempArena))
-	{
-	    LoadUnitScriptFromBuffer(&CurrentGameState->CurrentUnitScript, ScriptBuffer,&CurrentGameState->GameArena);
-	    CurrentGameState->CurrentScriptPool={};
-
-
-	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Create",0, 0, &CurrentGameState->UnitTransformationDetails);
-	    s32 Args[] ={s32(-1*COB_ANGULAR_CONSTANT)};
-	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Activate",1, Args, &CurrentGameState->UnitTransformationDetails);
-
-	    //if(!StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "AimPrimary",2, FireArgs, &CurrentGameState->UnitTransformationDetails))
-	    {
-		StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "StartBuilding",1, Args, &CurrentGameState->UnitTransformationDetails);
-	    }
-
-	    Args[0] = s32(5.0/60.0*COB_ANGULAR_CONSTANT);
-	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "SetSpeed",1, Args, &CurrentGameState->UnitTransformationDetails);
-
-
-//	    PrepareObject3dForRendering(CurrentGameState->temp_model,CurrentGameState->PaletteData);
-	}
-	PopArray(&CurrentGameState->TempArena, ScriptBuffer,ScriptEntry.File.FileSize, u8 );
-
-    }
-    PopArray(&CurrentGameState->TempArena, temp,Entry.File.FileSize,u8 );
-}
-
-static s32 Side=0;
 
 internal Matrix FPSViewMatrix(float * eye, float pitch, float yaw);
 internal void HandleInput(InputState * Input, GameState * CurrentGameState)
@@ -105,22 +49,6 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 			ViewRotation.Contents[2*4+1] * CameraTranslation + ViewRotation.Contents[3*4+1],
 			ViewRotation.Contents[2*4+2] * CameraTranslation + ViewRotation.Contents[3*4+2]};
 
-	for(int i=SDLK_0;i<=SDLK_9;i++)
-	{
-	    if(Input->KeyIsDown[i] && ! Input->KeyWasDown[i])
-	    {
-		int ScriptNumber = i -SDLK_0;
-		StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, ScriptNumber ,0, 0, &CurrentGameState->UnitTransformationDetails);
-
-	    }
-	}
-
-	if(Input->KeyIsDown[SDLK_f]&& !Input->KeyWasDown[SDLK_f])
-	{
-	    s32 FireArgs[] ={s32(-1*COB_ANGULAR_CONSTANT), s32(-0.25*COB_ANGULAR_CONSTANT)};
-	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "AimPrimary",2, FireArgs, &CurrentGameState->UnitTransformationDetails);
-	}
-
 
 	if(Input->KeyIsDown[SDLK_p]&& !Input->KeyWasDown[SDLK_p])
 	{
@@ -134,44 +62,12 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 	    }
 	}
 
-	if(Input->KeyIsDown[SDLK_h]&& !Input->KeyWasDown[SDLK_h])
-	{
-	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "StartMoving",0,0, &CurrentGameState->UnitTransformationDetails);
-	}
-
-	if(Input->KeyIsDown[SDLK_g]&& !Input->KeyWasDown[SDLK_g])
-	{
-	    StartNewEntryPoint(&CurrentGameState->CurrentScriptPool, &CurrentGameState->CurrentUnitScript, "Deactivate", 0, 0, &CurrentGameState->UnitTransformationDetails);
-	}
-
 	if(Input->KeyIsDown[SDLK_ESCAPE] && !Input->KeyWasDown[SDLK_ESCAPE]  )
 	{
 	    if(CurrentGameState->State == STATE_RUNNING || CurrentGameState->State == STATE_PAUSED)
 		CurrentGameState->State = STATE_MAIN_MENU;
 	    else
 		CurrentGameState->State = STATE_RUNNING;
-	}
-	if(Input->KeyIsDown[SDLK_o] && !Input->KeyWasDown[SDLK_o])
-	{
-	    CurrentGameState->UnitIndex--;;
-	    LoadCurrentModel(CurrentGameState);
-	}
-	if(Input->KeyIsDown[SDLK_l] && !Input->KeyWasDown[SDLK_l])
-	{
-	    CurrentGameState->UnitIndex++;
-	    LoadCurrentModel(CurrentGameState);
-	}
-	if(Input->KeyIsDown[SDLK_u] && !Input->KeyWasDown[SDLK_u])
-	{
-	    Side --;
-	    if(Side < 0)
-		Side =9;
-	}
-	if(Input->KeyIsDown[SDLK_j] && !Input->KeyWasDown[SDLK_j])
-	{
-	    Side ++;
-	    if(Side > 9)
-		Side =0;
 	}
 	//HACK: FIX THIS SHIT
 	if(Input->KeyIsDown[SDLK_UP&255])
@@ -535,7 +431,6 @@ internal void SetupGameState( GameState * CurrentGameState)
     CurrentGameState->CameraTranslation[1] =40.0f;
     CurrentGameState->CameraTranslation[2] =50.0f;
 
-    CurrentGameState->UnitIndex=14;
 
     //GL Setup:
     glClearColor( 0.f, 0.f,0.f, 0.f );
@@ -619,38 +514,11 @@ extern "C"
 	switch(CurrentGameState->State)
 	{
 	case STATE_RUNNING:
-	{
-	    for(int i=0;i<CurrentGameState->CurrentScriptPool.NumberOfScripts;i++)
-	    {
-		RunScript(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], &CurrentGameState->temp_model, &CurrentGameState->CurrentScriptPool);
-	    }
-	    CleanUpScriptPool(&CurrentGameState->CurrentScriptPool);
-	    b32 Animate = CurrentGameState->NumberOfFrames%10==0;
-
-	    UpdateTransformationDetails(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,1.0f/60.0f, Animate);
-	}
+	    CurrentGameState->ViewMatrix = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
+	    //TODO(Christof): Update game state
 	[[clang::fallthrough]];
 	case STATE_PAUSED:
 	{
-	    glUseProgram(CurrentGameState->UnitShaderDetails.Shader->ProgramID);
-	    glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTextures.Texture);
-	    CurrentGameState->ProjectionMatrix.Upload(CurrentGameState->UnitShaderDetails.ProjectionMatrixLocation);
-	    //CurrentGameState->ViewMatrix->Rotate(0,1,0, PI/300);
-	    //CurrentGameState->ViewMatrix->Move(0.01,-0.01,-0.01);
-	    CurrentGameState->ViewMatrix = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
-	    CurrentGameState->ViewMatrix.Upload(CurrentGameState->UnitShaderDetails.ViewMatrixLocation);
-
-	    Matrix ModelMatrix;
-
-	    for(int x=0;x<5;x++)
-	    {
-		for(int y=0;y<10;y++)
-		{
-		    ModelMatrix.SetTranslation(30.5f+x*50,44.5f,23.4f+y*50);
-		    RenderObject3d(&CurrentGameState->temp_model,&CurrentGameState->UnitTransformationDetails,CurrentGameState->UnitShaderDetails.ModelMatrixLocation,CurrentGameState->PaletteData,CurrentGameState->DebugAxisBuffer,Side, &CurrentGameState->UnitTextures,&CurrentGameState->TempArena,Matrix(),ModelMatrix);
-		}
-	    }
-
 	    glUseProgram(CurrentGameState->MapShader->ProgramID);
 	    CurrentGameState->ProjectionMatrix.Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));
 	    CurrentGameState->ViewMatrix.Upload(GetUniformLocation(CurrentGameState->MapShader,"View"));
@@ -669,165 +537,11 @@ extern "C"
 	glEnable(GL_BLEND);                      // Turn Blending on
 	glDisable(GL_DEPTH_TEST);        //Turn Depth Testing off
 
-#define DEBUG_DRAW_SCRIPT_STATE 1
 #define DEBUG_DRAW_STATS 1
-#define DEBUG_DRAW_UNIT_DETAILS 1
-
-
 	switch(CurrentGameState->State)
 	{
 	case STATE_PAUSED:
 	case STATE_RUNNING:
-	    //Debug draw unit details (name + desc)
-#if DEBUG_DRAW_UNIT_DETAILS
-	{
-	    int Index=CurrentGameState->UnitIndex;
-	    char * Name=CurrentGameState->Units.Details[Index].GetString("Name");
-	    const char * SideName;
-	    UnitSide UnitSide=CurrentGameState->Units.Details[Index].GetSide();
-	    switch(UnitSide)
-	    {
-	    case SIDE_ARM:
-		SideName = "ARM";
-		break;
-	    case SIDE_CORE:
-		SideName = "CORE";
-		break;
-	    case SIDE_UNKNOWN:
-		SideName="UNKNOWN";
-		break;
-	    }
-	    char * Desc=CurrentGameState->Units.Details[Index].GetString("Description");
-	    const int MAX_STRING=128;
-	    char tmp[MAX_STRING];
-	    float Alpha = 1.0f ;
-
-	    snprintf(tmp,MAX_STRING,"%s: %s\n%s",SideName, Name,Desc);
-	    DrawTextureFontText(tmp, 15, 54, &CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, Alpha);
-	}
-#endif
-
-	//Script Debug Rendering
-#if DEBUG_DRAW_SCRIPT_STATE
-	for(int i=0;i<CurrentGameState->CurrentUnitScript.NumberOfFunctions;i++)
-	{
-	    //TODO(Christof): Display Scripts as before?
-	    const int MAX_SCRIPT_STRING_LENGTH = 128;
-	    char ScriptString[MAX_SCRIPT_STRING_LENGTH];
-	    snprintf(ScriptString,MAX_SCRIPT_STRING_LENGTH, "%d) %s", i, CurrentGameState->CurrentUnitScript.FunctionNames[i] );
-	    Color TextColor = {{1,1,1}};
-
-	    Block BlockedOn = BLOCK_INIT;
-	    for(int j=0;j<CurrentGameState->CurrentScriptPool.NumberOfScripts;j++)
-	    {
-		if(CurrentGameState->CurrentScriptPool.Scripts[j].ScriptNumber == i )
-		    BlockedOn=CurrentGameState->CurrentScriptPool.Scripts[j].BlockedOn;
-	    }
-	    switch(BlockedOn)
-	    {
-	    case BLOCK_INIT:
-		TextColor = {{1,1,1}};
-		break;
-		//GREEN
-	    case BLOCK_NOT_BLOCKED:
-		TextColor = {{0,1,0}};
-		break;
-		//CYAN
-	    case BLOCK_MOVE:
-		TextColor = {{0,1,1}};
-		break;
-		//PURPLE
-	    case BLOCK_TURN:
-		TextColor = {{1,0,1}};
-		break;
-//BLUE
-	    case BLOCK_SLEEP:
-		TextColor = {{0,0,1}};
-		break;
-//YELLOW
-	    case BLOCK_DONE:
-		TextColor = {{1,1,0}};
-		break;
-		//RED
-	    case BLOCK_SCRIPT:
-		TextColor = {{1,0,0}};
-		break;
-	    }
-	    DrawTextureFontText(ScriptString, CurrentGameState->ScreenWidth - 150,150+i*30,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
-	}
-
-	for(s32 i=0;i < CurrentGameState->CurrentScriptPool.NumberOfScripts; i++)
-	{
-	    Block BlockedOn = BLOCK_INIT;
-
-	    BlockedOn=CurrentGameState->CurrentScriptPool.Scripts[i].BlockedOn;
-	    Color TextColor = {{1,1,1}};
-	    char ScriptBlockDeets[64];
-	    switch(BlockedOn)
-	    {
-	    case BLOCK_INIT:
-		TextColor = {{1,1,1}};
-		snprintf(ScriptBlockDeets, 64, "Waiting to start");
-		break;
-		//GREEN
-	    case BLOCK_NOT_BLOCKED:
-		TextColor = {{0,1,0}};
-		snprintf(ScriptBlockDeets, 64, "Running");
-		break;
-		//CYAN
-	    case BLOCK_MOVE:
-		TextColor = {{0,1,1}};
-		snprintf(ScriptBlockDeets, 64, "Waiting on Move");
-		break;
-		//PURPLE
-	    case BLOCK_TURN:
-		TextColor = {{1,0,1}};
-		snprintf(ScriptBlockDeets, 64, "Waiting on Turn");
-		break;
-//YELLOW
-	    case BLOCK_SLEEP:
-		TextColor = {{1,1,0}};
-		snprintf(ScriptBlockDeets, 64, "Sleeping");
-		break;
-		//BLUE
-	    case BLOCK_DONE:
-		TextColor = {{0,0,1}};
-		snprintf(ScriptBlockDeets, 64, "Done");
-		break;
-		//RED
-	    case BLOCK_SCRIPT:
-		TextColor = {{1,0,0}};
-		snprintf(ScriptBlockDeets, 64, "Waiting on script");
-		break;
-	    }
-	    char ScriptNameDeets[128];
-	    snprintf(ScriptNameDeets, 128, "%s - %s : %d", CurrentGameState->CurrentUnitScript.FunctionNames[CurrentGameState->CurrentScriptPool.Scripts[i].ScriptNumber], ScriptBlockDeets, CurrentGameState->CurrentScriptPool.Scripts[i].StackSize);
-	    DrawTextureFontText(ScriptNameDeets,i*350,  CurrentGameState->ScreenHeight -120 ,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
-
-
-	    s32 Offset = 0;
-	    TextColor = {{0,1,0}};
-	    for(s32 j=0;j<5;j++)
-	    {
-
-		Offset += OutputInstructionString(&CurrentGameState->CurrentUnitScript, &CurrentGameState->CurrentScriptPool.Scripts[i], 20+ i*350, CurrentGameState->ScreenHeight - 100+(j*20), TextColor, Offset, &CurrentGameState->Font12, &CurrentGameState->DrawTextureShaderDetails);
-		if(Offset == -1)
-		    break;
-		TextColor = {{1,1,1}};
-	    }
-
-	    TextColor = {{0,1,0}};
-	    for(s32 StackIndex = 0; StackIndex < CurrentGameState->CurrentScriptPool.Scripts[i].StackSize; StackIndex++)
-	    {
-		char StackString[24];
-		snprintf(StackString, 24, "%d", GetStack(&CurrentGameState->CurrentScriptPool.Scripts[i],StackIndex));
-		DrawTextureFontText(StackString,i*350 + 20,  CurrentGameState->ScreenHeight - 140 - StackIndex*20 ,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails , 1.0f,  TextColor );
-		TextColor = {{1,1,1}};
-	    }
-	}
-
-#endif
-
 	break;
 	case STATE_MAIN_MENU:
 	    RenderTAUIElement(&CurrentGameState->MainMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font11, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
@@ -876,12 +590,11 @@ extern "C"
 
 	char MemoryUsageText[128];
 
-	snprintf(MemoryUsageText, 128, "Game Arena: %.2fMB of %.2fMB (%.2f%% free)\nTemp Arena: %.2fMB of %.2fMB (%.2f%% free)\nScript Pool Size: %d",
+	snprintf(MemoryUsageText, 128, "Game Arena: %.2fMB of %.2fMB (%.2f%% free)\nTemp Arena: %.2fMB of %.2fMB (%.2f%% free)",
 		 CurrentGameState->GameArena.Used/(1024.0f*1024), CurrentGameState->GameArena.Size/(1024.0f*1024),
 		 float(CurrentGameState->GameArena.Size - CurrentGameState->GameArena.Used)/CurrentGameState->GameArena.Size*100.0f,
 		 CurrentGameState->TempArena.Used/(1024.0f*1024), CurrentGameState->TempArena.Size/(1024.0f*1024),
-		 float(CurrentGameState->TempArena.Size - CurrentGameState->TempArena.Used)/CurrentGameState->TempArena.Size*100.0f,
-		 CurrentGameState->CurrentScriptPool.NumberOfScripts);
+		 float(CurrentGameState->TempArena.Size - CurrentGameState->TempArena.Used)/CurrentGameState->TempArena.Size*100.0f);
 	DrawTextureFontText(MemoryUsageText, CurrentGameState->ScreenWidth-TextSizeInPixels(MemoryUsageText, &CurrentGameState->Font12).Width, 0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
 #endif
 

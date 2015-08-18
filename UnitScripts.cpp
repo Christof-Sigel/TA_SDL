@@ -918,6 +918,7 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 }
 
 
+#if 0
 static const char * Axes[]= {"X Axis","Y Axis","Z Axis"};
 #define PushStack(a,b) ASASAKLSJD
 #define PopStack (a) ASD:LAKSD:
@@ -1586,3 +1587,4 @@ internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s
     DrawTextureFontText(OutputString, X, Y, Font , ShaderDetails, 1.0f, TextColor);
     return Result;
 }
+#endif

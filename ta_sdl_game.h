@@ -187,14 +187,7 @@ inline void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
 
 
 #endif
-#define MAX_UNITS_LOADED 512
 
-struct TempUnitList
-{
-    UnitDetails Details[MAX_UNITS_LOADED];
-    s32 Size;
-    s32 PAD;
-};
 
 struct UnitShaderDetails
 {
@@ -251,7 +244,7 @@ struct GameState
     TextureContainer Font12;
     TextureContainer CommonGUITextures;
 
- SDL_Window * MainSDLWindow;
+    SDL_Window * MainSDLWindow;
 
     HPIFileCollection GlobalArchiveCollection;
     u8 PaletteData[1024];
@@ -270,9 +263,6 @@ struct GameState
     Matrix ProjectionMatrix;
     Matrix ModelMatrix;
     Matrix ViewMatrix;
-
-    
-   
 
 
     GLuint DebugAxisBuffer;
@@ -298,20 +288,12 @@ struct GameState
     TAUIElement SkirmishMenu;
     TAUIElement OptionsMenu;
 
-     TempUnitList Units;
-    UnitScript CurrentUnitScript;
     float CameraXRotation;
     float CameraYRotation;
 
-    Object3d temp_model;
     TAMap TestMap;
-    Object3dTransformationDetails UnitTransformationDetails;
-    int UnitIndex;
-
    
 
     float CameraTranslation[3];
-    ScriptStatePool CurrentScriptPool;
-
     s32 MouseX, MouseY;
 };

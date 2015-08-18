@@ -529,7 +529,7 @@ internal void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, 
 	Element->Height = 158;
     }
 
-     if(Element->ElementName == ELEMENT_NAME_DELETE)
+    if(Element->ElementName == ELEMENT_NAME_DELETE)
     {
 	Element->Visible = 0;
     }
@@ -638,6 +638,14 @@ internal void LoadCommonUITextures(GameState * CurrentGameState)
 
 internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2DShaderDetails * ShaderDetails, TextureContainer * Font11, TextureContainer *Font12, TextureContainer * CommonUIElements, DebugRectShaderDetails * DebugRectDetails, TAUIElement * Container = 0)
 {
+    //TODO(Christof): make this actually check for campaigns before enabling?
+    if(Element->ElementName == ELEMENT_NAME_CAMPAIGN_KNOB
+	|| Element->ElementName == ELEMENT_NAME_MISSIONS
+	|| Element->ElementName == ELEMENT_NAME_MISSIONS_KNOB
+	||Element->ElementName == ELEMENT_NAME_CAMPAIGN)
+    {
+	Element->Visible = 1;
+    }
     if(!Element->Visible)
 	return;
 
@@ -736,12 +744,12 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 		while(*++c)
 		{
 		    if(*c == '|')
-			{
+		    {
 			*c=0;
 			i++;
 			if(i==Button->CurrentStage)
 			    ButtonText = c+1;
-			}
+		    }
 		}
 		X += 5;
 	    }
@@ -810,13 +818,13 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 	    switch(Element->ElementType)
 	    {
 	    case TAG_BUTTON:
-		    if(Element->Button.Stages > 0 && Clicked)
-		    {
-			Element->Button.CurrentStage++;
-			if(Element->Button.CurrentStage >= Element->Button.Stages)
-			    Element->Button.CurrentStage = 0;
-		    }
-		    Element->Button.Pressed = Down;
+		if(Element->Button.Stages > 0 && Clicked)
+		{
+		    Element->Button.CurrentStage++;
+		    if(Element->Button.CurrentStage >= Element->Button.Stages)
+			Element->Button.CurrentStage = 0;
+		}
+		Element->Button.Pressed = Down;
 		break;
 	    }
 	    if(Element->ElementType != TAG_BUTTON || !Element->Button.Disabled)

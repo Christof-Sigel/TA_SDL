@@ -1,4 +1,3 @@
-internal void LoadCurrentModel(GameState * CurrentGameState);
 internal void InitialiseGame(Memory * GameMemory);
 
 internal void ReloadShaders(Memory * GameMemory)
@@ -129,35 +128,6 @@ extern "C"{
 	else
 	    LogDebug("failed to load map");
 
-	HPIEntry Entry=FindEntryInAllFiles("units",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-	if(Entry.IsDirectory)
-	{
-	    for(int i=0;i<Entry.Directory.NumberOfEntries;i++)
-	    {
-		//char temp[Entry.Directory.Entries[i].File.FileSize];
-		//STACK_ARRAY(temp,Entry.Directory.Entries[i].File.FileSize,char);
-		char * temp = PushArray(&CurrentGameState->TempArena, Entry.Directory.Entries[i].File.FileSize,char);
-		if(LoadHPIFileEntryData(Entry.Directory.Entries[i],(u8 *)temp,&CurrentGameState->TempArena))
-		{
-		    if(strstr(Entry.Directory.Entries[i].Name,".FBI"))
-		    {
-			if(CurrentGameState->Units.Size>=MAX_UNITS_LOADED)
-			{
-			    LogError("TOO MANY UNITS");
-			}
-			else
-			{
-			    LoadFBIFileFromBuffer(&CurrentGameState->Units.Details[CurrentGameState->Units.Size++],temp,&CurrentGameState->GameArena);
-			}
-		    }
-		}
-		PopArray(&CurrentGameState->TempArena, temp,Entry.Directory.Entries[i].File.FileSize,char);
-	    }
-	}
-	UnloadCompositeEntry(&Entry,&CurrentGameState->TempArena);
-
-	LoadCurrentModel(CurrentGameState);
-
 	CurrentGameState->MainMenu = LoadGUI("MainMenu.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 	CurrentGameState->SinglePlayerMenu = LoadGUI("Single.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 
@@ -175,9 +145,7 @@ extern "C"{
     void GameTeardown(Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
-	UnloadShaderProgram(CurrentGameState->UnitShaderDetails.Shader);
 	UnloadHPIFileCollection(&CurrentGameState->GlobalArchiveCollection);
-	Unload3DO(&CurrentGameState->temp_model);
     }
     void CheckResources(Memory * GameMemory);
     void CheckResources(Memory * GameMemory)
