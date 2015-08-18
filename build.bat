@@ -1,6 +1,6 @@
 @echo off
 
-set CommonCompilerFlags=-Od -D_CRT_SECURE_NO_WARNINGS -MTd -nologo -fp:fast -fp:except- -EHsc -Gm- -GR- -EHa- -Zo -Oi  -W4 -wd4201  -FC -Z7 -I../w64/include 
+set CommonCompilerFlags=-Od -D_CRT_SECURE_NO_WARNINGS -MTd -nologo -fp:fast -fp:except- -EHsc -Gm- -GR- -EHa- -Zo -Oi  -W4 -wd4201  -FC -Z7 -I../w64/include
 
 
 set CommonLinkerFlags= -opt:ref -incremental:no  user32.lib gdi32.lib winmm.lib

@@ -218,11 +218,19 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
 	}
 	else if(CaseInsensitiveMatch(FileName, "NewGame.gui"))
 	{
-	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/newcampaign4x.pcx", GlobalArchiveCollection, TempArena);
+	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/playanygame4.pcx", GlobalArchiveCollection, TempArena);
 	}
 	else if(CaseInsensitiveMatch(Name, "Skirmish.gui"))
 	{
 	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/skirmsetup4x.pcx", GlobalArchiveCollection, TempArena);
+	}
+	else if(CaseInsensitiveMatch(FileName, "LoadGame.gui"))
+	{
+	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/Dloadgame2.pcx", GlobalArchiveCollection, TempArena);
+	}
+	else if(CaseInsensitiveMatch(FileName, "startopt.gui"))
+	{
+	    Element->Container.Background = AddPCXToTextureContainer(Textures,"bitmaps/Options4x.pcx", GlobalArchiveCollection, TempArena);
 	}
 	else
 	{
@@ -283,8 +291,8 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     break;
     case TAG_LABEL_FONT:
     {
-	char * FileName = GetStringValue(Tree, "filename");
-	Element->LabelFont.Font=GetFont(FontContainer,FileName, GlobalArchiveCollection, TempArena);
+	char * FontFileName = GetStringValue(Tree, "filename");
+	Element->LabelFont.Font=GetFont(FontContainer,FontFileName, GlobalArchiveCollection, TempArena);
     }
     break;
     case TAG_LISTBOX:
@@ -324,7 +332,7 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     {
 	Element->ElementName = ELEMENT_NAME_SKIRMISH;
     }
-    else if(CaseInsensitiveMatch("PrevMenu",Name))
+    else if(CaseInsensitiveMatch("PrevMenu",Name)||CaseInsensitiveMatch("Prev",Name))
     {
 	Element->ElementName = ELEMENT_NAME_PREVIOUS_MENU;
     }
@@ -335,6 +343,199 @@ void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryAre
     else if(CaseInsensitiveMatch("OK",Name))
     {
 	Element->ElementName = ELEMENT_NAME_OK;
+    }
+    else if(CaseInsensitiveMatch("LOAD",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_LOAD;
+    }
+    else if(CaseInsensitiveMatch("CANCEL",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_CANCEL;
+    }
+    else if(CaseInsensitiveMatch("INTRO",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_INTRO;
+    }
+    else if(CaseInsensitiveMatch("Credits",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_CREDITS;
+    }
+    else if(CaseInsensitiveMatch("Start",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_START;
+    }
+    else if(CaseInsensitiveMatch("Campaign",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_CAMPAIGN;
+    }
+    else if(CaseInsensitiveMatch("CampaignKnob",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_CAMPAIGN_KNOB;
+    }
+    else if(CaseInsensitiveMatch("MissionsKnob",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_MISSIONS_KNOB;
+    }
+    else if(CaseInsensitiveMatch("Missions",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_MISSIONS;
+    }
+    else if(CaseInsensitiveMatch("Side0",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SIDE_0;
+    }
+    else if(CaseInsensitiveMatch("Side1",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SIDE_1;
+    }
+    else if(CaseInsensitiveMatch("SIDENAME",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SIDE_NAME;
+    }
+    else if(CaseInsensitiveMatch("Difficulty",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_DIFFICULTY;
+    }
+    else if(CaseInsensitiveMatch("Arm",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_ARM;
+    }
+    else if(CaseInsensitiveMatch("CORE",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_CORE;
+    }
+    else if(CaseInsensitiveMatch("GAMES",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_GAMES;
+    }
+    else if(CaseInsensitiveMatch("SLIDER",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SLIDER;
+    }
+    else if(CaseInsensitiveMatch("GAMENAME",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_GAME_NAME;
+    }
+    else if(CaseInsensitiveMatch("GAMETYPE",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_GAME_TYPE;
+    }
+    else if(CaseInsensitiveMatch("MISSION",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_MISSION;
+    }
+    else if(CaseInsensitiveMatch("TIME",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_TIME;
+    }
+    else if(CaseInsensitiveMatch("SIDE",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SIDE;
+    }
+    else if(CaseInsensitiveMatch("RADAR",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_RADAR;
+    }
+    else if(CaseInsensitiveMatch("DIFF",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_DIFF;
+    }
+    else if(CaseInsensitiveMatch("DELETE",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_DELETE;
+    }
+    else if(CaseInsensitiveMatch("SaveGame",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SAVE;
+    }
+    else if(CaseInsensitiveMatch("Skirmish.gui",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SKIRMISH_GUI;
+    }
+    else if(CaseInsensitiveMatch("HEADER",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_HEADER;
+    }
+    else if(CaseInsensitiveMatch("TEXT",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_TEXT;
+    }
+    else if(CaseInsensitiveMatch("SelectMap",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SELECT_MAP;
+    }
+    else if(CaseInsensitiveMatch("StartLocation",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_START_LOCATION;
+    }
+    else if(CaseInsensitiveMatch("CommanderDeath",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_COMMANDER_DEATH;
+    }
+    else if(CaseInsensitiveMatch("Mapping",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_MAPPING;
+    }
+    else if(CaseInsensitiveMatch("MapName",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_MAP_NAME;
+    }
+    else if(CaseInsensitiveMatch("LineOfSight",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_LINE_OF_SIGHT;
+    }
+    else if(CaseInsensitiveMatch("HELPTEXT",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_HELP_TEXT;
+    }
+    else if(CaseInsensitiveMatch("SOUND",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SOUND;
+    }
+    else if(CaseInsensitiveMatch("SPEEDS",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_SPEEDS;
+    }
+    else if(CaseInsensitiveMatch("VISUALS",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_VISUALS;
+    }
+    else if(CaseInsensitiveMatch("MUSIC",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_MUSIC;
+    }
+    else if(CaseInsensitiveMatch("RESTORE",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_RESTORE;
+    }
+    else if(CaseInsensitiveMatch("UNDO",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_UNDO;
+    }
+    else if(CaseInsensitiveMatch("MainMenu.gui",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_MAIN_MENU_GUI;
+    }
+    else if(CaseInsensitiveMatch("AnyMsn",Name))
+    {
+	Element->ElementName = ELEMENT_NAME_ANY_MISSION;
+    }
+
+    else
+    {
+	LogDebug("Unknown Element: %s",Name);
+    }
+
+
+    if(Element->ElementName == ELEMENT_NAME_SIDE_0 || Element->ElementName == ELEMENT_NAME_SIDE_1)
+    {
+	Element->Width = 158;
+	Element->Height = 158;
+    }
+
+     if(Element->ElementName == ELEMENT_NAME_DELETE)
+    {
+	Element->Visible = 0;
     }
 }
 
@@ -440,10 +641,15 @@ void LoadCommonUITextures(GameState * CurrentGameState)
     }
 }
 
-void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2DShaderDetails * ShaderDetails, TextureContainer * ButtonFont, TextureContainer * CommonUIElements, DebugRectShaderDetails * DebugRectDetails, TAUIElement * Container = 0)
+void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2DShaderDetails * ShaderDetails, TextureContainer * Font11, TextureContainer *Font12, TextureContainer * CommonUIElements, DebugRectShaderDetails * DebugRectDetails, TAUIElement * Container = 0)
 {
+    if(!Element->Visible)
+	return;
+
     s32 X= Element->X + XOffset;
     s32 Y = Element->Y + YOffset;
+    r32 Width = (r32)Element->Width;
+    r32 Height = (r32)Element->Height;
     switch(Element->ElementType)
     {
     case TAG_UI_CONTAINER:
@@ -455,7 +661,7 @@ void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2
 	}
 	for(int i=0;i<Element->Container.NumberOfElements;i++)
 	{
-	    RenderTAUIElement(&Element->Container.Elements[i], XOffset, YOffset, ShaderDetails, ButtonFont, CommonUIElements, DebugRectDetails, Element);
+	    RenderTAUIElement(&Element->Container.Elements[i], X, Y, ShaderDetails, Font11, Font12, CommonUIElements, DebugRectDetails, Element);
 	}
     }
     break;
@@ -464,43 +670,97 @@ void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2
 	TAUIButton * Button = &Element->Button;
 	Texture * ButtonBackground = GetTexture(Element->Name, Element->Textures);
 	TextureContainer * ButtonTextureContainer = Element->Textures;
+
+	int ButtonOffset = Button->Pressed;
 	if(!ButtonBackground)
 	{
 	    ButtonBackground = GetTexture(Element->Name,  CommonUIElements);
 	    ButtonTextureContainer = CommonUIElements;
 	    if(!ButtonBackground)
 	    {
-		ButtonBackground = GetTexture("Buttons0", CommonUIElements);
-		float ElementWidthInUV = (float)Element->Width / CommonUIElements->TextureWidth;
-		float ElementHeightInUV = (float)Element->Height / CommonUIElements->TextureHeight;
-		float BestMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
-		Texture * BestMatch = ButtonBackground;
-		for(int i=1;i<ButtonBackground->NumberOfFrames;i+=4)
+		if(Button->Stages > 0)
 		{
-		    ButtonBackground = GetTexture(ButtonBackground, i);
-		    float CurrentMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
-		    if(fabs(CurrentMatchAmount) < fabs(BestMatchAmount) )
-		    {
-			BestMatchAmount = CurrentMatchAmount;
-			BestMatch = ButtonBackground;
-		    }
+		    Assert(Button->Stages <4);
+		    const s32 MAX_STRING = 20;
+		    char ButtonName[MAX_STRING];
+		    snprintf(ButtonName,MAX_STRING,"stagebuttn%d", Button->Stages);
+		    ButtonBackground = GetTexture(ButtonName, CommonUIElements);
 		}
-		ButtonBackground = BestMatch;
-		Element->Width = ButtonBackground->Width * CommonUIElements->TextureWidth;
-		Element->Height = ButtonBackground->Height * CommonUIElements->TextureHeight;
+		else
+		{
+		    ButtonBackground = GetTexture("Buttons0", CommonUIElements);
+		    float ElementWidthInUV = (float)Element->Width / CommonUIElements->TextureWidth;
+		    float ElementHeightInUV = (float)Element->Height / CommonUIElements->TextureHeight;
+		    float BestMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
+		    Texture * BestMatch = ButtonBackground;
+		    for(int i=4;i<ButtonBackground->NumberOfFrames;i+=4)
+		    {
+			ButtonBackground = GetTexture(ButtonBackground, i);
+			float CurrentMatchAmount = (ButtonBackground->Width - ElementWidthInUV) + (ElementHeightInUV - ButtonBackground->Height);
+			if(fabs(CurrentMatchAmount) < fabs(BestMatchAmount) )
+			{
+			    BestMatchAmount = CurrentMatchAmount;
+			    BestMatch = ButtonBackground;
+			}
+		    }
+		    ButtonBackground = BestMatch;
+		}
+		Width = ButtonBackground->Width * CommonUIElements->TextureWidth;
+		Height = ButtonBackground->Height * CommonUIElements->TextureHeight;
+		if(Button->Pressed && Button->Stages >0)
+		{
+		    ButtonOffset = Button->Stages + 1; // == Stages is nothing selected
+		}
+		else if (Button->Stages >0)
+		{
+		    ButtonOffset = Button->CurrentStage;
+		}
+
 	    }
 	}
-	Assert(ButtonBackground);
-	ButtonBackground = GetTexture(ButtonBackground, ButtonBackground->FrameNumber + Button->CurrentStatus);
+	if(Element->Button.Disabled)
+	{
+	    ButtonOffset = 3;
+	}
+	ButtonBackground = GetTexture(ButtonBackground, ButtonBackground->FrameNumber + ButtonOffset);
 	float U = ButtonBackground->U;
 	float V = ButtonBackground->V;
-	DrawTexture2D(ButtonTextureContainer->Texture, float(X), float(Y), float(Element->Width), float(Element->Height), {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Width, ButtonBackground->Height);
+	DrawTexture2D(ButtonTextureContainer->Texture, float(X), float(Y), Width, Height, {{1,1,1}}, 1.0, ShaderDetails, U, V, ButtonBackground->Width, ButtonBackground->Height);
+
+//	DrawDebugRect(DebugRectDetails, X , Y, Width, Height, {1,1,1} , 2.0f );
 	if(Button->Text)
 	{
-	    FontDimensions TD = TextSizeInPixels(Button->Text, ButtonFont);
-	    DrawTextureFontText(Button->Text, X+((Element->Width - TD.Width)/2), Y+((Element->Height - ButtonFont->RequestedHeight)/2), ButtonFont, ShaderDetails);
+	    const s32 MAX_STRING = 64;
+	    char Text[MAX_STRING];
+	    snprintf(Text, MAX_STRING, "%s", Button->Text);
+	    char * ButtonText = Text;
+	    if(Button->Stages > 0)
+	    {
+		char * c = Text;
+		int i=0;
+		while(*++c)
+		{
+		    if(*c == '|')
+			{
+			*c=0;
+			i++;
+			if(i==Button->CurrentStage)
+			    ButtonText = c+1;
+			}
+		}
+		X += 5;
+	    }
+	    else
+	    {
+		FontDimensions TD = TextSizeInPixels(ButtonText, Font12);
+		X = X + (s32)((Width - TD.Width)/2);
+	    }
+	    FontDimensions TD = TextSizeInPixels(ButtonText, Font12);
+	    Y = Y + (s32)((Height - 18)/2); //NOTE(Christof): 18 is the pixel height of Font12
+
+	    DrawTextureFontText(ButtonText,X,Y , Font12, ShaderDetails);
 	}
-	//DrawDebugRect(DebugRectDetails, Element->X , Element->Y, Element->Width, Element->Height, {1,1,1} , 2.0f );
+
     }
     break;
     case TAG_LABEL:
@@ -518,47 +778,69 @@ void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2
 		}
 	    }
 	    char * Text= Element->Label.Text;
-	    if(Element->ElementName == ELEMENT_NAME_DEBUGSTRING)
-	    {
-		Text = "V 0.1";
-		X = (Container->Width - Element->Width)/2 + XOffset;
-	    }
 	    if(LabelFont)
 	    {
 		//TODO(Christof): FNT font label rendering here
 	    }
 	    else
 	    {
-		FontDimensions Size = TextSizeInPixels(Text, ButtonFont);
-		DrawTextureFontText(Text,X+((Element->Width - Size.Width)/2), Y+((Element->Height - Size.Height)/2), ButtonFont, ShaderDetails);
+		FontDimensions Size = TextSizeInPixels(Text, Font11);
+		DrawTextureFontText(Text,X, Y, Font11, ShaderDetails);
 	    }
 	}
     }
     break;
+    case TAG_LISTBOX:
+	DrawDebugRect(DebugRectDetails, X , Y, Width, Height, {1,0.5,0.5} , 2.0f );
+	break;
+
+    case TAG_SCROLLBAR:
+	DrawDebugRect(DebugRectDetails, X , Y, Width, Height, {0.5,1,1} , 2.0f );
+	break;
     }
 }
 
-TAUIElementName ProcessMouseClick(TAUIElement * Root, s32 MouseX, s32 MouseY, b32 Down, s32 XOffset, s32 YOffset)
+TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, b32 Down, b32 Clicked, s32 XOffset, s32 YOffset)
 {
     Assert(Root->ElementType == TAG_UI_CONTAINER);
-    TAUIElementName Result = ELEMENT_NAME_UNKNOWN;
+    TAUIElement * Result = 0;
+
+    XOffset += Root->X;
+    YOffset += Root->Y;
 
     for(s32 i=0;i<Root->Container.NumberOfElements;i++)
     {
 	TAUIElement * Element = &Root->Container.Elements[i];
 	s32 X = XOffset + Element->X, Y = YOffset + Element->Y;
-	if(MouseX < X + Element->Width && MouseX > X
+	if(Element->Visible && MouseX < X + Element->Width && MouseX > X
 	   && MouseY < Y + Element->Height && MouseY > Y)
 	{
 	    switch(Element->ElementType)
 	    {
 	    case TAG_BUTTON:
-		Element->Button.CurrentStatus = Down?1:0;
+		    if(Element->Button.Stages > 0 && Clicked)
+		    {
+			Element->Button.CurrentStage++;
+			if(Element->Button.CurrentStage >= Element->Button.Stages)
+			    Element->Button.CurrentStage = 0;
+		    }
+		    Element->Button.Pressed = Down;
 		break;
 	    }
-	    return Element->ElementName;
+	    if(Element->ElementType != TAG_BUTTON || !Element->Button.Disabled)
+	    {
+		Result = Element;
+	    }
+	}
+	else
+	{
+	    switch(Element->ElementType)
+	    {
+	    case TAG_BUTTON:
+		Element->Button.Pressed = 0;
+		break;
+	    }
 	}
     }
-
     return Result;
 }

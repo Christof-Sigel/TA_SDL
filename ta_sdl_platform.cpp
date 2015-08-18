@@ -31,7 +31,7 @@ void LoadGameLibrary()
     CopyFile(GAME_LIBRARY_OBJECT, TEMP_GAME_LIBRARY_OBJECT, FALSE);
     GameLibraryObject= SDL_LoadObject(TEMP_GAME_LIBRARY_OBJECT);
 #else
-    
+
     GameLibraryObject= SDL_LoadObject(GAME_LIBRARY_OBJECT);
 #endif
     if(!GameLibraryObject)
@@ -97,7 +97,7 @@ int main(int argc, char * argv[])
 	return 0;
     }
     LoadGameLibrary();
- 
+
     InputState GameInputState={};
     Memory GameMemory={};
 
@@ -109,10 +109,10 @@ int main(int argc, char * argv[])
     GameMemory.TransientStore = GameMemory.PermanentStore+GameMemory.PermanentStoreSize;
 
     GameState * CurrentGameState=(GameState *)GameMemory.PermanentStore;
-    
+
     if(!SetupSDLWindow(CurrentGameState))
 	return 1;
-    
+
     GameSetup(&GameMemory);
     SDL_Event e;
     while( CurrentGameState->State != STATE_QUIT )
@@ -140,8 +140,9 @@ int main(int argc, char * argv[])
 	    }
 	}
 
+	GameInputState.LastMouseButtons = GameInputState.MouseButtons;
 	GameInputState.MouseButtons = SDL_GetMouseState(&GameInputState.MouseX,&GameInputState.MouseY);
-	
+
 
 	GameUpdateAndRender(&GameInputState,&GameMemory);
 	SDL_GL_SwapWindow( CurrentGameState->MainSDLWindow );

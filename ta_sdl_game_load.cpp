@@ -159,7 +159,7 @@ extern "C"{
 	CurrentGameState->CampaignMenu = LoadGUI("NewGame.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 	CurrentGameState->LoadGameMenu = LoadGUI("LoadGame.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 	CurrentGameState->SkirmishMenu = LoadGUI("Skirmish.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
-	CurrentGameState->OptionsMenu = LoadGUI("gameoptions.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+	CurrentGameState->OptionsMenu = LoadGUI("startopt.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 
 
 

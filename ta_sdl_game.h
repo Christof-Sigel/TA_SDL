@@ -72,6 +72,7 @@ struct InputState
     u32 KeyIsDown[256];
     u32 KeyWasDown[256];
     s32 MouseButtons;
+    s32 LastMouseButtons;
     s32 MouseX, MouseY;
 };
 
@@ -122,7 +123,7 @@ inline void *
     printf("Allocating %d from %s in %s:%d\n",Size,caller, file,line);
     void *Result = Arena->Base + Arena->Used;
     Arena->Used += Size;
-    
+
     return(Result);
 }
 
@@ -162,7 +163,7 @@ PushSize_(MemoryArena *Arena, memory_index Size)
     Assert((Arena->Used + Size) <= Arena->Size);
     void *Result = Arena->Base + Arena->Used;
     Arena->Used += Size;
-    
+
     return(Result);
 }
 
@@ -222,16 +223,17 @@ struct DebugRectShaderDetails
 
 enum State
 {
-    STATE_RUNNING,
-    STATE_PAUSED,
-    STATE_QUIT,
     STATE_MAIN_MENU,
     STATE_SINGLEPLAYER_MENU,
     STATE_OPTIONS_MENU,
     STATE_CAMPAIGN_MENU,
     STATE_LOAD_GAME_MENU,
     STATE_SKIRMISH_MENU,
-    
+
+
+    STATE_RUNNING,
+    STATE_PAUSED,
+    STATE_QUIT,
 };
 
 struct GameState
@@ -241,7 +243,7 @@ struct GameState
     MemoryArena TempArena;
     State State;
     int NumberOfFrames;
-    
+
 
     Matrix ProjectionMatrix;
     Matrix ModelMatrix;
@@ -253,12 +255,12 @@ struct GameState
     FontShaderDetails FontShaderDetails;
     Texture2DShaderDetails DrawTextureShaderDetails;
     ShaderGroup ShaderGroup;
-    
-    
+
+
     GLuint DebugAxisBuffer;
     DebugRectShaderDetails DebugRectDetails;
     GLuint DebugRectBuffer;
-    
+
     FontContainer LoadedFonts;
     GLuint Draw2DVertexBuffer;
 
@@ -266,7 +268,7 @@ struct GameState
     TextureContainer Font11;
     TextureContainer Font12;
     TextureContainer CommonGUITextures;
-    
+
     int ScreenWidth,ScreenHeight;
     SDL_Window * MainSDLWindow;
 
@@ -298,4 +300,3 @@ struct GameState
 
     s32 MouseX, MouseY;
 };
-

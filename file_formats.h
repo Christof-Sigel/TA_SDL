@@ -277,7 +277,7 @@ struct Object3dTransformationDetails
     RotationDetails RotationTarget[TA_AXIS_NUM];
     MovementDetails MovementTarget[TA_AXIS_NUM];
     SpinDetails SpinTarget[TA_AXIS_NUM];
-    
+
     r32 Rotation[TA_AXIS_NUM];
     r32 Movement[TA_AXIS_NUM];
     r32 Spin[TA_AXIS_NUM];
@@ -300,7 +300,7 @@ struct UnitDetails
     UnitKeyValue Details[MAX_UNIT_DETAILS];
     int DetailsSize;
     int GetInt(const char * Name);
-    
+
     float GetFloat(const char * Name);
     char * GetString(const char * Name);
     s64  GetUnitCategories();
@@ -385,7 +385,7 @@ struct TAUIContainer
     struct TAUIElement * DefaultFocus;
     int NumberOfElements;
     TAUIElement * Elements;
-   
+
 };
 
 struct TAUIButton
@@ -394,7 +394,8 @@ struct TAUIButton
     int Stages;
     char * Text;// | seperator for multistage buttons, center aligned for simple (single stage) buttons, right aligned otherwise
     b8 Disabled;//pulls from grayedout
-    s32 CurrentStatus;
+    b32 Pressed;
+    s32 CurrentStage;
 };
 
 struct TAUITextBox
@@ -437,7 +438,54 @@ enum TAUIElementName
     ELEMENT_NAME_SKIRMISH,
     ELEMENT_NAME_PREVIOUS_MENU,
     ELEMENT_NAME_OPTIONS,
-    ELEMENT_NAME_OK
+    ELEMENT_NAME_OK,
+    ELEMENT_NAME_CANCEL,
+    ELEMENT_NAME_LOAD,
+
+    ELEMENT_NAME_INTRO,
+    ELEMENT_NAME_CREDITS,
+    ELEMENT_NAME_START,
+    ELEMENT_NAME_CAMPAIGN,
+    ELEMENT_NAME_CAMPAIGN_KNOB,
+    ELEMENT_NAME_MISSIONS_KNOB,
+    ELEMENT_NAME_MISSIONS,
+    ELEMENT_NAME_SIDE_0,
+    ELEMENT_NAME_SIDE_1,
+    ELEMENT_NAME_SIDE_NAME,
+    ELEMENT_NAME_DIFFICULTY,
+    ELEMENT_NAME_ARM,
+    ELEMENT_NAME_CORE,
+
+    ELEMENT_NAME_GAMES,
+    ELEMENT_NAME_SLIDER,
+    ELEMENT_NAME_GAME_NAME,
+    ELEMENT_NAME_GAME_TYPE,
+    ELEMENT_NAME_MISSION,
+    ELEMENT_NAME_TIME,
+    ELEMENT_NAME_SIDE,
+    ELEMENT_NAME_RADAR,
+    ELEMENT_NAME_DIFF,
+    ELEMENT_NAME_DELETE,
+    ELEMENT_NAME_SAVE,
+    ELEMENT_NAME_SKIRMISH_GUI,
+    ELEMENT_NAME_HEADER,
+    ELEMENT_NAME_TEXT,
+    ELEMENT_NAME_SELECT_MAP,
+    ELEMENT_NAME_START_LOCATION,
+    ELEMENT_NAME_COMMANDER_DEATH,
+    ELEMENT_NAME_MAPPING,
+    ELEMENT_NAME_MAP_NAME,
+    ELEMENT_NAME_LINE_OF_SIGHT,
+    ELEMENT_NAME_HELP_TEXT,
+    ELEMENT_NAME_SOUND,
+    ELEMENT_NAME_SPEEDS,
+    ELEMENT_NAME_VISUALS,
+    ELEMENT_NAME_MUSIC,
+    ELEMENT_NAME_RESTORE,
+    ELEMENT_NAME_UNDO,
+    ELEMENT_NAME_MAIN_MENU_GUI,
+    ELEMENT_NAME_ANY_MISSION,
+
 };
 
 struct TAUIElement
@@ -532,7 +580,7 @@ struct TAMap
 	glBindTexture(GL_TEXTURE_2D,MapTexture);
 	glBindVertexArray(MapVertexBuffer);
 	glDrawArrays(GL_TRIANGLES, 0, NumTriangles*3);
-	
+
     }
 
     void RenderMiniMap()

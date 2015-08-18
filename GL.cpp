@@ -59,10 +59,10 @@ ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char
 {
     ShaderProgram * Shader = &ShaderGroup->Shaders[ShaderGroup->NumberOfShaders++];
     *Shader = {};
-   
+
     strncpy(Shader->PixelFileName, PixelShaderFileName, MAX_SHADER_FILENAME);
     strncpy(Shader->VertexFileName, VertexShaderFileName, MAX_SHADER_FILENAME);
-   
+
     if(ShaderGroup->NumberOfShaders+1>= MAX_SHADER_NUMBER)
     {
 	LogError("Not enough shaders allocated, failed to load shader program for %s, %s", VertexShaderFileName, PixelShaderFileName);
@@ -74,7 +74,7 @@ ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char
 	LogError("Failed to load vertex shader file %s",VertexShaderFileName);
 	return &NullShader;
     }
-    
+
     MemoryMappedFile PixelShaderFile=MemoryMapFile(PixelShaderFileName);
     if(!PixelShaderFile.MMapBuffer)
     {
@@ -82,7 +82,7 @@ ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char
 	LogError("Failed to load pixel shader file %s",PixelShaderFileName);
 	return &NullShader;
     }
-    
+
     Shader->ProgramID = glCreateProgram();
     GLenum ErrorValue = glGetError();
     if(ErrorValue!=GL_NO_ERROR)
@@ -95,10 +95,10 @@ ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char
     }
     Shader->VertexFileModifiedTime = VertexShaderFile.ModifiedTime;
     Shader->PixelFileModifiedTime = PixelShaderFile.ModifiedTime;
-  
+
     Shader->VertexID = LoadShader(GL_VERTEX_SHADER,VertexShaderFile,VertexShaderFileName);
     glAttachShader(Shader->ProgramID,Shader->VertexID);
-    
+
     Shader->PixelID = LoadShader(GL_FRAGMENT_SHADER,PixelShaderFile,PixelShaderFileName);
     glAttachShader(Shader->ProgramID,Shader->PixelID);
 
@@ -112,7 +112,7 @@ ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char
 	Shader->ProgramID=Shader->VertexID = Shader->PixelID = 0;
 	return &NullShader;
     }
-    
+
     if(!Shader->PixelID || !Shader->VertexID)
     {
 	UnloadShaderProgram(Shader);
@@ -121,7 +121,7 @@ ShaderProgram * LoadShaderProgram( const char * VertexShaderFileName, const char
     }
     glLinkProgram(Shader->ProgramID);
     glUseProgram(Shader->ProgramID);
-  
+
     return Shader;
 }
 
@@ -165,7 +165,7 @@ void DrawTexture2D(GLuint Texture, float X, float Y, float Width, float Height, 
 	glUniform2f(ShaderDetails->TextureOffsetLocation, U,V);
 	glUniform2f(ShaderDetails->TextureSizeLocation, TextureWidth,TextureHeight);
 	glUniform2f(ShaderDetails->SizeLocation,Width, Height);
-		 
+
 	glBindVertexArray(ShaderDetails->VertexBuffer);
 	glBindTexture(GL_TEXTURE_2D,Texture);
 	glDrawArrays(GL_TRIANGLES,0,6);
@@ -181,7 +181,7 @@ void DrawTexture2D(GLuint Texture, float X, float Y, float Width, float Height, 
     }
 }
 
-void DrawDebugRect(DebugRectShaderDetails * Details,int X, int Y, int Width, int Height, Color BorderColor , float BorderWidth , float BorderAlpha = 1.0f, Color Color ={{1,1,1}}, float InnerAlpha = 0.0f)
+void DrawDebugRect(DebugRectShaderDetails * Details,float X, float Y, float Width, float Height, Color BorderColor , float BorderWidth , float BorderAlpha = 1.0f, Color Color ={{1,1,1}}, float InnerAlpha = 0.0f)
 {
      if(Details->Program->ProgramID)
     {
@@ -191,7 +191,7 @@ void DrawDebugRect(DebugRectShaderDetails * Details,int X, int Y, int Width, int
 	glUniform1f(Details->BorderWidthLocation, BorderWidth);
 	glUniform4f(Details->BorderColorLocation, BorderColor.R, BorderColor.G, BorderColor.B, BorderAlpha);
 	glUniform2f(Details->SizeLocation,Width, Height);
-		 
+
 	glBindVertexArray(Details->VertexBuffer);
 	glDrawArrays(GL_TRIANGLES,0,6);
     }
