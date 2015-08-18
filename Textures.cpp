@@ -65,7 +65,7 @@ TexturePosition GetAvailableTextureLocation(int Width, int Height, TextureContai
 	    if(Y+HeightInSquares>TextureContainer->HeightInSquares || X+ WidthInSquares > TextureContainer->WidthInSquares)
 		continue;
 
-		    
+
 	    for(int TexY=0;TexY<HeightInSquares;TexY++)
 	    {
 		for(int TexX=0;TexX<WidthInSquares;TexX++)
@@ -130,7 +130,7 @@ void LoadGafTextureData(u8 * Buffer, FILE_GafFrameData * Frame, TexturePosition 
 			}
 			x++;
 		    }
-			
+
 		}
 		else
 		{
@@ -184,13 +184,13 @@ void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContai
 	LogInformation("Skipping %s as it has already been loaded",Entry->Name);
 	return;
     }
-    
+
     for(int i=0;i<Entry->NumberOfFrames;i++)
     {
 	FILE_GafFrameData * Frame = (FILE_GafFrameData *)(Buffer + FrameEntries[i].FrameInfoOffset);
-	
 
-	
+
+
 	int NextTexture = TextureContainer->NumberOfTextures;
 	Assert(NextTexture < TextureContainer->MaximumTextures);
 	TexturePosition PositionToStore = GetAvailableTextureLocation(Frame->Width,Frame->Height, TextureContainer);
@@ -225,7 +225,7 @@ void LoadGafFrameEntry(u8 * Buffer, int Offset, TextureContainer * TextureContai
 	Textures[NextTexture].NumberOfFrames = Entry->NumberOfFrames;
 	TextureContainer->NumberOfTextures++;
     }
-    
+
 }
 
 void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureContainer, u8 * PalletteData, u8 * TextureData)
@@ -288,7 +288,7 @@ void LoadAllTexturesFromHPIEntry(HPIEntry * Textures, TextureContainer * Texture
 	    LoadHPIFileEntryData(Textures->Directory.Entries[i],GafBuffer,TempArena);
 	    LoadTexturesFromGafBuffer(GafBuffer,TextureContainer, PaletteData, TextureData);
 	    PopArray(TempArena, GafBuffer,Textures->Directory.Entries[i].File.FileSize,u8 );
-	}    
+	}
     }
 
     glGenTextures(1,&TextureContainer->Texture);
@@ -369,25 +369,25 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 		int ColorIndex = *ImageBuffer++;
 		while(count-->0)
 		{
-		   
+
 			TextureData[(X+Y*Width)*4+0]=PaletteData[ColorIndex*3+0];
 			TextureData[(X+Y*Width)*4+1]=PaletteData[ColorIndex*3+1];
 			TextureData[(X+Y*Width)*4+2]=PaletteData[ColorIndex*3+2];
 			TextureData[(X+Y*Width)*4+3]=255;
-		  
+
 		    X++;
 		}
 	    }
 	    else
 	    {
 		int ColorIndex = ColorOrCount;
-	
+
 		    TextureData[(X+Y*Width)*4+0]=PaletteData[ColorIndex*3+0];
 		    TextureData[(X+Y*Width)*4+1]=PaletteData[ColorIndex*3+1];
 		    TextureData[(X+Y*Width)*4+2]=PaletteData[ColorIndex*3+2];
 		    TextureData[(X+Y*Width)*4+3]=255;
-		
-		
+
+
 		X++;
 	    }
 	    if(X>=Width)
@@ -397,23 +397,43 @@ Texture * AddPCXToTextureContainer(TextureContainer * Textures, const char * Fil
 	    }
 	}
 
+	int ActualWidth = Width-1, ActualHeight = Height-1;
+	for(;ActualHeight > 0; ActualHeight--)
+	{
+	    if(!(TextureData[( 0 + ActualHeight*Width)*4+0]==128
+	       && TextureData[( 0 + ActualHeight*Width)*4+1]==0
+		 && TextureData[(0 + ActualHeight*Width)*4+2]==128))
+		break;
+	}
+
+	for(;ActualWidth > 0; ActualWidth--)
+	{
+	    if(!(TextureData[(ActualWidth + 0*Width)*4+0]==128
+	       && TextureData[(ActualWidth + 0*Width)*4+1]==0
+		 && TextureData[(ActualWidth + 0*Width)*4+2]==128))
+		break;
+	}
+	ActualHeight++;
+	ActualWidth++;
+
 	glBindTexture(GL_TEXTURE_2D, Textures->Texture);
 	glTexSubImage2D(GL_TEXTURE_2D, 0, PCXPos.X, PCXPos.Y, Width, Height, GL_RGBA, GL_UNSIGNED_BYTE, TextureData);
-	
+
+
 	PopArray(TempArena, TextureData,  Width*Height*4, u8 );
 	PopArray(TempArena, PCXBuffer,  PCX.File.FileSize, u8 );
 
 	int NextTexture = Textures->NumberOfTextures;
-	Textures->Textures[NextTexture].Width=Width/float( Textures->TextureWidth);
-	Textures->Textures[NextTexture].Height=Height/float( Textures->TextureHeight);
+	Textures->Textures[NextTexture].Width=ActualWidth/float( Textures->TextureWidth);
+	Textures->Textures[NextTexture].Height=ActualHeight/float( Textures->TextureHeight);
 	Textures->Textures[NextTexture].X=0;
 	Textures->Textures[NextTexture].Y=0;
 	Textures->Textures[NextTexture].U=PCXPos.X/float(Textures->TextureWidth);
 	Textures->Textures[NextTexture].V=PCXPos.Y/float(Textures->TextureHeight);
 	Textures->Textures[NextTexture].FrameNumber = 0;
 	Textures->Textures[NextTexture].NumberOfFrames =1;
-	
-	
+
+
 	return &Textures->Textures[Textures->NumberOfTextures++];
     }
 
