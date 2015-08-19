@@ -1,6 +1,8 @@
 @echo off
 
-set CommonCompilerFlags=-Od -D_CRT_SECURE_NO_WARNINGS -MTd -nologo -fp:fast -fp:except- -EHsc -Gm- -GR- -EHa- -Zo -Oi  -W4 -wd4201  -FC -Z7 -I../w64/include
+REM TODO(Christof): enable warning 4505 when we are using the unit stuff again so we don't miss unreferenced functions
+REM maybe also 4710 (function not inlined)
+set CommonCompilerFlags=-Od -D_CRT_SECURE_NO_WARNINGS -MTd -nologo -fp:fast -fp:except- -EHsc -Gm- -GR- -EHa- -Zo -Oi  -Wall -wd4201 -wd4068 -wd5030 -wd4649 -wd4505 -wd4710  -FC -Z7 -I../w64/include
 
 
 set CommonLinkerFlags= -opt:ref -incremental:no  user32.lib gdi32.lib winmm.lib

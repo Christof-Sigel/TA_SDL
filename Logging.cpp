@@ -1,6 +1,9 @@
 #include "Logging.h"
 #include <stdio.h>
+#pragma warning(push)
+#pragma warning(disable: 4668 4820)
 #include <SDL2/SDL.h>
+#pragma warning(pop)
 
 #ifdef __WINDOWS__
 #define WIN32_LEAN_AND_MEAN

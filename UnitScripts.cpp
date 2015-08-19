@@ -19,14 +19,14 @@ internal b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryAr
 	memcpy(Script->FunctionNames[i],Buffer + NameOffsetArray[i], Length);
 	Script->FunctionNames[i][Length]=0;
     }
-    
+
     Script->PieceNames = PushArray(GameArena, Script->NumberOfPieces, char*);
     if(Script->PieceNames)
     {
 	Script->PieceNames[0] = PushArray(GameArena, Script->NumberOfPieces * SCRIPT_NAME_STORAGE_SIZE, char);
 	for(int i=1;i<Script->NumberOfPieces;i++)
 	{
-	    Script->PieceNames[i] = Script->PieceNames[0] + SCRIPT_NAME_STORAGE_SIZE*i; 
+	    Script->PieceNames[i] = Script->PieceNames[0] + SCRIPT_NAME_STORAGE_SIZE*i;
 	}
 	NameOffsetArray = (s32  *)(Buffer + Header->OffsetToPieceNameOffsetArray);
 	for(int i=0;i<Script->NumberOfPieces;i++)
@@ -48,7 +48,7 @@ internal b32 LoadUnitScriptFromBuffer(UnitScript * Script, u8 * Buffer, MemoryAr
 	Script->FunctionOffsets[i] = ScriptOffsetArray[i];
     }
     memcpy(Script->ScriptData, Buffer+Header->OffsetToScriptCode, (size_t)Script->ScriptDataSize);
-    
+
     return 1;
 }
 
@@ -134,7 +134,7 @@ enum CobCommands
     COB_SET_UNIT_VALUE = 0x10082000,
     COB_ATTACH_UNIT = 0x10083000,
     COB_DROP_UNIT = 0x10084000
-    
+
 };
 
 
@@ -235,7 +235,7 @@ internal ScriptState * AddNewScript(ScriptStatePool * Pool, UnitScript * Script,
     NewState->ScriptNumber = FunctionNumber;
     NewState->SignalMask = SignalMask;
     NewState->StackData = NewState->StackStorage;
-   
+
     NewState->TransformationDetails = TransformationDetails;
     NewState->NumberOfParameters = NumberOfArguments;
     return NewState;
@@ -244,13 +244,6 @@ internal ScriptState * AddNewScript(ScriptStatePool * Pool, UnitScript * Script,
 internal ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, const char * FunctionName, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
 {
     s32 FunctionNumber =  GetScriptNumberForFunction( Script, FunctionName);
-    if(FunctionNumber < 0)
-	return 0;
-    return AddNewScript(Pool,Script, NumberOfArguments, Arguments, TransformationDetails, FunctionNumber);
-}
-
-internal ScriptState * StartNewEntryPoint(ScriptStatePool * Pool, UnitScript * Script, s32 FunctionNumber, s32 NumberOfArguments, s32 * Arguments, Object3dTransformationDetails * TransformationDetails)
-{
     if(FunctionNumber < 0)
 	return 0;
     return AddNewScript(Pool,Script, NumberOfArguments, Arguments, TransformationDetails, FunctionNumber);
@@ -327,7 +320,7 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 	    else
 	    {
 		return -1;
-	    } 
+	    }
 	}
     }
     break;
@@ -338,7 +331,7 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 	State->BlockedOn = BLOCK_NOT_BLOCKED;
 	break;
     }
-    
+
     int CurrentInstructionCount=0;
 
     //NOTE(Christof): in cob instructions doc, top of the stack is at the BOTTOM of the list
@@ -593,8 +586,7 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 	    break;
 	case COB_STACK_FLUSH:
 	    LogDebug("Flushing stack in %s",Script->FunctionNames[State->ScriptNumber]);
-//	    State->StackSize=0;
-	    Assert(0);
+	    State->StackSize=0;
 	    break;
 	case COB_PUSH_CONSTANT:
 	    PushStack(State, PostData(Script,State));
@@ -608,7 +600,7 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 		PushStack(State,0);
 	    }
 	    else
-	    { 
+	    {
 		PushStack(State, State->LocalVariables[Index]);
 	    }
 	}
@@ -622,7 +614,7 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 		PushStack(State, 0);
 	    }
 	    else
-	    { 
+	    {
 		PushStack(State, State->StaticVariables[Index]);
 	    }
 	}
@@ -652,7 +644,7 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 		State->StaticVariables[Index] = PopStack(State);
 	    }
 	}
-	    
+
 	break;
 	case COB_ADD:
 	{
@@ -732,7 +724,7 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 		LogWarning("Putting bogus unit value %d (%s) on the stack",GetValue, UnitVariableNames[GetValue]);
 		break;
 	    }
-	    
+
 	    PushStack(State, Value);
 	}
 	break;
@@ -743,12 +735,14 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 	    s32 Value = 1;
 	    switch(GetValue)
 	    {
-	    case 0:
+	    case UNIT_VAR_ATAN:
+		if(GetValueArg)
 		Value=1;
+
 		break;
 	    }
 	    LogWarning("Putting bogus value %d (%s) on the stack",GetValue, UnitVariableNames[GetValue]);
-	    PushStack(State, Value);   
+	    PushStack(State, Value);
 	}
 	break;
 	case COB_UNKNOWN5:
@@ -788,7 +782,7 @@ internal s32 RunScript(UnitScript * Script, ScriptState * State, Object3d * Obje
 	}
 	break;
 	case COB_EQUAL:
-	{	
+	{
 	    s32 Val2 = PopStack(State);
 	    s32 Val1 = PopStack(State);
 	    PushStack(State, Val1 == Val2);
@@ -942,7 +936,7 @@ internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s
 	return -1;
     const s32 MAX_STRING_LEN = 128;
     char InstructionString[MAX_STRING_LEN] = "UNDER CONSTRUCTION";
-   
+
        s32 Result =  1;
     switch(Script->ScriptData[State->ProgramCounter + Offset])
     {
@@ -1057,7 +1051,7 @@ internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s
     }
     break;
     case COB_MOVE_NOW:
-    {	
+    {
 	s32 PieceNumber = GetNextData(Script,State, Offset + (Result++));
 	s32 Axis = GetNextData(Script,State, Offset + (Result++));
 	char * PieceName = Script->PieceNames[PieceNumber];
@@ -1202,7 +1196,7 @@ internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s
 	{
 	    snprintf(InstructionString, MAX_STRING_LEN, "? - ?");
 	}
-	
+
 	break;
     case COB_MULTIPLY:
 		if(Offset == 0 )
@@ -1395,7 +1389,7 @@ internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s
 	}
 	break;
     case COB_AND:
-    
+
 		if(Offset == 0 )
 	{
 	    s32 Op1 = GetStack(State, 0);
@@ -1406,10 +1400,10 @@ internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s
 	{
 	    snprintf(InstructionString, MAX_STRING_LEN, "? && ?");
 	}
-    
+
     break;
     case COB_OR:
-    
+
 		if(Offset == 0 )
 	{
 	    s32 Op1 = GetStack(State, 0);
@@ -1420,10 +1414,10 @@ internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s
 	{
 	    snprintf(InstructionString, MAX_STRING_LEN, "? || ?");
 	}
-    
+
     break;
     case COB_XOR:
-    
+
 		if(Offset == 0 )
 	{
 	    s32 Op1 = GetStack(State, 0);
@@ -1440,7 +1434,7 @@ internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s
 	if(Offset == 0 )
 	{
 	    s32 Op1 = GetStack(State, 0);
-	    
+
 	    snprintf(InstructionString, MAX_STRING_LEN, "! %d",Op1);
 	}
 	else
@@ -1551,7 +1545,7 @@ internal s32 OutputInstructionString(UnitScript * Script, ScriptState * State, s
     break;
     case COB_ATTACH_UNIT:
     {
-	
+
 	if(Offset == 0)
 	{
 	    s32 UnitID = GetStack(State, 0);

@@ -15,7 +15,7 @@ internal MemoryMappedFile MemoryMapFile(const char * FileName)
 	return {};
     MMFile.FileSize=(u64)filestats.st_size;
     MMFile.ModifiedTime=(u64)filestats.st_mtime;
-    
+
     MMFile.File=open(FileName,O_RDONLY);
     if(MMFile.File==-1)
 	return {};
@@ -32,7 +32,7 @@ internal MemoryMappedFile MemoryMapFile(const char * FileName)
 
     DWORD high=0;
     DWORD low=GetFileSize(MMFile.File,&high);
-    MMFile.FileSize = low | (((s64 )high) << 32);
+    MMFile.FileSize = low | (((u64)high) << 32);
     MMFile.ModifiedTime = GetFileModifiedTime(FileName);
     MMFile.MMFile=CreateFileMapping(MMFile.File,NULL,PAGE_READONLY,0,0,NULL);
     if(!MMFile.MMFile)
@@ -209,7 +209,7 @@ inline u64  GetFileModifiedTime(const char * FileName)
 
     if(stat64(FileName,&filestats)==-1)
 	return {};
-  
+
     return (u64)filestats.st_mtime;
 #endif
 }

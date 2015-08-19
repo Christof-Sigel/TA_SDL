@@ -5,7 +5,7 @@ int UnitDetails::GetInt(const char * Name)
 	return atoi(Value);
     return -1;
 }
-    
+
 float UnitDetails::GetFloat(const char * Name)
 {
     char * Value= GetString(Name);
@@ -13,7 +13,7 @@ float UnitDetails::GetFloat(const char * Name)
 	return (float)atof(Value);
     return -1;
 }
-    
+
 char * UnitDetails::GetString(const char * Name)
 {
     for(int i=0;i<DetailsSize;i++)
@@ -21,13 +21,13 @@ char * UnitDetails::GetString(const char * Name)
 	    return Details[i].Value;
     return 0;
 }
-    
+
 s64  UnitDetails::GetUnitCategories()
 {
     char * Value=GetString("Category");
     if(!Value)
 	return 0;
-	
+
     s64  Categories=0;
     int done=0;
     while(!done)
@@ -78,7 +78,7 @@ s64  UnitDetails::GetUnitCategories()
 	else if(CaseInsensitiveMatch(Cat,"BOMB")){Categories |= (s64 )1<<UNIT_CATEGORY_BOMB;}
 	else if(CaseInsensitiveMatch(Cat,"PHIB")){Categories |= (s64 )1<<UNIT_CATEGORY_PHIB;}
 	else if(CaseInsensitiveMatch(Cat,"UNDERWATER")){Categories |= (s64 )1<<UNIT_CATEGORY_UNDERWATER;}
-	else if(CaseInsensitiveMatch(Cat,"KAMIKAZE")){Categories |= (s64 )1<<UNIT_CATEGORY_KAMIKAZE;}		
+	else if(CaseInsensitiveMatch(Cat,"KAMIKAZE")){Categories |= (s64 )1<<UNIT_CATEGORY_KAMIKAZE;}
 	else
 	{
 	    LogDebug("Unknown category %s encountered while parsing unit info file Category",Cat);
@@ -89,7 +89,7 @@ s64  UnitDetails::GetUnitCategories()
     }
     return Categories;
 }
-    
+
 UnitSide UnitDetails::GetSide()
 {
     char * Value = GetString("Side");
@@ -103,7 +103,6 @@ UnitSide UnitDetails::GetSide()
 	LogDebug("Unknown side Designation in unit info: %s",Value);
     return SIDE_UNKNOWN;
 }
-
 
 internal void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, MemoryArena * GameArena)
 {
@@ -158,7 +157,7 @@ internal void LoadFBIFileFromBuffer(UnitDetails * UnitDeets, char * buffer, Memo
 	memcpy(temp.Value,Value,length);
 
 	UnitDeets->Details[UnitDeets->DetailsSize++]=temp;
-	
+
 	while(*Start==' ' || *Start =='\t' || *Start == '\r' || *Start == '\n')
 	{
 	    Start++;

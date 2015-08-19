@@ -3,7 +3,7 @@ internal void LoadCharacter(s16  CharacterOffset, u8 * FileBuffer, u8 * TextureB
     if(CharacterOffset ==0)
 	return;
     int Width = * (FileBuffer + CharacterOffset );
-    if(Width == 0) 
+    if(Width == 0)
 	return;
     u8 * ImageData = (FileBuffer + CharacterOffset + 1);
     int ByteOffset = 0, X =0, Y=0;
@@ -11,11 +11,11 @@ internal void LoadCharacter(s16  CharacterOffset, u8 * FileBuffer, u8 * TextureB
     {
 	for(int i=7;i>=0;i--)
 	{
-	    u8 bit = ImageData[ByteOffset]&(1<<i);
+	    int bit = ImageData[ByteOffset]&(1<<i);
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+0] = 255;
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+1] = 255;
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+2] = 255;
-	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+3] = bit*255;
+	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+3] = bit?(u8)1:(u8)0;
 	    X++;
 	    if(X>=Width)
 	    {
@@ -66,7 +66,7 @@ internal void LoadFNTFont(u8 * Buffer, FNTFont * Font, MemoryArena * TempArena)
 internal void SetupFontRendering(GLuint * Draw2DVertexBuffer)
 {
     GLfloat RenderData[6*(2+2)];//6 Vert (2 triangles) each 2 position coords and 2 texture coords
-    
+
     glGenVertexArrays(1,Draw2DVertexBuffer);
 
     GLfloat Vertices[]={0,0, 1,0, 1,1, 0,1};
@@ -92,8 +92,8 @@ internal void SetupFontRendering(GLuint * Draw2DVertexBuffer)
 	RenderData[(i+3)*(2+2)+2]=Vertices[Indexes2[i]*2+0];
 	RenderData[(i+3)*(2+2)+3]=Vertices[Indexes2[i]*2+1];
     }
-		      
-    
+
+
     glBindVertexArray(*Draw2DVertexBuffer);
 
     GLuint VertexBuffer;
@@ -108,7 +108,7 @@ internal void SetupFontRendering(GLuint * Draw2DVertexBuffer)
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    glBindVertexArray(0); 
+    glBindVertexArray(0);
 }
 
 
@@ -116,7 +116,7 @@ internal void LoadGafFonts(GameState * CurrentGameState)
 {
     SetupTextureContainer(&CurrentGameState->Font11, 2120, 15, 256, &CurrentGameState->GameArena);
     SetupTextureContainer(&CurrentGameState->Font12, 2880, 18, 256, &CurrentGameState->GameArena);
-    
+
     HPIEntry Font = FindEntryInAllFiles("anims/hattfont12.GAF",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     if(Font.IsDirectory)
     {
@@ -126,7 +126,7 @@ internal void LoadGafFonts(GameState * CurrentGameState)
     {
 	LoadAllTexturesFromHPIEntry(&Font, &CurrentGameState->Font12, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
     }
-    
+
     Font = FindEntryInAllFiles("anims/hattfont11.GAF", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     if(Font.IsDirectory)
     {
@@ -159,7 +159,7 @@ internal int FontHeightInPixels(const char * Text, TextureContainer * Font)
     {
 	Texture * tex = GetTexture(&Font->Textures[0], *Char);
 	float CharHeight = tex->Height;
-	
+
 	int CharHeightInPixels = int(CharHeight * Font->TextureHeight);
 	if(Result<CharHeightInPixels)
 	{
@@ -232,7 +232,7 @@ internal void DrawTextureFontText(const char * Text, int InitialX, int InitialY,
 	float CharWidth = tex->Width;
 	float CharHeight = tex->Height;
 	float U = tex->U, V = tex->V;
-	
+
 	int CharWidthInPixels = int(CharWidth * Font->TextureWidth);
 	int CharHeightInPixels = int(CharHeight * Font->TextureHeight);
 	if(*Char > ' ')
@@ -263,11 +263,11 @@ internal FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCo
     }
 
     char FontName[74];
-    
+
     size_t len=strlen(Name)+1;
     if(len>63)
 	len=63;
-   
+
     memcpy(&FontName[6], Name, len);
     FontName[len+9]=0;
     FontName[len+5]='.';

@@ -1,16 +1,16 @@
-internal float GetTileXTex(int TileIndex, float Offset, int TextureSide)
+internal inline float GetTileXTex(int TileIndex, float Offset, int TextureSide)
 {
     int X = TileIndex % (TextureSide/32);
     return (X + Offset)/(TextureSide/32);
 }
 
-internal float GetTileYTex(int TileIndex, float Offset, int TextureSide)
+internal inline float GetTileYTex(int TileIndex, float Offset, int TextureSide)
 {
     int Y = TileIndex / (TextureSide/32);
     return (Y + Offset)/(TextureSide/32);
 }
 
-internal float GetHeightFor(u32 X, u32 Y, FILE_TNTAttribute * Attributes, u32 Width,u32 Height)
+internal inline float GetHeightFor(u32 X, u32 Y, FILE_TNTAttribute * Attributes, u32 Width,u32 Height)
 {
     const float HEIGHT_MOD = 1/25.50f;
     float result=0;
@@ -79,7 +79,7 @@ internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, Mem
 			TileTextureData[(X+x+(Y+y)*TileTextureSide)*4+2]=PaletteData[Tiles[i].TileData[x+y*32]*4+2];
 			TileTextureData[(X+x+(Y+y)*TileTextureSide)*4+3]=255;//PaletteData[Tiles[i].TileData[x+y*32]*4+0];
 		    }
-		    
+
 		    // TileTextureData[(x+i*32+y*Header->NumberOfTiles*32)*4+1]=PaletteData[Tiles[i].TileData[x+y*32]*4+1];
 		    // TileTextureData[(x+i*32+y*Header->NumberOfTiles*32)*4+2]=PaletteData[Tiles[i].TileData[x+y*32]*4+2];
 		    // TileTextureData[(x+i*32+y*Header->NumberOfTiles*32)*4+3]=255;//PaletteData[Tiles[i].TileData[x+y*32]*4+3];
@@ -90,7 +90,7 @@ internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, Mem
 		goto texture_done;
 	}
     }
-    
+
 
 texture_done:
     glGenTextures(1,&Result->MapTexture);
@@ -101,7 +101,7 @@ texture_done:
     PopArray(TempArena,TileTextureData,TileTextureSide*TileTextureSide*4,u8 );
 
 
-    
+
     const int NUM_FLOATS_PER_HALFTILE=2*3*(3+2);//2 triangles per half tile, 3 verts per tri, 3 poscoords + 2 texcoords per vert
     GLfloat * PositionAndTexture = PushArray(TempArena,NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,GLfloat);
 
@@ -152,8 +152,8 @@ texture_done:
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+27]=(Y+1)*UnitsPerTile;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+28]=GetTileXTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],X%2?1.0f:0.5f,TileTextureSide);
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+29]=GetTileYTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],Y%2?1.0f:0.5f,TileTextureSide);
-	   
-	    
+
+
 	}
     }
 
@@ -165,7 +165,7 @@ texture_done:
     glGenBuffers(1,&VertexBuffer);
 
     glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER,sizeof(GLfloat)*NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,PositionAndTexture,GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER,(s64)sizeof(GLfloat)*NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,PositionAndTexture,GL_STATIC_DRAW);
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*NUM_FLOATS_PER_HALFTILE/6,0);
     glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*NUM_FLOATS_PER_HALFTILE/6,(GLvoid*)(sizeof(GLfloat)*3));
 

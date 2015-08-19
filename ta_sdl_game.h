@@ -66,6 +66,7 @@ struct Unit
     UnitDetails * Details;
     UnitSide Side;
     r32 Health, BuildPercent;
+    s32 PAD;
 };
 
 
@@ -250,16 +251,16 @@ struct GameState
     u8 PaletteData[1024];
     u64  PerformanceCounterFrequency;
 
-    
+
     MemoryArena GameArena;
     MemoryArena TempArena;
     State State;
-      
-   
+
+
 
     b32 IsInitialised;
     s32 NumberOfFrames;
-  
+
     Matrix ProjectionMatrix;
     Matrix ModelMatrix;
     Matrix ViewMatrix;
@@ -272,15 +273,13 @@ struct GameState
     FontContainer LoadedFonts;
     GLuint Draw2DVertexBuffer;
 
-   
+
 
     int ScreenWidth,ScreenHeight;
-   
 
 
-    s32 PAD;
     //Test data
-
+float CameraTranslation[3];
     TAUIElement MainMenu;
     TAUIElement SinglePlayerMenu;
     TAUIElement CampaignMenu;
@@ -292,8 +291,9 @@ struct GameState
     float CameraYRotation;
 
     TAMap TestMap;
-   
 
-    float CameraTranslation[3];
+
+
     s32 MouseX, MouseY;
+
 };

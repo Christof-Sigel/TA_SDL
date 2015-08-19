@@ -1,5 +1,8 @@
 #include <stdio.h>
+#pragma warning(push)
+#pragma warning(disable: 4668 4820)
 #include <SDL2/SDL.h>
+#pragma warning(pop)
 #ifdef __LINUX__
 #include <sys/stat.h>
 #include <fcntl.h>

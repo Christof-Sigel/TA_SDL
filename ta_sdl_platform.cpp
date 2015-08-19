@@ -1,6 +1,9 @@
 #include <GL/glew.h>
+#pragma warning(push)
+#pragma warning(disable: 4668 4820)
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_loadso.h>
+#pragma warning(pop)
 
 #include "ta_sdl_platform.h"
 #include "ta_sdl_game.h"

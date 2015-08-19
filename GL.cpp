@@ -152,8 +152,6 @@ union Color
 };
 
 
-
-
 internal void DrawTexture2D(GLuint Texture, float X, float Y, float Width, float Height, Color Color, float Alpha, Texture2DShaderDetails * ShaderDetails, float U, float V, float TextureWidth, float TextureHeight)
 {
     if(ShaderDetails->Program->ProgramID)

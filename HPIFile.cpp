@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
+#pragma warning(push)
+#pragma warning(disable: 4668 4820)
 #include "zlib.h"
+#pragma warning(pop)
 
 internal inline void UnloadHPIFile(HPIFile * HPI)
 {
@@ -50,7 +53,7 @@ internal inline void DecryptHPIBuffer(HPIFile * HPI, u8 * Destination, s32 Lengt
 	Destination[BufferIndex] = (u8 )(CurrentKey ^ ~ (HPI->MMFile.MMapBuffer[BufferIndex+FileOffset]));
     }
 }
-    
+
 internal b32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * FileArena, MemoryArena * TempArena)
 {
     MemoryMappedFile HPIMemory = MemoryMapFile(FileName);
@@ -59,7 +62,7 @@ internal b32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * Fil
 	LogError("Could not open %s",FileName);
 	return 0;
     }
-	    
+
     FILE_HPIHeader * header = (FILE_HPIHeader *)HPIMemory.MMapBuffer;
     if(header->HPIMarker != HPI_MARKER)
     {
@@ -77,11 +80,11 @@ internal b32 LoadHPIFile(const char * FileName, HPIFile * HPI, MemoryArena * Fil
 	return 0;
     }
     HPI->MMFile = HPIMemory;
-    
+
     HPI->DecryptionKey = ~((header->HeaderKey *4) | (header->HeaderKey >> 6));
     size_t NameLength=strlen(FileName);
     Assert(NameLength < MAX_HPI_FILE_NAME);
-	
+
     memcpy(HPI->Name,FileName,NameLength);
     HPI->Name[NameLength]=0;
 
@@ -132,7 +135,7 @@ const int LZ77_LENGTH_MASK=0x0f;
 internal void DecompressLZ77Chunk(u8 * Source,  u8 * Destination)
 {
     unsigned char Window[LZ77_WINDOW_SIZE];
-    
+
     int windowIndex=1;
     int done = 0;
     while(!done)
@@ -212,7 +215,7 @@ internal u8 * LoadChunk(u8 * Source, u8  * Destination)
 	DecompressLZ77Chunk(data,Destination);
 	break;
     }
-    
+
     return data + header->CompressedSize;
 }
 
