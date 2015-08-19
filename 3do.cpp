@@ -438,7 +438,7 @@ internal b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, 
 }
 
 
-internal void InitTransformationDetails(Object3d * Object, Object3dTransformationDetails *  TransformationDetails, MemoryArena * GameArena)
+internal inline void InitTransformationDetails(Object3d * Object, Object3dTransformationDetails *  TransformationDetails, MemoryArena * GameArena)
 {
     *TransformationDetails = {};
     TransformationDetails->Children = PushArray(GameArena, Object->NumberOfChildren,Object3dTransformationDetails);
@@ -446,7 +446,7 @@ internal void InitTransformationDetails(Object3d * Object, Object3dTransformatio
 	InitTransformationDetails(& Object->Children[i], &TransformationDetails->Children[i], GameArena);
 }
 
-internal void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails * TransformationDetails,float TimeStep, b32 Animate)
+internal inline void UpdateTransformationDetails(Object3d* Object, Object3dTransformationDetails * TransformationDetails,float TimeStep, b32 Animate)
 {
     if(!Object || ! TransformationDetails)
 	return;
@@ -580,7 +580,7 @@ internal void UpdateTransformationDetails(Object3d* Object, Object3dTransformati
     }
 }
 
-internal void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLint ModelMatrixLocation, u8 * PaletteData, GLuint DebugAxisBuffer, s32 Side,TextureContainer * TextureContainer, MemoryArena * TempArena, Matrix ParentMatrix, Matrix ModelMatrix)
+internal inline void RenderObject3d(Object3d * Object,Object3dTransformationDetails * TransformationDetails,GLint ModelMatrixLocation, u8 * PaletteData, GLuint DebugAxisBuffer, s32 Side,TextureContainer * TextureContainer, MemoryArena * TempArena, Matrix ParentMatrix, Matrix ModelMatrix)
 {
     if((TransformationDetails->Flags & OBJECT3D_FLAG_HIDE))
 	return;
@@ -664,7 +664,7 @@ internal int Count3DOChildren(u8 * Buffer,FILE_Object3dHeader * header)
 }
 
 
-internal b32 Load3DOFromBuffer(u8 * Buffer, Object3d * Object, TextureContainer * TextureContainer, MemoryArena * GameArena, int Offset=0)
+internal inline b32 Load3DOFromBuffer(u8 * Buffer, Object3d * Object, TextureContainer * TextureContainer, MemoryArena * GameArena, int Offset=0)
 {
     FILE_Object3dHeader * header = (FILE_Object3dHeader *)(Buffer+Offset);
     if(header->Version != 1)
@@ -750,7 +750,7 @@ internal b32 Load3DOFromBuffer(u8 * Buffer, Object3d * Object, TextureContainer 
     return 1;
 }
 
-internal void Unload3DO(Object3d * Object)
+internal inline  void Unload3DO(Object3d * Object)
 {
     if(!Object)
 	return;
@@ -770,7 +770,7 @@ internal void Unload3DO(Object3d * Object)
     *Object = {};
 }
 
-internal void UnloadTransfomationDetails(Object3dTransformationDetails * TransformationDetails, Object3d * Object)
+internal inline void UnloadTransfomationDetails(Object3dTransformationDetails * TransformationDetails, Object3d * Object)
 {
     if(!TransformationDetails)
 	return;

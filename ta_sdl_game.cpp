@@ -708,7 +708,7 @@ extern "C"
 	char FPS[32];
 	const float FramesToCount = 30.0f;
 	CurrentFPS = (CurrentFPS*(FramesToCount-1) + 1.0f/((CurrentFrameTime - LastFrameTime)/1000.0f))/FramesToCount;
-	snprintf(FPS, 32, "%0.2f, %I64u", CurrentFPS, CurrentFrameTime - LastFrameTime);
+	snprintf(FPS, 32, "%0.2f, %d", CurrentFPS, (s32)(CurrentFrameTime - LastFrameTime));
 	DrawTextureFontText(FPS, 0,0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
 	LastFrameTime = CurrentFrameTime;
 

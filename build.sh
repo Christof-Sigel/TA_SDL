@@ -1,5 +1,6 @@
 #!/bin/bash
-IGNORE_WARNINGS="-Wno-c++98-compat-pedantic -Wno-old-style-cast -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-anonymous-struct -Wno-cast-align"
+IGNORE_WARNINGS="-Wno-c++98-compat-pedantic -Wno-old-style-cast -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-anonymous-struct -Wno-cast-align -Wno-unknown-pragmas -Wno-unused-function"
+#TODO(Christof): re-enable -Wunused-function when we start using all the unit stuff again
 #clang++ -lSDL2 -ggdb -Wall -lGLEW -lGLU -lGL -lz -lpng ta_sdl.cpp $IGNORE_WARNINGS -D__CSGL_DEBUG__ -o ta_sdl
 #clang++ -lSDL2 -ggdb -Wall -lGLEW -lGLU -lGL -lz -lpng ta_sdl_linux.cpp ta_sdl.cpp $IGNORE_WARNINGS -D__CSGL_DEBUG__ -o ta_sdl
 clang++ -std=c++11 -lSDL2 -ggdb -Weverything -lGLEW -lGLU -lGL -lz -lpng -shared -Wl,-soname,ta_sdl_game.so.1 -fPIC ta_sdl_game.cpp Logging.cpp $IGNORE_WARNINGS -D__CSGL_DEBUG__ -o ta_sdl_game.so.new
