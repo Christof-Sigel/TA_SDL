@@ -963,33 +963,32 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 		}
 		break;
 	    case TAG_SCROLLBAR:
-		if(Down)
+		if(MouseY < Y+10)
 		{
-		    if(MouseY < Y+10)
+
+		    if(Down && !WasDown)
+			Element->ScrollBar.Pressed = 1;
+		    if(Clicked && Element->ScrollBar.Pressed == 1)
 		    {
-			if(!WasDown)
-			    Element->ScrollBar.Pressed = 1;
-			if(Clicked && Element->ScrollBar.Pressed == 1)
+			if(Element->ScrollBar.ListBox->DisplayItemIndex >0)
 			{
-			    if(Element->ScrollBar.ListBox->DisplayItemIndex >0)
-			    {
-				Element->ScrollBar.ListBox->DisplayItemIndex--;
-			    }
-			}
-		    }
-		    else if(MouseY > Y + Element->Height -10)
-		    {
-			if(!WasDown)
-			    Element->ScrollBar.Pressed = 2;
-			if(Clicked && Element->ScrollBar.Pressed==2)
-			{
-			    if(Element->ScrollBar.ListBox->DisplayItemIndex < Element->ScrollBar.ListBox->NumberOfItems - Element->ScrollBar.ListBox->NumberOfDisplayableItems)
-			    {
-				Element->ScrollBar.ListBox->DisplayItemIndex++;
-			    }
+			    Element->ScrollBar.ListBox->DisplayItemIndex--;
 			}
 		    }
 		}
+		else if(MouseY > Y + Element->Height -10)
+		{
+		    if(Down && !WasDown)
+			Element->ScrollBar.Pressed = 2;
+		    if(Clicked && Element->ScrollBar.Pressed==2)
+		    {
+			if(Element->ScrollBar.ListBox->DisplayItemIndex < Element->ScrollBar.ListBox->NumberOfItems - Element->ScrollBar.ListBox->NumberOfDisplayableItems)
+			{
+			    Element->ScrollBar.ListBox->DisplayItemIndex++;
+			}
+		    }
+		}
+
 		break;
 	    case TAG_LISTBOX:
 		if(Clicked)
