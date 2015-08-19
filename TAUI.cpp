@@ -263,9 +263,10 @@ internal void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, 
     break;
     case TAG_SCROLLBAR:
     {
-	Element->ScrollBar.Maximum = GetIntValue(Tree, "range");
+	/*Element->ScrollBar.Maximum = GetIntValue(Tree, "range");
 	Element->ScrollBar.Position = GetIntValue(Tree, "knobpos");
-	Element->ScrollBar.KnobSize = GetIntValue(Tree, "knobsize");
+	Element->ScrollBar.KnobSize = GetIntValue(Tree, "knobsize");*/
+	//NOTE(Christof): Any slider we care about hase these values set from stuff its connected to anyway
     }
     break;
     case TAG_LABEL:
@@ -533,6 +534,36 @@ internal void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, 
     {
 	Element->Visible = 0;
     }
+
+
+    //TODO(Christof): make this actually check for campaigns before enabling?
+    if(Element->ElementName == ELEMENT_NAME_CAMPAIGN_KNOB
+       || Element->ElementName == ELEMENT_NAME_MISSIONS
+       || Element->ElementName == ELEMENT_NAME_MISSIONS_KNOB
+       ||Element->ElementName == ELEMENT_NAME_CAMPAIGN)
+    {
+	Element->Visible = 1;
+    }
+    if(Element->ElementName == ELEMENT_NAME_CAMPAIGN_KNOB)
+    {
+	Element->Height = 46;
+	Element->Y = 308;
+    }
+    if( Element->ElementName == ELEMENT_NAME_MISSIONS)
+    {
+	Element->Height = 64;
+	Element->Width = 318;
+    }
+    if( Element->ElementName == ELEMENT_NAME_MISSIONS_KNOB)
+    {
+	Element->Height = 64;
+    }
+    if(Element->ElementName == ELEMENT_NAME_CAMPAIGN)
+    {
+	Element->Height = 46;
+	Element->Width = 318;
+	Element->Y = 308;
+    }
 }
 
 internal TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * Arena, MemoryArena * TempArena, const char * FileName, HPIFileCollection * GlobalArchiveCollection, u8 * PaletteData, FontContainer * FontContainer)
@@ -638,14 +669,6 @@ internal void LoadCommonUITextures(GameState * CurrentGameState)
 
 internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2DShaderDetails * ShaderDetails, TextureContainer * Font11, TextureContainer *Font12, TextureContainer * CommonUIElements, DebugRectShaderDetails * DebugRectDetails, TAUIElement * Container = 0)
 {
-    //TODO(Christof): make this actually check for campaigns before enabling?
-    if(Element->ElementName == ELEMENT_NAME_CAMPAIGN_KNOB
-	|| Element->ElementName == ELEMENT_NAME_MISSIONS
-	|| Element->ElementName == ELEMENT_NAME_MISSIONS_KNOB
-	||Element->ElementName == ELEMENT_NAME_CAMPAIGN)
-    {
-	Element->Visible = 1;
-    }
     if(!Element->Visible)
 	return;
 
@@ -791,20 +814,118 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
     }
     break;
     case TAG_LISTBOX:
-	DrawDebugRect(DebugRectDetails, X , Y, Width, Height, {{1,0.5,0.5}} , 2.0f );
+	for(s32 i=0 ; i<Element->ListBox.NumberOfDisplayableItems ; i++)
+	{
+	    s32 index = Element->ListBox.DisplayItemIndex + i;
+	    if(index == Element->ListBox.SelectedIndex)
+	    {
+		DrawDebugRect(DebugRectDetails, (r32)X , (r32)(Y + i * LIST_ITEM_HEIGHT), Width, LIST_ITEM_HEIGHT, {1,1,1} , 0.0f , 1.0f, {0,0.25,0}, 0.5f);
+	    }
+	    DrawTextureFontText(Element->ListBox.ItemStrings[index], X+2, Y + (i*LIST_ITEM_HEIGHT), Font12, ShaderDetails, 1.0,{2.0,2.0,2.0});
+	}
 	break;
 
     case TAG_SCROLLBAR:
-	DrawDebugRect(DebugRectDetails, X , Y, Width, Height, {{0.5,1,1}} , 2.0f );
+	{
+	    if(!Element->ScrollBar.ListBox)
+	    {
+		for(int i=0;i<Container->Container.NumberOfElements;i++)
+		{
+		    if(Container->Container.Elements[i].Association == Element->Association && Container->Container.Elements[i].ElementType == TAG_LISTBOX )
+		    {
+			Element->ScrollBar.ListBox = &Container->Container.Elements[i].ListBox;
+			break;
+		    }
+		}
+	    }
+
+	     s32 NumberOfDisplayableItems = Element->ScrollBar.ListBox->NumberOfDisplayableItems;
+	    s32 NumberOfItems = Element->ScrollBar.ListBox->NumberOfItems;
+	    s32 DisplayIndex = Element->ScrollBar.ListBox->DisplayItemIndex;
+
+
+	    if(NumberOfItems > NumberOfDisplayableItems)
+	    {
+	    s32 OY=Y;
+	    //TODO(Christof): Check for and render horizontal sliders (only ones we care about at the moment and vertical)
+	    Texture * Slider = GetTexture("SLIDERS", CommonUIElements);
+	    //Draw (unpressed for now) arrow
+	    Slider = GetTexture(Slider, 6);
+	    s32 TotalHeight =0;
+	    s32 SliderHeight = (s32)(Slider->Height * CommonUIElements->TextureHeight);
+	    DrawTexture2D(CommonUIElements->Texture, float(X), float(Y), Width, (r32)SliderHeight, {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+	    Y += SliderHeight;
+	    TotalHeight += SliderHeight;
+	    s32 TopY = Y;
+
+	    //Draw top
+	    Slider = GetTexture(Slider, 0);
+	    SliderHeight = (s32)(Slider->Height * CommonUIElements->TextureHeight);
+	    DrawTexture2D(CommonUIElements->Texture, float(X), float(Y), Width, (r32)SliderHeight, {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+	    Y += SliderHeight;
+	    TotalHeight += SliderHeight;
+	    s32 MiddleY = Y;
+
+	    //Draw Bottom arrow
+	    Slider = GetTexture(Slider, 8);
+	    SliderHeight = (s32)(Slider->Height * CommonUIElements->TextureHeight);
+	    Y = OY + Element->Height - SliderHeight;
+	    DrawTexture2D(CommonUIElements->Texture, float(X), float(Y), Width, (r32)SliderHeight, {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+	    TotalHeight += SliderHeight;
+	    s32 BottomY = Y;
+
+	    //Draw Bottom
+	    Slider = GetTexture(Slider, 2);
+	    SliderHeight = (s32)(Slider->Height * CommonUIElements->TextureHeight);
+	    Y -= SliderHeight;
+
+
+	    DrawTexture2D(CommonUIElements->Texture, float(X), float(Y), Width, (r32)SliderHeight, {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+	    TotalHeight += SliderHeight;
+
+	    s32 MiddleHeight = Element->Height - TotalHeight;
+	    if(MiddleHeight > 0)
+	    {
+		Slider = GetTexture(Slider, 1);
+		DrawTexture2D(CommonUIElements->Texture, float(X), float(MiddleY), Width, (r32)MiddleHeight, {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+	    }
+
+
+
+		 TopY+=4;
+	    BottomY-=4;
+		if(DisplayIndex > NumberOfItems - NumberOfDisplayableItems)
+		    DisplayIndex = NumberOfItems - NumberOfDisplayableItems;
+		s32 InnerSize = BottomY - TopY;
+		r32 KnobProportion = (r32) NumberOfDisplayableItems / NumberOfItems ;
+		Element->ScrollBar.KnobSize = InnerSize * KnobProportion;
+		if(Element->ScrollBar.KnobSize < 10)
+		    Element->ScrollBar.KnobSize = 10;
+		Element->ScrollBar.KnobPosition = ((r32) DisplayIndex / (NumberOfItems - NumberOfDisplayableItems)) * (InnerSize - Element->ScrollBar.KnobSize);
+
+		//Draw Top of knob
+		Slider = GetTexture(Slider, 3);
+		DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition), Width, 1 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+
+		//Draw Top of knob
+		Slider = GetTexture(Slider, 4);
+		DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition+1), Width, Element->ScrollBar.KnobSize-2 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+
+		//Draw Top of knob
+		Slider = GetTexture(Slider, 5);
+		DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition+Element->ScrollBar.KnobSize-1), Width, 1 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+	    }
+	}
+
 	break;
     }
 }
 
-internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, b32 Down, b32 Clicked, s32 XOffset, s32 YOffset)
+internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, b32 Down, b32 WasDown, s32 XOffset, s32 YOffset)
 {
     Assert(Root->ElementType == TAG_UI_CONTAINER);
     TAUIElement * Result = 0;
-
+    b32 Clicked = !Down && WasDown;
     XOffset += Root->X;
     YOffset += Root->Y;
 
@@ -818,16 +939,50 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 	    switch(Element->ElementType)
 	    {
 	    case TAG_BUTTON:
-		if(Element->Button.Stages > 0 && Clicked)
+		if(Element->ElementName == ELEMENT_NAME_SIDE_0||
+		   Element->ElementName == ELEMENT_NAME_SIDE_1||
+		   Element->ElementName == ELEMENT_NAME_ARM ||
+		   Element->ElementName == ELEMENT_NAME_CORE)
 		{
-		    Element->Button.CurrentStage++;
-		    if(Element->Button.CurrentStage >= Element->Button.Stages)
-			Element->Button.CurrentStage = 0;
 		}
-		Element->Button.Pressed = Down;
+		else
+		{
+		    if(Element->Button.Stages > 0 && Clicked)
+		    {
+			Element->Button.CurrentStage++;
+			if(Element->Button.CurrentStage >= Element->Button.Stages)
+			    Element->Button.CurrentStage = 0;
+		    }
+		    Element->Button.Pressed = Down &&(!WasDown || Element->Button.Pressed);
+		}
+		break;
+	    case TAG_SCROLLBAR:
+		if(Clicked)
+		{
+		    if(MouseY < Y+10)
+		    {
+			if(Element->ScrollBar.ListBox->DisplayItemIndex >0)
+			{
+			    Element->ScrollBar.ListBox->DisplayItemIndex--;
+			}
+		    }
+		    else if(MouseY > Y + Element->Height -10)
+		    {
+			if(Element->ScrollBar.ListBox->DisplayItemIndex < Element->ScrollBar.ListBox->NumberOfItems - Element->ScrollBar.ListBox->NumberOfDisplayableItems)
+			{
+			    Element->ScrollBar.ListBox->DisplayItemIndex++;
+			}
+		    }
+		}
+		break;
+	    case TAG_LISTBOX:
+		if(Clicked)
+		{
+		    Element->ListBox.SelectedIndex = (MouseY - Y)/LIST_ITEM_HEIGHT + Element->ListBox.DisplayItemIndex;
+		}
 		break;
 	    }
-	    if(Element->ElementType != TAG_BUTTON || !Element->Button.Disabled)
+	    if(Clicked && ( Element->ElementType != TAG_BUTTON || (!Element->Button.Disabled && Element->Button.Pressed)))
 	    {
 		Result = Element;
 	    }
@@ -837,10 +992,32 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 	    switch(Element->ElementType)
 	    {
 	    case TAG_BUTTON:
-		Element->Button.Pressed = 0;
+		if(Element->ElementName == ELEMENT_NAME_SIDE_0||
+		   Element->ElementName == ELEMENT_NAME_SIDE_1||
+		   Element->ElementName == ELEMENT_NAME_ARM ||
+		   Element->ElementName == ELEMENT_NAME_CORE)
+		{
+		}
+		else
+		{
+		    Element->Button.Pressed = 0;
+		}
 		break;
 	    }
 	}
     }
     return Result;
+}
+
+internal TAUIElement * GetElementByName(TAUIElementName Name, TAUIElement * Root)
+{
+    Assert(Root->ElementType == TAG_UI_CONTAINER);
+    for(int i=0;i<Root->Container.NumberOfElements;i++)
+    {
+	if(Root->Container.Elements[i].ElementName == Name)
+	{
+	    return &Root->Container.Elements[i];
+	}
+    }
+    return 0;
 }

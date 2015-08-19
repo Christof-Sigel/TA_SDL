@@ -25,12 +25,98 @@
 #include "ta_sdl_game_load.cpp"
 
 
+internal void LoadMissions(TAUIElement * Root, MemoryArena * TempArena)
+{
+    Assert(Root->ElementType == TAG_UI_CONTAINER);
+    TAUIElement * ArmButton = GetElementByName(ELEMENT_NAME_ARM,Root);
+
+    TAUIElement * MissionElement = GetElementByName(ELEMENT_NAME_MISSIONS, Root);
+    TAUIListBox * MissionListBox = &MissionElement->ListBox;
+
+    MissionListBox->NumberOfDisplayableItems = 4;
+
+    if(ArmButton->Button.Pressed)
+    {
+	MissionListBox->DisplayItemIndex = 0;
+	MissionListBox->NumberOfItems = 5;
+	MissionListBox->ItemStrings = PushArray(TempArena, MissionListBox->NumberOfItems, char*);
+	for(int s=0;s<MissionListBox->NumberOfItems;s++)
+	{
+	    MissionListBox->ItemStrings[s] = PushArray(TempArena, 5, char);
+	    MissionListBox->ItemStrings[s][0] = 'A';
+	    MissionListBox->ItemStrings[s][1] = 'R';
+	    MissionListBox->ItemStrings[s][2] = 'M';
+	    MissionListBox->ItemStrings[s][3] = '0'+s;
+	    MissionListBox->ItemStrings[s][4] = 0;
+	}
+    }
+    else
+    {
+	MissionListBox->DisplayItemIndex = 0;
+	MissionListBox->NumberOfItems = 10;
+	MissionListBox->ItemStrings = PushArray(TempArena, MissionListBox->NumberOfItems, char*);
+	for(int s=0;s<MissionListBox->NumberOfItems;s++)
+	{
+	    MissionListBox->ItemStrings[s] = PushArray(TempArena, 5, char);
+	    MissionListBox->ItemStrings[s][0] = 'C';
+	    MissionListBox->ItemStrings[s][1] = 'O';
+	    MissionListBox->ItemStrings[s][2] = 'R';
+	    MissionListBox->ItemStrings[s][3] = '0'+s;
+	    MissionListBox->ItemStrings[s][4] = 0;
+	}
+    }
+}
+
+internal void LoadCampaigns(TAUIElement * Root, MemoryArena * TempArena)
+{
+    Assert(Root->ElementType == TAG_UI_CONTAINER);
+    TAUIElement * ArmButton = GetElementByName(ELEMENT_NAME_ARM,Root);
+
+    TAUIElement * CampaignElement = GetElementByName(ELEMENT_NAME_CAMPAIGN, Root);
+    TAUIListBox * CampaignListBox = &CampaignElement->ListBox;
+
+    CampaignListBox->NumberOfDisplayableItems = 3;
+
+    if(ArmButton->Button.Pressed)
+    {
+	CampaignListBox->DisplayItemIndex = 0;
+	CampaignListBox->NumberOfItems = 5;
+	CampaignListBox->ItemStrings = PushArray(TempArena, CampaignListBox->NumberOfItems, char*);
+	for(int s=0;s<CampaignListBox->NumberOfItems;s++)
+	{
+	    CampaignListBox->ItemStrings[s] = PushArray(TempArena, 5, char);
+	    CampaignListBox->ItemStrings[s][0] = 'A';
+	    CampaignListBox->ItemStrings[s][1] = 'R';
+	    CampaignListBox->ItemStrings[s][2] = 'M';
+	    CampaignListBox->ItemStrings[s][3] = 'g';
+	    CampaignListBox->ItemStrings[s][4] = 0;
+	}
+    }
+    else
+    {
+	CampaignListBox->DisplayItemIndex = 0;
+	CampaignListBox->NumberOfItems = 10;
+	CampaignListBox->ItemStrings = PushArray(TempArena, CampaignListBox->NumberOfItems, char*);
+	for(int s=0;s<CampaignListBox->NumberOfItems;s++)
+	{
+	    CampaignListBox->ItemStrings[s] = PushArray(TempArena, 5, char);
+	    CampaignListBox->ItemStrings[s][0] = 'C';
+	    CampaignListBox->ItemStrings[s][1] = 'O';
+	    CampaignListBox->ItemStrings[s][2] = 'R';
+	    CampaignListBox->ItemStrings[s][3] = 'E';
+	    CampaignListBox->ItemStrings[s][4] = 0;
+	}
+    }
+    LoadMissions(Root, TempArena);
+
+}
+
 
 internal Matrix FPSViewMatrix(float * eye, float pitch, float yaw);
 internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 {
-    b32 MouseButtonDown = Input->MouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT);
-    b32 MouseButtonClicked = Input->LastMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT) && !(Input->MouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT));
+    b32 MouseButtonDown = !!Input->MouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT);
+    b32 MouseButtonWasDown = !!Input->LastMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT);
     switch(CurrentGameState->State)
     {
     case STATE_RUNNING:
@@ -126,8 +212,8 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 
     case STATE_MAIN_MENU:
     {
-	TAUIElement * Element = ProcessMouse(&CurrentGameState->MainMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
-	if(MouseButtonClicked && Element)
+	TAUIElement * Element = ProcessMouse(&CurrentGameState->MainMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonWasDown, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if( Element)
 	{
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wswitch"
@@ -152,8 +238,8 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
     break;
     case STATE_SINGLEPLAYER_MENU:
     {
-	TAUIElement * Element = ProcessMouse(&CurrentGameState->SinglePlayerMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
-	if(MouseButtonClicked && Element)
+	TAUIElement * Element = ProcessMouse(&CurrentGameState->SinglePlayerMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonWasDown, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if( Element)
 	{
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wswitch"
@@ -167,6 +253,7 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		break;
 	    case ELEMENT_NAME_NEW_CAMPAIGN:
 		CurrentGameState->State = STATE_CAMPAIGN_MENU;
+		LoadCampaigns(&CurrentGameState->CampaignMenu, & CurrentGameState->TempArena);
 		break;
 	    case ELEMENT_NAME_SKIRMISH:
 		CurrentGameState->State = STATE_SKIRMISH_MENU;
@@ -181,8 +268,8 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
     break;
     case STATE_OPTIONS_MENU:
     {
-	TAUIElement * Element = ProcessMouse(&CurrentGameState->OptionsMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
-	if(MouseButtonClicked && Element)
+	TAUIElement * Element = ProcessMouse(&CurrentGameState->OptionsMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonWasDown, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if( Element)
 	{
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wswitch"
@@ -202,8 +289,8 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 
     case STATE_CAMPAIGN_MENU:
     {
-	TAUIElement * Element = ProcessMouse(&CurrentGameState->CampaignMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
-	if(MouseButtonClicked && Element)
+	TAUIElement * Element = ProcessMouse(&CurrentGameState->CampaignMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonWasDown, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if(Element)
 	{
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wswitch"
@@ -215,6 +302,40 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 	    case ELEMENT_NAME_START:
 		CurrentGameState->State = STATE_RUNNING;
 		break;
+	    case ELEMENT_NAME_SIDE_0:
+	    case ELEMENT_NAME_ARM:
+	    {
+		TAUIElement * E = GetElementByName(ELEMENT_NAME_SIDE_0,&CurrentGameState->CampaignMenu);
+		E->Button.Pressed = 1;
+		E = GetElementByName(ELEMENT_NAME_ARM,&CurrentGameState->CampaignMenu);
+		E->Button.Pressed = 1;
+
+		E = GetElementByName(ELEMENT_NAME_SIDE_1,&CurrentGameState->CampaignMenu);
+		E->Button.Pressed = 0;
+		E = GetElementByName(ELEMENT_NAME_CORE,&CurrentGameState->CampaignMenu);
+		E->Button.Pressed = 0;
+		LoadCampaigns(&CurrentGameState->CampaignMenu, & CurrentGameState->TempArena);
+	    }
+	    break;
+
+	    case ELEMENT_NAME_SIDE_1:
+	    case ELEMENT_NAME_CORE:
+	    {
+		TAUIElement * E = GetElementByName(ELEMENT_NAME_SIDE_1,&CurrentGameState->CampaignMenu);
+		E->Button.Pressed = 1;
+		E = GetElementByName(ELEMENT_NAME_CORE,&CurrentGameState->CampaignMenu);
+		E->Button.Pressed = 1;
+
+		E = GetElementByName(ELEMENT_NAME_SIDE_0,&CurrentGameState->CampaignMenu);
+		E->Button.Pressed = 0;
+		E = GetElementByName(ELEMENT_NAME_ARM,&CurrentGameState->CampaignMenu);
+		E->Button.Pressed = 0;
+		LoadCampaigns(&CurrentGameState->CampaignMenu, & CurrentGameState->TempArena);
+	    }
+	    break;
+	    case ELEMENT_NAME_CAMPAIGN:
+		LoadMissions(&CurrentGameState->CampaignMenu, & CurrentGameState->TempArena);
+	    break;
 	    }
 #pragma clang diagnostic pop
 	}
@@ -223,8 +344,8 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 
     case STATE_SKIRMISH_MENU:
     {
-	TAUIElement * Element = ProcessMouse(&CurrentGameState->SkirmishMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
-	if(MouseButtonClicked  && Element)
+	TAUIElement * Element = ProcessMouse(&CurrentGameState->SkirmishMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonWasDown, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if(Element)
 	{
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wswitch"
@@ -240,8 +361,8 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
     break;
     case STATE_LOAD_GAME_MENU:
     {
-	TAUIElement * Element = ProcessMouse(&CurrentGameState->LoadGameMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonClicked, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
-	if(MouseButtonClicked  && Element)
+	TAUIElement * Element = ProcessMouse(&CurrentGameState->LoadGameMenu, Input->MouseX, Input->MouseY, MouseButtonDown,MouseButtonWasDown, (CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2);
+	if(Element)
 	{
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wswitch"
@@ -587,7 +708,7 @@ extern "C"
 	char FPS[32];
 	const float FramesToCount = 30.0f;
 	CurrentFPS = (CurrentFPS*(FramesToCount-1) + 1.0f/((CurrentFrameTime - LastFrameTime)/1000.0f))/FramesToCount;
-	snprintf(FPS, 32, "%0.2f, %lu", CurrentFPS, CurrentFrameTime - LastFrameTime);
+	snprintf(FPS, 32, "%0.2f, %I64u", CurrentFPS, CurrentFrameTime - LastFrameTime);
 	DrawTextureFontText(FPS, 0,0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
 	LastFrameTime = CurrentFrameTime;
 
@@ -603,6 +724,4 @@ extern "C"
 
 	CurrentGameState->NumberOfFrames++;
     }
-
-
 }

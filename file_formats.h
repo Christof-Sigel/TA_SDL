@@ -118,6 +118,7 @@ enum TagType
 const int TAUI_ATTRIBUTE_SCROLLBAR_HORIZONTAL = 1;
 const int TAUI_ATTRIBUTE_SCROLLBAR_VERTICAL = 2;
 const int FILE_UI_MAX_STRING_LENGTH  = 32;
+const int LIST_ITEM_HEIGHT = 16;
 
 //UnitScripts
 enum Block
@@ -427,11 +428,18 @@ struct TAUITextBox
     int MaximumCharacters;
 };
 
+struct TAUIListBox
+{
+    char ** ItemStrings;
+    s32 NumberOfDisplayableItems, NumberOfItems, DisplayItemIndex;
+    s32 SelectedIndex;
+};
+
 struct TAUIScrollbar
 {
-    int Maximum;
-    int Position;
-    int KnobSize;
+    r32 KnobPosition;
+    r32 KnobSize;
+    TAUIListBox * ListBox;
 };
 
 struct TAUILabel
@@ -527,6 +535,7 @@ struct TAUIElement
 	TAUIButton Button;
 	TAUIContainer Container;
 	TAUITextBox TextBox;
+	TAUIListBox ListBox;
 	TAUIScrollbar ScrollBar;
 	TAUILabel Label;
 	TAUIDynamicImage DynamicImage;
