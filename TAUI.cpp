@@ -817,11 +817,13 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 	for(s32 i=0 ; i<Element->ListBox.NumberOfDisplayableItems ; i++)
 	{
 	    s32 index = Element->ListBox.DisplayItemIndex + i;
+	    Color TextColor = {{1.0,1.0,1.0}};
 	    if(index == Element->ListBox.SelectedIndex)
 	    {
-		DrawDebugRect(DebugRectDetails, (r32)X , (r32)(Y + i * LIST_ITEM_HEIGHT), Width, LIST_ITEM_HEIGHT, {1,1,1} , 0.0f , 1.0f, {0,0.25,0}, 0.5f);
+		DrawDebugRect(DebugRectDetails, (r32)X , (r32)(Y + i * LIST_ITEM_HEIGHT), Width, LIST_ITEM_HEIGHT, {{1,1,1}} , 0.0f , 1.0f, {{0,0.25,0}}, 0.5f);
+		TextColor = {{1.75,1.75,1.75}};
 	    }
-	    DrawTextureFontText(Element->ListBox.ItemStrings[index], X+2, Y + (i*LIST_ITEM_HEIGHT), Font12, ShaderDetails, 1.0,{2.0,2.0,2.0});
+	    DrawTextureFontText(Element->ListBox.ItemStrings[index], X+2, Y + (i*LIST_ITEM_HEIGHT), Font12, ShaderDetails, 1.0, TextColor);
 	}
 	break;
 
