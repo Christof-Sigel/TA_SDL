@@ -945,27 +945,18 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 	    switch(Element->ElementType)
 	    {
 	    case TAG_BUTTON:
-		if(Element->ElementName == ELEMENT_NAME_SIDE_0||
-		   Element->ElementName == ELEMENT_NAME_SIDE_1||
-		   Element->ElementName == ELEMENT_NAME_ARM ||
-		   Element->ElementName == ELEMENT_NAME_CORE)
+
+		if(Element->Button.Stages > 0 && Clicked)
 		{
+		    Element->Button.CurrentStage++;
+		    if(Element->Button.CurrentStage >= Element->Button.Stages)
+			Element->Button.CurrentStage = 0;
 		}
-		else
-		{
-		    if(Element->Button.Stages > 0 && Clicked)
-		    {
-			Element->Button.CurrentStage++;
-			if(Element->Button.CurrentStage >= Element->Button.Stages)
-			    Element->Button.CurrentStage = 0;
-		    }
-		    Element->Button.Pressed = Down &&(!WasDown || Element->Button.Pressed);
-		}
+		Element->Button.Pressed = Down &&(!WasDown || Element->Button.Pressed);
 		break;
 	    case TAG_SCROLLBAR:
 		if(MouseY < Y+10)
 		{
-
 		    if(Down && !WasDown)
 			Element->ScrollBar.Pressed = 1;
 		    if(Clicked && Element->ScrollBar.Pressed == 1)
