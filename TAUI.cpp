@@ -264,8 +264,8 @@ internal void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, 
     case TAG_SCROLLBAR:
     {
 	/*Element->ScrollBar.Maximum = GetIntValue(Tree, "range");
-	Element->ScrollBar.Position = GetIntValue(Tree, "knobpos");
-	Element->ScrollBar.KnobSize = GetIntValue(Tree, "knobsize");*/
+	  Element->ScrollBar.Position = GetIntValue(Tree, "knobpos");
+	  Element->ScrollBar.KnobSize = GetIntValue(Tree, "knobsize");*/
 	//NOTE(Christof): Any slider we care about hase these values set from stuff its connected to anyway
     }
     break;
@@ -828,26 +828,26 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 	break;
 
     case TAG_SCROLLBAR:
+    {
+	if(!Element->ScrollBar.ListBox)
 	{
-	    if(!Element->ScrollBar.ListBox)
+	    for(int i=0;i<Container->Container.NumberOfElements;i++)
 	    {
-		for(int i=0;i<Container->Container.NumberOfElements;i++)
+		if(Container->Container.Elements[i].Association == Element->Association && Container->Container.Elements[i].ElementType == TAG_LISTBOX )
 		{
-		    if(Container->Container.Elements[i].Association == Element->Association && Container->Container.Elements[i].ElementType == TAG_LISTBOX )
-		    {
-			Element->ScrollBar.ListBox = &Container->Container.Elements[i].ListBox;
-			break;
-		    }
+		    Element->ScrollBar.ListBox = &Container->Container.Elements[i].ListBox;
+		    break;
 		}
 	    }
+	}
 
-	     s32 NumberOfDisplayableItems = Element->ScrollBar.ListBox->NumberOfDisplayableItems;
-	    s32 NumberOfItems = Element->ScrollBar.ListBox->NumberOfItems;
-	    s32 DisplayIndex = Element->ScrollBar.ListBox->DisplayItemIndex;
+	s32 NumberOfDisplayableItems = Element->ScrollBar.ListBox->NumberOfDisplayableItems;
+	s32 NumberOfItems = Element->ScrollBar.ListBox->NumberOfItems;
+	s32 DisplayIndex = Element->ScrollBar.ListBox->DisplayItemIndex;
 
 
-	    if(NumberOfItems > NumberOfDisplayableItems)
-	    {
+	if(NumberOfItems > NumberOfDisplayableItems)
+	{
 	    s32 OY=Y;
 	    //TODO(Christof): Check for and render horizontal sliders (only ones we care about at the moment and vertical)
 	    Texture * Slider = GetTexture("SLIDERS", CommonUIElements);
@@ -896,30 +896,30 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 
 	    TopY+=4;
 	    BottomY-=4;
-		if(DisplayIndex > NumberOfItems - NumberOfDisplayableItems)
-		    DisplayIndex = NumberOfItems - NumberOfDisplayableItems;
-		s32 InnerSize = BottomY - TopY;
-		r32 KnobProportion = (r32) NumberOfDisplayableItems / NumberOfItems ;
-		Element->ScrollBar.KnobSize = InnerSize * KnobProportion;
-		if(Element->ScrollBar.KnobSize < 10)
-		    Element->ScrollBar.KnobSize = 10;
-		Element->ScrollBar.KnobPosition = ((r32) DisplayIndex / (NumberOfItems - NumberOfDisplayableItems)) * (InnerSize - Element->ScrollBar.KnobSize);
+	    if(DisplayIndex > NumberOfItems - NumberOfDisplayableItems)
+		DisplayIndex = NumberOfItems - NumberOfDisplayableItems;
+	    s32 InnerSize = BottomY - TopY;
+	    r32 KnobProportion = (r32) NumberOfDisplayableItems / NumberOfItems ;
+	    Element->ScrollBar.KnobSize = InnerSize * KnobProportion;
+	    if(Element->ScrollBar.KnobSize < 10)
+		Element->ScrollBar.KnobSize = 10;
+	    Element->ScrollBar.KnobPosition = ((r32) DisplayIndex / (NumberOfItems - NumberOfDisplayableItems)) * (InnerSize - Element->ScrollBar.KnobSize);
 
-		//Draw Top of knob
-		Slider = GetTexture(Slider, 3);
-		DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition), Width, 1 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+	    //Draw Top of knob
+	    Slider = GetTexture(Slider, 3);
+	    DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition), Width, 1 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
 
-		//Draw Middle of knob
-		Slider = GetTexture(Slider, 4);
-		DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition+1), Width, Element->ScrollBar.KnobSize-2 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
+	    //Draw Middle of knob
+	    Slider = GetTexture(Slider, 4);
+	    DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition+1), Width, Element->ScrollBar.KnobSize-2 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
 
-		//Draw bottom of knob
-		Slider = GetTexture(Slider, 5);
-		DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition+Element->ScrollBar.KnobSize-1), Width, 1 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
-	    }
+	    //Draw bottom of knob
+	    Slider = GetTexture(Slider, 5);
+	    DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition+Element->ScrollBar.KnobSize-1), Width, 1 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
 	}
+    }
 
-	break;
+    break;
     }
 }
 
