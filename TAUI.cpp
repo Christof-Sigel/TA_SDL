@@ -849,8 +849,8 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 	    s32 OY=Y;
 	    //TODO(Christof): Check for and render horizontal sliders (only ones we care about at the moment and vertical)
 	    Texture * Slider = GetTexture("SLIDERS", CommonUIElements);
-	    //Draw (unpressed for now) arrow
-	    Slider = GetTexture(Slider, 6);
+	    //Draw  arrow
+	    Slider = GetTexture(Slider, 6 + (Element->ScrollBar.Pressed ==1));
 	    s32 TotalHeight =0;
 	    s32 SliderHeight = (s32)(Slider->Height * CommonUIElements->TextureHeight);
 	    DrawTexture2D(CommonUIElements->Texture, float(X), float(Y), Width, (r32)SliderHeight, {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
@@ -867,7 +867,7 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 	    s32 MiddleY = Y;
 
 	    //Draw Bottom arrow
-	    Slider = GetTexture(Slider, 8);
+	    Slider = GetTexture(Slider, 8 + (Element->ScrollBar.Pressed ==2));
 	    SliderHeight = (s32)(Slider->Height * CommonUIElements->TextureHeight);
 	    Y = OY + Element->Height - SliderHeight;
 	    DrawTexture2D(CommonUIElements->Texture, float(X), float(Y), Width, (r32)SliderHeight, {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
@@ -892,7 +892,7 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 
 
 
-		 TopY+=4;
+	    TopY+=4;
 	    BottomY-=4;
 		if(DisplayIndex > NumberOfItems - NumberOfDisplayableItems)
 		    DisplayIndex = NumberOfItems - NumberOfDisplayableItems;
@@ -907,11 +907,11 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 		Slider = GetTexture(Slider, 3);
 		DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition), Width, 1 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
 
-		//Draw Top of knob
+		//Draw Middle of knob
 		Slider = GetTexture(Slider, 4);
 		DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition+1), Width, Element->ScrollBar.KnobSize-2 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
 
-		//Draw Top of knob
+		//Draw bottom of knob
 		Slider = GetTexture(Slider, 5);
 		DrawTexture2D(CommonUIElements->Texture, float(X), float(TopY+Element->ScrollBar.KnobPosition+Element->ScrollBar.KnobSize-1), Width, 1 , {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
 	    }
@@ -936,6 +936,10 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 	if(Element->Visible && MouseX < X + Element->Width && MouseX > X
 	   && MouseY < Y + Element->Height && MouseY > Y)
 	{
+	    if(Clicked && ( (Element->ElementType != TAG_BUTTON && Element->ElementType != TAG_SCROLLBAR) || (!Element->Button.Disabled && Element->Button.Pressed)))
+	    {
+		Result = Element;
+	    }
 	    switch(Element->ElementType)
 	    {
 	    case TAG_BUTTON:
@@ -957,20 +961,30 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 		}
 		break;
 	    case TAG_SCROLLBAR:
-		if(Clicked)
+		if(Down)
 		{
 		    if(MouseY < Y+10)
 		    {
-			if(Element->ScrollBar.ListBox->DisplayItemIndex >0)
+			if(!WasDown)
+			    Element->ScrollBar.Pressed = 1;
+			if(Clicked && Element->ScrollBar.Pressed == 1)
 			{
-			    Element->ScrollBar.ListBox->DisplayItemIndex--;
+			    if(Element->ScrollBar.ListBox->DisplayItemIndex >0)
+			    {
+				Element->ScrollBar.ListBox->DisplayItemIndex--;
+			    }
 			}
 		    }
 		    else if(MouseY > Y + Element->Height -10)
 		    {
-			if(Element->ScrollBar.ListBox->DisplayItemIndex < Element->ScrollBar.ListBox->NumberOfItems - Element->ScrollBar.ListBox->NumberOfDisplayableItems)
+			if(!WasDown)
+			    Element->ScrollBar.Pressed = 2;
+			if(Clicked && Element->ScrollBar.Pressed==2)
 			{
-			    Element->ScrollBar.ListBox->DisplayItemIndex++;
+			    if(Element->ScrollBar.ListBox->DisplayItemIndex < Element->ScrollBar.ListBox->NumberOfItems - Element->ScrollBar.ListBox->NumberOfDisplayableItems)
+			    {
+				Element->ScrollBar.ListBox->DisplayItemIndex++;
+			    }
 			}
 		    }
 		}
@@ -982,10 +996,7 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 		}
 		break;
 	    }
-	    if(Clicked && ( Element->ElementType != TAG_BUTTON || (!Element->Button.Disabled && Element->Button.Pressed)))
-	    {
-		Result = Element;
-	    }
+
 	}
 	else
 	{
@@ -1000,8 +1011,18 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 		}
 		else
 		{
-		    Element->Button.Pressed = 0;
+		    if(Element->Button.Pressed)
+		    {
+			Element->Button.Pressed = Down;
+		    }
 		}
+		break;
+	    case TAG_SCROLLBAR:
+		if(Element->ScrollBar.Pressed && !Down)
+		{
+		    Element->ScrollBar.Pressed = 0;
+		}
+
 		break;
 	    }
 	}

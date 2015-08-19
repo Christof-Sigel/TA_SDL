@@ -440,6 +440,7 @@ struct TAUIScrollbar
     r32 KnobPosition;
     r32 KnobSize;
     TAUIListBox * ListBox;
+    b32 Pressed;
 };
 
 struct TAUILabel
