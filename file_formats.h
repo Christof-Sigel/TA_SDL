@@ -117,8 +117,10 @@ enum TagType
 
 const int TAUI_ATTRIBUTE_SCROLLBAR_HORIZONTAL = 1;
 const int TAUI_ATTRIBUTE_SCROLLBAR_VERTICAL = 2;
-const int FILE_UI_MAX_STRING_LENGTH  = 32;
 const int LIST_ITEM_HEIGHT = 16;
+
+//TDF
+const int TDF_MAX_STRING_LENGTH  = 64;
 
 //UnitScripts
 enum Block
@@ -545,20 +547,21 @@ struct TAUIElement
     } ;
 };
 
+//TDF
 
-struct FILE_UINameValue
+struct TDFNameValue
 {
-    char Name[FILE_UI_MAX_STRING_LENGTH];
-    char Value[FILE_UI_MAX_STRING_LENGTH];
-    FILE_UINameValue * Next;
+    char Name[TDF_MAX_STRING_LENGTH];
+    char Value[TDF_MAX_STRING_LENGTH];
+    TDFNameValue * Next;
 };
 
-struct FILE_UIElement
+struct TDFElement
 {
-    FILE_UIElement * Next;
-    FILE_UIElement * Child;
-    FILE_UINameValue * Value;
-    char Name[FILE_UI_MAX_STRING_LENGTH];
+    TDFElement * Next;
+    TDFElement * Child;
+    TDFNameValue * Value;
+    char Name[TDF_MAX_STRING_LENGTH];
 };
 
 //UnitScripts
@@ -610,7 +613,7 @@ struct ScriptStatePool
 //TNT
 struct TAMap
 {
-    GLuint MapVertexBuffer, MapTexture, MinimapTexture;
+    GLuint MapVertexBuffer, MapTexture, MinimapTexture,VertexBuffer;
     int NumTriangles;
     void Render(ShaderProgram * MapShader)
     {
@@ -618,11 +621,37 @@ struct TAMap
 	glBindTexture(GL_TEXTURE_2D,MapTexture);
 	glBindVertexArray(MapVertexBuffer);
 	glDrawArrays(GL_TRIANGLES, 0, NumTriangles*3);
-
     }
 
     void RenderMiniMap()
     {
 	//TODO(Christof): Render into TAUI elements
     }
+};
+
+
+//Campaigns
+
+struct Mission
+{
+    char * MissionFile;
+    char * MissionName;
+};
+
+struct Campaign
+{
+    char * CampaignName;
+    Mission * Missions;
+    s32 NumberOfMissions;
+    s32 PAD;
+};
+
+const s32 MAX_CAMPAIGNS = 16;
+
+struct CampaignList
+{
+    s32 NumberOfARMCampaigns;
+    s32 NumberOfCORECampaigns;
+    Campaign ARMCampaigns[MAX_CAMPAIGNS];
+    Campaign CORECampaigns[MAX_CAMPAIGNS];
 };

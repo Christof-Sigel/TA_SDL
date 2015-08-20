@@ -1,4 +1,5 @@
 #include "FILE_structs.h"
+#include "TDF.cpp"
 #include "HPIFile.cpp"
 #include "Textures.cpp"
 #include "3do.cpp"
@@ -7,4 +8,3 @@
 #include "Font.cpp"
 #include "TAUI.cpp"
 #include "UnitScripts.cpp"
-

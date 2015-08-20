@@ -25,90 +25,71 @@
 #include "ta_sdl_game_load.cpp"
 
 
-internal void LoadMissions(TAUIElement * Root, MemoryArena * TempArena)
+
+internal void DisplayMissions(TAUIElement * Root, CampaignList * Campaigns, MemoryArena * TempArena)
 {
     Assert(Root->ElementType == TAG_UI_CONTAINER);
-    TAUIElement * ArmButton = GetElementByName(ELEMENT_NAME_ARM,Root);
+    TAUIElement * CoreButton = GetElementByName(ELEMENT_NAME_CORE, Root);
+
+    TAUIElement * CampaignElement = GetElementByName(ELEMENT_NAME_CAMPAIGN, Root);
+    TAUIListBox * CampaignListBox = &CampaignElement->ListBox;
 
     TAUIElement * MissionElement = GetElementByName(ELEMENT_NAME_MISSIONS, Root);
     TAUIListBox * MissionListBox = &MissionElement->ListBox;
 
     MissionListBox->NumberOfDisplayableItems = 4;
 
-    if(ArmButton->Button.Pressed)
+    Campaign * Campaign;
+    s32 CampaignIndex = CampaignListBox->SelectedIndex;
+    if(CoreButton->Button.Pressed)
     {
-	MissionListBox->DisplayItemIndex = 0;
-	MissionListBox->NumberOfItems = 5;
-	MissionListBox->ItemStrings = PushArray(TempArena, MissionListBox->NumberOfItems, char*);
-	for(int s=0;s<MissionListBox->NumberOfItems;s++)
-	{
-	    MissionListBox->ItemStrings[s] = PushArray(TempArena, 5, char);
-	    MissionListBox->ItemStrings[s][0] = 'A';
-	    MissionListBox->ItemStrings[s][1] = 'R';
-	    MissionListBox->ItemStrings[s][2] = 'M';
-	    MissionListBox->ItemStrings[s][3] = '0'+s;
-	    MissionListBox->ItemStrings[s][4] = 0;
-	}
+	Campaign = &Campaigns->CORECampaigns[CampaignIndex];
     }
     else
     {
-	MissionListBox->DisplayItemIndex = 0;
-	MissionListBox->NumberOfItems = 10;
-	MissionListBox->ItemStrings = PushArray(TempArena, MissionListBox->NumberOfItems, char*);
-	for(int s=0;s<MissionListBox->NumberOfItems;s++)
-	{
-	    MissionListBox->ItemStrings[s] = PushArray(TempArena, 5, char);
-	    MissionListBox->ItemStrings[s][0] = 'C';
-	    MissionListBox->ItemStrings[s][1] = 'O';
-	    MissionListBox->ItemStrings[s][2] = 'R';
-	    MissionListBox->ItemStrings[s][3] = '0'+s;
-	    MissionListBox->ItemStrings[s][4] = 0;
-	}
+	Campaign = &Campaigns->ARMCampaigns[CampaignIndex];
     }
+
+    MissionListBox->NumberOfItems = Campaign->NumberOfMissions;
+    MissionListBox->ItemStrings = PushArray(TempArena, MissionListBox->NumberOfItems, char*);
+    for(s32 i=0;i<MissionListBox->NumberOfItems;i++)
+    {
+	MissionListBox->ItemStrings[i] = Campaign->Missions[i].MissionName;
+    }
+
 }
 
-internal void LoadCampaigns(TAUIElement * Root, MemoryArena * TempArena)
+internal void DisplayCampaigns(TAUIElement * Root, CampaignList * Campaigns, MemoryArena * TempArena)
 {
     Assert(Root->ElementType == TAG_UI_CONTAINER);
     TAUIElement * ArmButton = GetElementByName(ELEMENT_NAME_ARM,Root);
+    TAUIElement * CoreButton = GetElementByName(ELEMENT_NAME_CORE, Root);
 
     TAUIElement * CampaignElement = GetElementByName(ELEMENT_NAME_CAMPAIGN, Root);
     TAUIListBox * CampaignListBox = &CampaignElement->ListBox;
 
     CampaignListBox->NumberOfDisplayableItems = 3;
-
-    if(ArmButton->Button.Pressed)
+    if(CoreButton->Button.Pressed)
     {
-	CampaignListBox->DisplayItemIndex = 0;
-	CampaignListBox->NumberOfItems = 5;
+	CampaignListBox->NumberOfItems = Campaigns->NumberOfCORECampaigns;
 	CampaignListBox->ItemStrings = PushArray(TempArena, CampaignListBox->NumberOfItems, char*);
-	for(int s=0;s<CampaignListBox->NumberOfItems;s++)
+	for(s32 i=0;i<Campaigns->NumberOfCORECampaigns;i++)
 	{
-	    CampaignListBox->ItemStrings[s] = PushArray(TempArena, 5, char);
-	    CampaignListBox->ItemStrings[s][0] = 'A';
-	    CampaignListBox->ItemStrings[s][1] = 'R';
-	    CampaignListBox->ItemStrings[s][2] = 'M';
-	    CampaignListBox->ItemStrings[s][3] = 'g';
-	    CampaignListBox->ItemStrings[s][4] = 0;
+	    CampaignListBox->ItemStrings[i] = Campaigns->CORECampaigns[i].CampaignName;
 	}
     }
     else
     {
-	CampaignListBox->DisplayItemIndex = 0;
-	CampaignListBox->NumberOfItems = 10;
+	ArmButton->Button.Pressed = 1;
+	GetElementByName(ELEMENT_NAME_SIDE_0,Root)->Button.Pressed =1;
+	CampaignListBox->NumberOfItems = Campaigns->NumberOfARMCampaigns;
 	CampaignListBox->ItemStrings = PushArray(TempArena, CampaignListBox->NumberOfItems, char*);
-	for(int s=0;s<CampaignListBox->NumberOfItems;s++)
+	for(s32 i=0;i<Campaigns->NumberOfARMCampaigns;i++)
 	{
-	    CampaignListBox->ItemStrings[s] = PushArray(TempArena, 5, char);
-	    CampaignListBox->ItemStrings[s][0] = 'C';
-	    CampaignListBox->ItemStrings[s][1] = 'O';
-	    CampaignListBox->ItemStrings[s][2] = 'R';
-	    CampaignListBox->ItemStrings[s][3] = 'E';
-	    CampaignListBox->ItemStrings[s][4] = 0;
+	    CampaignListBox->ItemStrings[i] = Campaigns->ARMCampaigns[i].CampaignName;
 	}
     }
-    LoadMissions(Root, TempArena);
-
+    DisplayMissions(Root, Campaigns , TempArena);
 }
 
 
@@ -253,7 +234,7 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		break;
 	    case ELEMENT_NAME_NEW_CAMPAIGN:
 		CurrentGameState->State = STATE_CAMPAIGN_MENU;
-		LoadCampaigns(&CurrentGameState->CampaignMenu, & CurrentGameState->TempArena);
+		DisplayCampaigns(&CurrentGameState->CampaignMenu, &CurrentGameState->CampaignList, &CurrentGameState->TempArena);
 		break;
 	    case ELEMENT_NAME_SKIRMISH:
 		CurrentGameState->State = STATE_SKIRMISH_MENU;
@@ -300,6 +281,52 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		CurrentGameState->State = STATE_SINGLEPLAYER_MENU;
 		break;
 	    case ELEMENT_NAME_START:
+	    {
+		const s32 MAX_STRING = 128;
+		char MapName[MAX_STRING];
+		TAUIElement * CoreButton = GetElementByName(ELEMENT_NAME_CORE, &CurrentGameState->CampaignMenu);
+		TAUIElement * CampaignElement = GetElementByName(ELEMENT_NAME_CAMPAIGN, &CurrentGameState->CampaignMenu);
+		TAUIListBox * CampaignListBox = &CampaignElement->ListBox;
+
+		TAUIElement * MissionElement = GetElementByName(ELEMENT_NAME_MISSIONS, &CurrentGameState->CampaignMenu);
+		TAUIListBox * MissionListBox = &MissionElement->ListBox;
+
+		MissionListBox->NumberOfDisplayableItems = 4;
+
+		Campaign * Campaign;
+		s32 CampaignIndex = CampaignListBox->SelectedIndex;
+		if(CoreButton->Button.Pressed)
+		{
+		    Campaign = &CurrentGameState->CampaignList.CORECampaigns[CampaignIndex];
+		}
+		else
+		{
+		    Campaign = &CurrentGameState->CampaignList.ARMCampaigns[CampaignIndex];
+		}
+		UnloadTNT(&CurrentGameState->Map);
+
+		snprintf(MapName, MAX_STRING, "maps/%s", Campaign->Missions[MissionListBox->SelectedIndex].MissionFile);
+		size_t Len = strlen(MapName);
+		MapName[Len-1] = 't';
+		MapName[Len-2] = 'n';
+		MapName[Len-3] = 't';
+		HPIEntry Map = FindEntryInAllFiles(MapName,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
+		if(Map.Name)
+		{
+		    u8 * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,u8 );
+
+		    if(LoadHPIFileEntryData(Map,temp,&CurrentGameState->TempArena))
+		    {
+			LoadTNTFromBuffer(temp,&CurrentGameState->Map,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
+		    }
+		    else
+			LogDebug("failed to load map buffer from hpi");
+		    PopArray(&CurrentGameState->TempArena,temp,Map.File.FileSize,u8 );
+		}
+		else
+		    LogDebug("failed to load map");
+
+	    }
 		CurrentGameState->State = STATE_RUNNING;
 		break;
 	    case ELEMENT_NAME_SIDE_0:
@@ -314,7 +341,7 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		E->Button.Pressed = 0;
 		E = GetElementByName(ELEMENT_NAME_CORE,&CurrentGameState->CampaignMenu);
 		E->Button.Pressed = 0;
-		LoadCampaigns(&CurrentGameState->CampaignMenu, & CurrentGameState->TempArena);
+		DisplayCampaigns(&CurrentGameState->CampaignMenu, &CurrentGameState->CampaignList,&CurrentGameState->TempArena);
 	    }
 	    break;
 
@@ -330,11 +357,11 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		E->Button.Pressed = 0;
 		E = GetElementByName(ELEMENT_NAME_ARM,&CurrentGameState->CampaignMenu);
 		E->Button.Pressed = 0;
-		LoadCampaigns(&CurrentGameState->CampaignMenu, & CurrentGameState->TempArena);
+		DisplayCampaigns(&CurrentGameState->CampaignMenu, &CurrentGameState->CampaignList, &CurrentGameState->TempArena);
 	    }
 	    break;
 	    case ELEMENT_NAME_CAMPAIGN:
-		LoadMissions(&CurrentGameState->CampaignMenu, & CurrentGameState->TempArena);
+		DisplayMissions(&CurrentGameState->CampaignMenu, &CurrentGameState->CampaignList, &CurrentGameState->TempArena);
 	    break;
 	    }
 #pragma clang diagnostic pop
@@ -567,7 +594,6 @@ internal void SetupGameState( GameState * CurrentGameState)
     glFrontFace(GL_CCW);
 
     SetupDebugAxisBuffer(&CurrentGameState->DebugAxisBuffer);
-
 }
 
 internal void InitialiseGame(Memory * GameMemory)
@@ -638,6 +664,8 @@ extern "C"
 	switch(CurrentGameState->State)
 	{
 	case STATE_RUNNING:
+	    CurrentGameState->CameraXRotation = -0.4 * PI;
+	    CurrentGameState->CameraYRotation = 0.0;
 	    CurrentGameState->ViewMatrix = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
 	    //TODO(Christof): Update game state
 	[[clang::fallthrough]];
@@ -646,7 +674,7 @@ extern "C"
 	    glUseProgram(CurrentGameState->MapShader->ProgramID);
 	    CurrentGameState->ProjectionMatrix.Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));
 	    CurrentGameState->ViewMatrix.Upload(GetUniformLocation(CurrentGameState->MapShader,"View"));
-	    CurrentGameState->TestMap.Render(CurrentGameState->MapShader);
+	    CurrentGameState->Map.Render(CurrentGameState->MapShader);
 
 	}
 	break;

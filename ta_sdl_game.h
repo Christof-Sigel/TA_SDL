@@ -114,7 +114,7 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 #define PushSubArena(Arena, Size) PushSubArena_(Arena,Size,__func__,__LINE__,__FILE__)
 #define PopSubArena(Arena, SubArena) PopSubArena_(Arena, SubArena,__func__,__LINE__,__FILE__)
 
-inline void *
+internal inline void *
     PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, const char * file)
 {
     if(Size ==0)
@@ -127,7 +127,7 @@ inline void *
     return(Result);
 }
 
-MemoryArena * PushSubArena_(MemoryArena * Arena, memory_index Size, const char * caller, int line, const char * file)
+internal inline MemoryArena * PushSubArena_(MemoryArena * Arena, memory_index Size, const char * caller, int line, const char * file)
 {
     MemoryArena * Result = (MemoryArena*)PushSize_(Arena, Size+sizeof(MemoryArena),  caller,  line, file);
     InitializeArena(Result, Size, Result+sizeof(MemoryArena));
@@ -135,14 +135,14 @@ MemoryArena * PushSubArena_(MemoryArena * Arena, memory_index Size, const char *
 }
 
 
-inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, const char * caller, int line, const char * file)
+internal inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, const char * caller, int line, const char * file)
 {
     printf("Popping %d from %s in %s:%d\n",Size,caller, file,line);
     Assert(((u64 )Memory + Size == Arena->Used + (us64 )Arena->Base);
     Arena->Used -=Size;
 }
 
-void PopSubArena_(MemoryArena * Arena, MemoryArena * SubArena ,const char * caller, int line, const char * file)
+internal inline void PopSubArena_(MemoryArena * Arena, MemoryArena * SubArena ,const char * caller, int line, const char * file)
 {
     PopSize_(Arena, SubArena, SubArena->Size+sizeof(MemoryArena), caller,  line, file);
 }
@@ -155,7 +155,7 @@ void PopSubArena_(MemoryArena * Arena, MemoryArena * SubArena ,const char * call
 #define PushSize(Arena, Size) PushSize_(Arena, Size)
 #define PopArray(Arena, Memory, Count, type) PopSize_(Arena,Memory,(u64)(Count)*sizeof(type))
 
-inline void *
+internal inline void *
 PushSize_(MemoryArena *Arena, memory_index Size)
 {
     if(Size ==0)
@@ -167,21 +167,21 @@ PushSize_(MemoryArena *Arena, memory_index Size)
     return(Result);
 }
 
-inline MemoryArena * PushSubArena(MemoryArena * Arena, memory_index Size)
+internal inline MemoryArena * PushSubArena(MemoryArena * Arena, memory_index Size)
 {
     MemoryArena * Result = (MemoryArena*)PushSize_(Arena, Size+sizeof(MemoryArena));
     InitializeArena(Result, Size, Result+sizeof(MemoryArena));
     return Result;
 }
 
-inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
+internal inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
 {
     Assert((u64 )Memory + Size == Arena->Used + (u64 )Arena->Base);
 
     Arena->Used -=Size;
 }
 
-inline void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
+internal inline void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
 {
     PopSize_(Arena, SubArena, SubArena->Size+sizeof(MemoryArena));
 }
@@ -251,7 +251,7 @@ struct GameState
     u8 PaletteData[1024];
     u64  PerformanceCounterFrequency;
 
-
+    CampaignList CampaignList;
     MemoryArena GameArena;
     MemoryArena TempArena;
     State State;
@@ -273,13 +273,12 @@ struct GameState
     FontContainer LoadedFonts;
     GLuint Draw2DVertexBuffer;
 
-
-
     int ScreenWidth,ScreenHeight;
+    TAMap Map;
 
 
     //Test data
-float CameraTranslation[3];
+    float CameraTranslation[3];
     TAUIElement MainMenu;
     TAUIElement SinglePlayerMenu;
     TAUIElement CampaignMenu;
@@ -290,7 +289,7 @@ float CameraTranslation[3];
     float CameraXRotation;
     float CameraYRotation;
 
-    TAMap TestMap;
+
 
 
 

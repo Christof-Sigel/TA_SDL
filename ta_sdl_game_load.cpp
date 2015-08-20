@@ -83,13 +83,78 @@ CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation
 
 internal void SetupDebugRectBuffer(GLuint * DebugRectBuffer);
 
+internal void LoadCampaigns(HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, MemoryArena * CampaignArena, CampaignList * Campaigns)
+{
+    HPIEntry CampaignDirectory = FindEntryInAllFiles("camps", GlobalArchiveCollection, TempArena);
+
+    if(!CampaignDirectory.IsDirectory)
+    {
+	LogError("File encountered while loading campaigns directory");
+    }
+    else
+    {
+	for(int i=0;i<CampaignDirectory.Directory.NumberOfEntries;i++)
+	{
+	    if(!CampaignDirectory.Directory.Entries[i].IsDirectory)
+	    {
+		HPIEntry * Entry = &CampaignDirectory.Directory.Entries[i];
+		char * CampaignFileBuffer = PushArray(TempArena, Entry->File.FileSize, char);
+		if(LoadHPIFileEntryData(*Entry, (u8*)CampaignFileBuffer, TempArena))
+		{
+		    MemoryArena * Arena = PushSubArena(TempArena, 64*1024);
+		    TDFElement * First = LoadTDFElementsFromBuffer(&CampaignFileBuffer, CampaignFileBuffer + Entry->File.FileSize,Arena);
+		    char * Side = GetStringValue(First,"campaignside");
+		    Campaign * Campaign;
+		    if(CaseInsensitiveMatch(Side,"ARM"))
+		    {
+			Campaign = &Campaigns->ARMCampaigns[Campaigns->NumberOfARMCampaigns++];
+		    }
+		    else
+		    {
+			//NOTE(Christof): Assuming not ARM means CORE
+			Campaign = &Campaigns->CORECampaigns[Campaigns->NumberOfCORECampaigns++];
+		    }
+		    size_t NameLen = strlen(Entry->Name);
+		    Campaign->CampaignName = PushArray(CampaignArena, NameLen, char);
+		    memcpy(Campaign->CampaignName, Entry->Name, NameLen);
+		    Campaign->CampaignName[NameLen -4] =0;
+
+		    Campaign->NumberOfMissions = CountElements(First) - 1;
+		    Campaign->Missions = PushArray(CampaignArena, Campaign->NumberOfMissions, Mission);
+		    for(s32 j = 0;j<Campaign->NumberOfMissions;j++)
+		    {
+			TDFElement * Mission = GetNthElement(First, j+1);
+			char * FileName = GetStringValue(Mission, "missionfile");
+			char * MissionName = GetStringValue(Mission, "missionname");
+			NameLen = strlen(FileName)+1;
+			Campaign->Missions[j].MissionFile = PushArray(CampaignArena, NameLen, char);
+			memcpy(Campaign->Missions[j].MissionFile, FileName, NameLen);
+
+			NameLen = strlen(MissionName)+1;
+			Campaign->Missions[j].MissionName = PushArray(CampaignArena, NameLen, char);
+			memcpy(Campaign->Missions[j].MissionName, MissionName, NameLen);
+		    }
+
+
+		    PopSubArena(TempArena, Arena);
+		}
+//		if(CampaignFileBuffer)
+//		PopArray(TempArena, CampaignFileBuffer, Entry->File.FileSize, char);
+	    }
+	}
+    }
+
+
+    //UnloadCompositeEntry(&CampaignDirectory, TempArena);
+}
+
 
 
 internal void SetupGameState( GameState * CurrentGameState);
 extern "C"{
 
     void GameSetup(Memory * GameMemory);
-    
+
     void GameSetup(Memory * GameMemory)
     {
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
@@ -112,21 +177,6 @@ extern "C"{
 	SetupFontRendering(&CurrentGameState->Draw2DVertexBuffer);
 	CurrentGameState->DrawTextureShaderDetails.VertexBuffer = CurrentGameState->Draw2DVertexBuffer;
 
-	HPIEntry Map = FindEntryInAllFiles("maps/Metal Maze.tnt",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-	if(Map.Name)
-	{
-	    u8 * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,u8 );
-
-	    if(LoadHPIFileEntryData(Map,temp,&CurrentGameState->TempArena))
-	    {
-		LoadTNTFromBuffer(temp,&CurrentGameState->TestMap,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
-	    }
-	    else
-		LogDebug("failed to load map buffer from hpi");
-	    PopArray(&CurrentGameState->TempArena,temp,Map.File.FileSize,u8 );
-	}
-	else
-	    LogDebug("failed to load map");
 
 	CurrentGameState->MainMenu = LoadGUI("MainMenu.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 	CurrentGameState->SinglePlayerMenu = LoadGUI("Single.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
@@ -135,10 +185,8 @@ extern "C"{
 	CurrentGameState->LoadGameMenu = LoadGUI("LoadGame.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 	CurrentGameState->SkirmishMenu = LoadGUI("Skirmish.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 	CurrentGameState->OptionsMenu = LoadGUI("startopt.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
-
-
-
 	SetupDebugRectBuffer(&CurrentGameState->DebugRectDetails.VertexBuffer);
+	LoadCampaigns(&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena, &CurrentGameState->CampaignList);
     }
 
     void GameTeardown(Memory * GameMemory);

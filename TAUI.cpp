@@ -1,173 +1,6 @@
-internal char * GetStringValue(FILE_UIElement * Element, const char * Name)
+internal void LoadElementFromTree(TAUIElement * Element, TDFElement * Tree, MemoryArena * Arena, TextureContainer * Textures, MemoryArena * TempArena, HPIFileCollection * GlobalArchiveCollection, FontContainer * FontContainer, const char * FileName)
 {
-    FILE_UINameValue * NameValue = Element->Value;
-    while(NameValue)
-    {
-	if(CaseInsensitiveMatch(Name, NameValue->Name))
-	    return NameValue->Value;
-	NameValue = NameValue->Next;
-    }
-    return 0;
-}
-
-internal int GetIntValue(FILE_UIElement * Element, const char * Name)
-{
-    char * Value=GetStringValue(Element,Name);
-    if(Value)
-	return atoi(Value);
-    return -1;
-}
-
-internal float GetFloat(FILE_UIElement * Element, const char * Name)
-{
-    char * Value= GetStringValue(Element,Name);
-    if(Value)
-	return (float)atof(Value);
-    return -1;
-}
-
-internal FILE_UIElement * GetSubElement(FILE_UIElement * Root, const char * Name)
-{
-    FILE_UIElement * element = Root->Child;
-    while(element)
-    {
-	if(CaseInsensitiveMatch(Name, element->Name))
-	    return element;
-	element=element->Next;
-    }
-    return 0;
-}
-
-internal FILE_UIElement * GetNthElement(FILE_UIElement * Start, int N)
-{
-    if(N ==0 || !Start)
-	return Start;
-    return GetNthElement(Start->Next, N-1);
-}
-
-internal int CountElements(FILE_UIElement * First)
-{
-    int count = 0;
-    while(First)
-    {
-	First = First->Next;
-	count++;
-    }
-    return count;
-}
-
-internal FILE_UINameValue * LoadUINameValueFromBuffer(char ** InBuffer, char * End, MemoryArena * Arena)
-{
-    char * Buffer = *InBuffer;
-    char * Start=Buffer;
-    while(*Buffer != '=' && *Buffer != ' ' && *Buffer != '\t' && *Buffer != '\r' && *Buffer!='\n' && Buffer <=End) {  Buffer++;  }
-    if(Buffer == End){	return 0; }
-    char sep = *Buffer;
-    *Buffer =0;
-    FILE_UINameValue * Result = PushStruct(Arena, FILE_UINameValue);
-    *Result={};
-    strncpy(Result->Name, Start, FILE_UI_MAX_STRING_LENGTH);
-    Buffer++;
-    if(sep != '=')
-    {
-	while((*Buffer == '=' || *Buffer != ' ' || *Buffer != '\t' || *Buffer != '\r' || *Buffer!='\n')
-	      && Buffer <=End) {  Buffer++;  }
-	if(Buffer >= End){	return 0; }
-    }
-    Start = Buffer;
-    while(*Buffer != ';' && Buffer <=End) {  Buffer++;  }
-    if(Buffer >= End){	return 0; }
-    *Buffer =0;
-    strncpy(Result->Value, Start, FILE_UI_MAX_STRING_LENGTH);
-    Buffer++;
-
-    *InBuffer = Buffer;
-    return Result;
-}
-
-internal FILE_UIElement * LoadUIElementFromBuffer(char ** InBuffer, char * End, MemoryArena * Arena)
-{
-    char * Buffer = *InBuffer;
-    while(*Buffer != '[' && Buffer <=End) {  Buffer++;  }
-    if(Buffer == End){	return 0; }
-    char * Start = Buffer+1;
-    while(*Buffer != ']' && Buffer <=End) {  Buffer++;  }
-    if(Buffer == End){	return 0; }
-    *Buffer =0;
-
-    FILE_UIElement * Result = PushStruct(Arena, FILE_UIElement);
-    *Result={};
-    strncpy(Result->Name, Start, FILE_UI_MAX_STRING_LENGTH);
-    while(*Buffer != '{' && Buffer <=End) {  Buffer++;  }
-    if(Buffer == End){	return 0; }
-    Buffer++;
-
-    while(Buffer<=End)
-    {
-	while((*Buffer == ' ' || *Buffer == '\t' || *Buffer =='\r' || *Buffer == '\n' )&& Buffer <=End) {  Buffer++;  }
-	if(Buffer == End){	return 0; }
-	if(*Buffer =='}')
-	{
-	    Buffer++;
-	    *InBuffer = Buffer;
-	    return Result;
-	}
-	else if(*Buffer == '[')
-	{
-	    if(Result->Child)
-	    {
-		FILE_UIElement * Child = Result->Child;
-		while(Child->Next)
-		{
-		    Child=Child->Next;
-		}
-		Child->Next=LoadUIElementFromBuffer(&Buffer,End, Arena);
-	    }
-	    else
-	    {
-		Result->Child = LoadUIElementFromBuffer(&Buffer, End, Arena);
-	    }
-	}
-	else
-	{
-	    if(Result->Value)
-	    {
-		FILE_UINameValue * Value = Result->Value;
-		while(Value->Next)
-		{
-		    Value=Value->Next;
-		}
-		Value->Next = LoadUINameValueFromBuffer(&Buffer, End, Arena);
-	    }
-	    else
-	    {
-		Result->Value=LoadUINameValueFromBuffer(&Buffer, End, Arena);
-	    }
-	}
-
-    }
-    *InBuffer = Buffer;
-    return 0;
-}
-
-internal FILE_UIElement * LoadUIElementsFromBuffer(char ** InBuffer, char * End, MemoryArena * Arena)
-{
-    FILE_UIElement * First = LoadUIElementFromBuffer(InBuffer, End, Arena);
-    FILE_UIElement * Last = First;
-    while(*InBuffer <End)
-    {
-	Last->Next = LoadUIElementFromBuffer(InBuffer, End, Arena);
-	if(Last->Next)
-	{
-	    Last = Last->Next;
-	}
-    }
-    return First;
-}
-
-internal void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, MemoryArena * Arena, TextureContainer * Textures, MemoryArena * TempArena, HPIFileCollection * GlobalArchiveCollection, FontContainer * FontContainer, const char * FileName)
-{
-    FILE_UIElement * Common = GetSubElement(Tree,"common");
+    TDFElement * Common = GetSubElement(Tree,"common");
     Element->ElementType = (TagType)GetIntValue(Common, "ID");
 
     Element->Association = GetIntValue(Common, "assoc");
@@ -523,18 +356,15 @@ internal void LoadElementFromTree(TAUIElement * Element, FILE_UIElement * Tree, 
 	LogDebug("Unknown Element: %s",Name);
     }
 
-
     if(Element->ElementName == ELEMENT_NAME_SIDE_0 || Element->ElementName == ELEMENT_NAME_SIDE_1)
     {
 	Element->Width = 158;
 	Element->Height = 158;
     }
-
     if(Element->ElementName == ELEMENT_NAME_DELETE)
     {
 	Element->Visible = 0;
     }
-
 
     //TODO(Christof): make this actually check for campaigns before enabling?
     if(Element->ElementName == ELEMENT_NAME_CAMPAIGN_KNOB
@@ -602,7 +432,7 @@ internal TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * 
 	LoadAllTexturesFromHPIEntry(&UITextures, Textures, TempArena, PaletteData);
     }
     MemoryArena * UIElementsArena = PushSubArena(TempArena, 64*1024);
-    FILE_UIElement * First = LoadUIElementsFromBuffer(&Buffer, End, UIElementsArena);
+    TDFElement * First = LoadTDFElementsFromBuffer(&Buffer, End, UIElementsArena);
     TAUIElement Container ={};
     if(First)
     {
@@ -815,16 +645,23 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
     }
     break;
     case TAG_LISTBOX:
+	if(Element->ListBox.DisplayItemIndex >= Element->ListBox.NumberOfItems)
+	{
+	    Element->ListBox.DisplayItemIndex = Element->ListBox.NumberOfItems-1;
+	}
 	for(s32 i=0 ; i<Element->ListBox.NumberOfDisplayableItems ; i++)
 	{
 	    s32 index = Element->ListBox.DisplayItemIndex + i;
-	    Color TextColor = {{1.0,1.0,1.0}};
-	    if(index == Element->ListBox.SelectedIndex)
+	    if(index < Element->ListBox.NumberOfItems)
 	    {
-		DrawDebugRect(DebugRectDetails, (r32)X , (r32)(Y + i * LIST_ITEM_HEIGHT), Width, (r32)LIST_ITEM_HEIGHT, {{1,1,1}} , 0.0f , 1.0f, {{0,0.25,0}}, 0.5f);
-		TextColor = {{1.75,1.75,1.75}};
+		Color TextColor = {{1.0,1.0,1.0}};
+		if(index == Element->ListBox.SelectedIndex)
+		{
+		    DrawDebugRect(DebugRectDetails, (r32)X , (r32)(Y + i * LIST_ITEM_HEIGHT), Width, (r32)LIST_ITEM_HEIGHT, {{1,1,1}} , 0.0f , 1.0f, {{0,0.25,0}}, 0.5f);
+		    TextColor = {{1.75,1.75,1.75}};
+		}
+		DrawTextureFontText(Element->ListBox.ItemStrings[index], X+2, Y + (i*LIST_ITEM_HEIGHT), Font12, ShaderDetails, 1.0, TextColor);
 	    }
-	    DrawTextureFontText(Element->ListBox.ItemStrings[index], X+2, Y + (i*LIST_ITEM_HEIGHT), Font12, ShaderDetails, 1.0, TextColor);
 	}
 	break;
 
@@ -892,8 +729,6 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 		Slider = GetTexture(Slider, 1);
 		DrawTexture2D(CommonUIElements->Texture, float(X), float(MiddleY), Width, (r32)MiddleHeight, {{1,1,1}}, 1.0, ShaderDetails, Slider->U, Slider->V, Slider->Width, Slider->Height);
 	    }
-
-
 
 	    TopY+=4;
 	    BottomY-=4;
