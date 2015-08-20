@@ -735,7 +735,8 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 		Height = ButtonBackground->Height * CommonUIElements->TextureHeight;
 		if(Button->Pressed && Button->Stages >0)
 		{
-		    ButtonOffset = Button->Stages + 1; // == Stages is nothing selected
+		    //NOTE(Christof): gaf file containes {1 selected,2 selected, ....,nothing selected and presed}
+		    ButtonOffset = Button->Stages + 1;
 		}
 		else if (Button->Stages >0)
 		{
@@ -820,7 +821,7 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 	    Color TextColor = {{1.0,1.0,1.0}};
 	    if(index == Element->ListBox.SelectedIndex)
 	    {
-		DrawDebugRect(DebugRectDetails, (r32)X , (r32)(Y + i * LIST_ITEM_HEIGHT), Width, LIST_ITEM_HEIGHT, {{1,1,1}} , 0.0f , 1.0f, {{0,0.25,0}}, 0.5f);
+		DrawDebugRect(DebugRectDetails, (r32)X , (r32)(Y + i * LIST_ITEM_HEIGHT), Width, (r32)LIST_ITEM_HEIGHT, {{1,1,1}} , 0.0f , 1.0f, {{0,0.25,0}}, 0.5f);
 		TextColor = {{1.75,1.75,1.75}};
 	    }
 	    DrawTextureFontText(Element->ListBox.ItemStrings[index], X+2, Y + (i*LIST_ITEM_HEIGHT), Font12, ShaderDetails, 1.0, TextColor);
@@ -945,14 +946,27 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 	    switch(Element->ElementType)
 	    {
 	    case TAG_BUTTON:
-
-		if(Element->Button.Stages > 0 && Clicked)
+		if(Element->ElementName == ELEMENT_NAME_SIDE_0||
+		   Element->ElementName == ELEMENT_NAME_SIDE_1||
+		   Element->ElementName == ELEMENT_NAME_ARM ||
+		   Element->ElementName == ELEMENT_NAME_CORE)
 		{
-		    Element->Button.CurrentStage++;
-		    if(Element->Button.CurrentStage >= Element->Button.Stages)
-			Element->Button.CurrentStage = 0;
+		    if(Down)
+		    {
+			Result = Element;
+			Element->Button.Pressed =1;
+		    }
 		}
-		Element->Button.Pressed = Down &&(!WasDown || Element->Button.Pressed);
+		else
+		{
+		    if(Element->Button.Stages > 0 && Clicked)
+		    {
+			Element->Button.CurrentStage++;
+			if(Element->Button.CurrentStage >= Element->Button.Stages)
+			    Element->Button.CurrentStage = 0;
+		    }
+		    Element->Button.Pressed = Down &&(!WasDown || Element->Button.Pressed);
+		}
 		break;
 	    case TAG_SCROLLBAR:
 		if(MouseY < Y+10)
@@ -1000,6 +1014,7 @@ internal TAUIElement * ProcessMouse(TAUIElement * Root, s32 MouseX, s32 MouseY, 
 		   Element->ElementName == ELEMENT_NAME_ARM ||
 		   Element->ElementName == ELEMENT_NAME_CORE)
 		{
+
 		}
 		else
 		{
