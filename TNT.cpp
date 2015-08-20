@@ -93,7 +93,9 @@ internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, Mem
 
 
 texture_done:
-    glGenTextures(1,&Result->MapTexture);
+
+    if(!Result->MapTexture)
+	glGenTextures(1,&Result->MapTexture);
     glBindTexture(GL_TEXTURE_2D,Result->MapTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -158,13 +160,16 @@ texture_done:
     }
 
 
-    glGenVertexArrays(1,&Result->MapVertexBuffer);
+    if(!Result->MapVertexBuffer)
+    {
+	glGenVertexArrays(1,&Result->MapVertexBuffer);
+	glGenBuffers(1,&Result->VertexBuffer);
+    }
     glBindVertexArray(Result->MapVertexBuffer);
 
-    GLuint VertexBuffer;
-    glGenBuffers(1,&VertexBuffer);
 
-    glBindBuffer(GL_ARRAY_BUFFER,VertexBuffer);
+
+    glBindBuffer(GL_ARRAY_BUFFER,Result->VertexBuffer);
     glBufferData(GL_ARRAY_BUFFER,(s64)sizeof(GLfloat)*NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,PositionAndTexture,GL_STATIC_DRAW);
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*NUM_FLOATS_PER_HALFTILE/6,0);
     glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*NUM_FLOATS_PER_HALFTILE/6,(GLvoid*)(sizeof(GLfloat)*3));
@@ -173,9 +178,17 @@ texture_done:
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
-    // glDeleteBuffers(1,&VertexBuffer);
     Result->NumTriangles = (s32)NumberOfHalfTiles*2;
     PopArray(TempArena,PositionAndTexture,NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,GLfloat);
 
     return 1;
+}
+
+void UnloadTNT(TAMap * Map)
+{
+    if(Map && Map->MapVertexBuffer)
+    {
+    //glDeleteBuffers(1, &Map->MapVertexBuffer);
+    //glDeleteTextures(1,&Map->MapTexture);
+    }
 }
