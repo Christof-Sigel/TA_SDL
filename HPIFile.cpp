@@ -325,9 +325,7 @@ internal HPIEntry FindHPIEntry(HPIFile * File, const char * Path)
     return FindHPIEntry(File->Root,Path);
 }
 
-static const char * HPIFileNames[]={"rev31.gp3","btdata.ccx","ccdata.ccx","tactics1.hpi","tactics2.hpi",
-			     "tactics3.hpi","tactics4.hpi","tactics5.hpi","tactics6.hpi","tactics7.hpi",
-			     "tactics8.hpi","totala1.hpi","totala2.hpi","totala3.hpi","totala4.hpi"};
+static const char * HPIFileNames[]={"rev31.gp3","btdata.ccx","btmaps.ccx","ccmiss.ccx","ccmaps.ccx","ccdata.ccx","tactics1.hpi","tactics2.hpi","tactics3.hpi","tactics4.hpi","tactics5.hpi","tactics6.hpi","tactics7.hpi","tactics8.hpi","totala1.hpi","totala2.hpi","totala3.hpi","totala4.hpi","worlds.hpi"};
 const int NUM_FIXED_FILES=sizeof(HPIFileNames)/sizeof(HPIFileNames[0]);
 
 internal b32 LoadHPIFileCollection(HPIFileCollection * GlobalArchiveCollection, MemoryArena * GameArena, MemoryArena * TempArena)
