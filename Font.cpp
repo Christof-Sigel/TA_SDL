@@ -252,7 +252,7 @@ internal void DrawTextureFontText(const char * Text, int InitialX, int InitialY,
     }
 }
 
-internal FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCollection * FileCollection, MemoryArena * TempArena)
+internal FNTFont * GetFont(FontContainer * FontContainer, const char * Name, HPIFileCollection * FileCollection, MemoryArena * TempArena)
 {
     for(int i=0;i<FontContainer->NumberOfFonts;i++)
     {
@@ -303,7 +303,7 @@ internal FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCo
 
 internal void DrawFNTText(r32 X, r32 Y, const char * Text, FNTFont * Font, Texture2DShaderDetails * ShaderDetails, Color Color = {{1,1,1}}, r32 Alpha = 1.0f)
 {
-    char * c = (char*)Text;
+    u8 * c = (u8*)Text;
     r32 PrintX = X,PrintY = Y;
 
     while(*c)

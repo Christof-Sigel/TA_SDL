@@ -280,13 +280,14 @@ struct GameState
 
 
     //Test data
-    float CameraTranslation[3];
+
     TAUIElement MainMenu;
     TAUIElement SinglePlayerMenu;
     TAUIElement CampaignMenu;
     TAUIElement LoadGameMenu;
     TAUIElement SkirmishMenu;
     TAUIElement OptionsMenu;
+    float CameraTranslation[3];
 
     float CameraXRotation;
     float CameraYRotation;
@@ -296,5 +297,5 @@ struct GameState
 
 
     s32 MouseX, MouseY;
-
+    s32 PAD;
 };
