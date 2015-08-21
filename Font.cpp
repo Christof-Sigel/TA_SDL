@@ -15,7 +15,7 @@ internal void LoadCharacter(s16  CharacterOffset, u8 * FileBuffer, u8 * TextureB
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+0] = 255;
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+1] = 255;
 	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+2] = 255;
-	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+3] = bit?(u8)1:(u8)0;
+	    TextureBuffer[(XOffset+X + (Y+YOffset)*TextureWidth)*4+3] = bit?(u8)255:(u8)0;
 	    X++;
 	    if(X>=Width)
 	    {
@@ -299,4 +299,25 @@ internal FNTFont * GetFont(FontContainer * FontContainer, char * Name, HPIFileCo
 	}
     }
     return 0;
+}
+
+internal void DrawFNTText(r32 X, r32 Y, const char * Text, FNTFont * Font, Texture2DShaderDetails * ShaderDetails, Color Color = {{1,1,1}}, r32 Alpha = 1.0f)
+{
+    char * c = (char*)Text;
+    r32 PrintX = X,PrintY = Y;
+
+    while(*c)
+    {
+    FNTGlyph * Char = &Font->Characters[*c];
+
+    DrawTexture2D(Font->Texture, PrintX, PrintY , Char->Width, Font->Height , Color, Alpha, ShaderDetails, Char->U, 0, Char->TextureWidth, 1);
+    PrintX+= Char->Width;
+    if(*c =='\n')
+    {
+	PrintX = X;
+	PrintY += Font->Height;
+    }
+    c++;
+
+    }
 }

@@ -431,7 +431,7 @@ internal TAUIElement LoadGUIFromBuffer(char * Buffer, char * End, MemoryArena * 
     {
 	LoadAllTexturesFromHPIEntry(&UITextures, Textures, TempArena, PaletteData);
     }
-    MemoryArena * UIElementsArena = PushSubArena(TempArena, 64*1024);
+    MemoryArena * UIElementsArena = PushSubArena(TempArena, 256*1024);
     TDFElement * First = LoadTDFElementsFromBuffer(&Buffer, End, UIElementsArena);
     TAUIElement Container ={};
     if(First)
@@ -499,8 +499,8 @@ internal void LoadCommonUITextures(GameState * CurrentGameState)
 
 internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2DShaderDetails * ShaderDetails, TextureContainer * Font11, TextureContainer *Font12, TextureContainer * CommonUIElements, DebugRectShaderDetails * DebugRectDetails, TAUIElement * Container = 0)
 {
-    if(!Element->Visible)
-	return;
+    // if(!Element->Visible)
+//	return;
 
     s32 X= Element->X + XOffset;
     s32 Y = Element->Y + YOffset;
@@ -678,6 +678,8 @@ internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset,
 		}
 	    }
 	}
+	if(!Element->ScrollBar.ListBox)
+	    break;
 
 	s32 NumberOfDisplayableItems = Element->ScrollBar.ListBox->NumberOfDisplayableItems;
 	s32 NumberOfItems = Element->ScrollBar.ListBox->NumberOfItems;

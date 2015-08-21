@@ -106,7 +106,7 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 	Matrix ViewRotation = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
 //    ViewRotation.Rotate(1,0,0, CurrentGameState->CameraXRotation);
 	//  ViewRotation.Rotate(0,1,0, CurrentGameState->CameraYRotation);
-	const float CameraTranslation = 1.0;
+	const float CameraTranslation = 5.0;
 	float DX[3] = { ViewRotation.Contents[0*4+0] * CameraTranslation + ViewRotation.Contents[3*4+0],
 			ViewRotation.Contents[0*4+1] * CameraTranslation + ViewRotation.Contents[3*4+1],
 			ViewRotation.Contents[0*4+2] * CameraTranslation + ViewRotation.Contents[3*4+2]};
@@ -664,7 +664,7 @@ extern "C"
 	switch(CurrentGameState->State)
 	{
 	case STATE_RUNNING:
-	    CurrentGameState->CameraXRotation = -0.4 * PI;
+	    CurrentGameState->CameraXRotation = -0.45 * PI;
 	    CurrentGameState->CameraYRotation = 0.0;
 	    CurrentGameState->ViewMatrix = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
 	    //TODO(Christof): Update game state
@@ -694,6 +694,60 @@ extern "C"
 	{
 	case STATE_PAUSED:
 	case STATE_RUNNING:
+	{
+	    r32 X = 128;
+	    u32 SideOffset = 0;
+	    DrawDebugRect(&CurrentGameState->DebugRectDetails, 0 , 0, 128, CurrentGameState->ScreenHeight, {0.0,0.0,0} , 2.0f, 1.0f, {0.0,0.0,0} , 1.0f );
+	    while (X< CurrentGameState->ScreenWidth)
+	    {
+	    DrawGafTexture(X,0,"panelbot", &CurrentGameState->ArmInterfaceTextures, &CurrentGameState->DrawTextureShaderDetails);
+	    DrawGafTexture(X,CurrentGameState->ScreenHeight - 33,"panelbot", &CurrentGameState->ArmInterfaceTextures, &CurrentGameState->DrawTextureShaderDetails);
+	    X+= 513.0f;
+	    }
+	    DrawGafTexture(128,0,"paneltop", &CurrentGameState->ArmInterfaceTextures, &CurrentGameState->DrawTextureShaderDetails);
+
+	    DrawGafTexture(0,0,"panelside2", &CurrentGameState->ArmInterfaceTextures, &CurrentGameState->DrawTextureShaderDetails);
+	    DrawGafTexture(128,0,"32xlogos", &CurrentGameState->UnitTextures, &CurrentGameState->DrawTextureShaderDetails, SideOffset);
+
+	    FNTFont * SmallFont = GetFont(&CurrentGameState->LoadedFonts, "SMLFont", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
+	    u32 EnergyMax = 1000, EnergyCurrent = 500, MetalMax =1000, MetalCurrent = 500;
+	    r32 EnergyProd = 1427, EnergyUse = 139, MetalProd = 11.6, MetalUse = 17.5;
+	    const s32 MAX_STRING = 12;
+	    char Temp[MAX_STRING];
+
+	    snprintf(Temp, MAX_STRING, "%d",MetalMax);
+	    DrawFNTText( 320,0, Temp, SmallFont, &CurrentGameState->DrawTextureShaderDetails);
+
+	    snprintf(Temp, MAX_STRING, "%d",MetalCurrent);
+	    DrawFNTText( 270,15, Temp, SmallFont, &CurrentGameState->DrawTextureShaderDetails);
+
+	    DrawFNTText( 220,0, "0", SmallFont, &CurrentGameState->DrawTextureShaderDetails);
+
+	    DrawDebugRect(&CurrentGameState->DebugRectDetails, 220 , 12, 125 * ((r32)MetalCurrent/MetalMax), 2, {0.8,0.8,1} , 2.0f );
+
+	    snprintf(Temp, MAX_STRING, "%.1f",MetalProd);
+	    DrawFNTText( 357,4, Temp, SmallFont, &CurrentGameState->DrawTextureShaderDetails, {{83/255.0,223/255.0,79/255.0}} );
+
+	    snprintf(Temp, MAX_STRING, "%.1f",MetalUse);
+	    DrawFNTText( 357,16, Temp, SmallFont, &CurrentGameState->DrawTextureShaderDetails,  {{255/255.0,71/255.0,0}});
+
+
+	    snprintf(Temp, MAX_STRING, "%d",EnergyMax);
+	    DrawFNTText( 570,0, Temp, SmallFont, &CurrentGameState->DrawTextureShaderDetails);
+
+	    snprintf(Temp, MAX_STRING, "%d",EnergyCurrent);
+	    DrawFNTText( 520,15, Temp, SmallFont, &CurrentGameState->DrawTextureShaderDetails);
+
+	    DrawFNTText( 470,0, "0", SmallFont, &CurrentGameState->DrawTextureShaderDetails);
+
+snprintf(Temp, MAX_STRING, "%.0f",EnergyProd);
+	    DrawFNTText( 608,4, Temp, SmallFont, &CurrentGameState->DrawTextureShaderDetails, {{83/255.0,223/255.0,79/255.0}} );
+
+	    snprintf(Temp, MAX_STRING, "%.0f",EnergyUse);
+	    DrawFNTText( 608,16, Temp, SmallFont, &CurrentGameState->DrawTextureShaderDetails,  {{255/255.0,71/255.0,0}});
+
+	    DrawDebugRect(&CurrentGameState->DebugRectDetails, 470 , 12, 125* ((r32)EnergyCurrent/EnergyMax), 2, {1,1,0} , 2.0f );
+	}
 	break;
 	case STATE_MAIN_MENU:
 	    RenderTAUIElement(&CurrentGameState->MainMenu,(CurrentGameState->ScreenWidth - CurrentGameState->MainMenu.Width)/2,(CurrentGameState->ScreenHeight - CurrentGameState->MainMenu.Height)/2,&CurrentGameState->DrawTextureShaderDetails, &CurrentGameState->Font11, &CurrentGameState->Font12, &CurrentGameState->CommonGUITextures, &CurrentGameState->DebugRectDetails);
@@ -736,13 +790,12 @@ extern "C"
 	char FPS[32];
 	const float FramesToCount = 30.0f;
 	CurrentFPS = (CurrentFPS*(FramesToCount-1) + 1.0f/((CurrentFrameTime - LastFrameTime)/1000.0f))/FramesToCount;
-	snprintf(FPS, 32, "%0.2f, %d", CurrentFPS, (s32)(CurrentFrameTime - LastFrameTime));
-	DrawTextureFontText(FPS, 0,0,&CurrentGameState->Font12,&CurrentGameState->DrawTextureShaderDetails, 1.0f);
+
 	LastFrameTime = CurrentFrameTime;
 
 	char MemoryUsageText[128];
 
-	snprintf(MemoryUsageText, 128, "Game Arena: %.2fMB of %.2fMB (%.2f%% free)\nTemp Arena: %.2fMB of %.2fMB (%.2f%% free)",
+	snprintf(MemoryUsageText, 128, "FPS: %0.2f\nGame Arena: %.2fMB of %.2fMB (%.2f%% free)\nTemp Arena: %.2fMB of %.2fMB (%.2f%% free)", CurrentFPS,
 		 CurrentGameState->GameArena.Used/(1024.0f*1024), CurrentGameState->GameArena.Size/(1024.0f*1024),
 		 float(CurrentGameState->GameArena.Size - CurrentGameState->GameArena.Used)/CurrentGameState->GameArena.Size*100.0f,
 		 CurrentGameState->TempArena.Used/(1024.0f*1024), CurrentGameState->TempArena.Size/(1024.0f*1024),

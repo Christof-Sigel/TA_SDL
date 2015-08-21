@@ -65,14 +65,7 @@ internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, Mem
 	    {
 		for(int x=0;x<32;x++)
 		{
-		    if(Tiles[i].TileData[x+y*32]=='d')
-		    {
-			TileTextureData[(X+x+(Y+y)*TileTextureSide)*4+0]=255;
-			TileTextureData[(X+x+(Y+y)*TileTextureSide)*4+1]=0;
-			TileTextureData[(X+x+(Y+y)*TileTextureSide)*4+2]=255;
-			TileTextureData[(X+x+(Y+y)*TileTextureSide)*4+3]=0;//PaletteData[Tiles[i].TileData[x+y*32]*4+0];
-		    }
-		    else
+
 		    {
 			TileTextureData[(X+x+(Y+y)*TileTextureSide)*4+0]=PaletteData[Tiles[i].TileData[x+y*32]*4+0];
 			TileTextureData[(X+x+(Y+y)*TileTextureSide)*4+1]=PaletteData[Tiles[i].TileData[x+y*32]*4+1];
@@ -97,9 +90,11 @@ texture_done:
     if(!Result->MapTexture)
 	glGenTextures(1,&Result->MapTexture);
     glBindTexture(GL_TEXTURE_2D,Result->MapTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glEnable(GL_TEXTURE_2D);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,TileTextureSide, TileTextureSide,0, GL_RGBA, GL_UNSIGNED_BYTE, TileTextureData);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     PopArray(TempArena,TileTextureData,TileTextureSide*TileTextureSide*4,u8 );
 
 

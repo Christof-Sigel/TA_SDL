@@ -244,6 +244,8 @@ struct GameState
     TextureContainer Font11;
     TextureContainer Font12;
     TextureContainer CommonGUITextures;
+    TextureContainer ArmInterfaceTextures;
+    TextureContainer CoreInterfaceTextures;
 
     SDL_Window * MainSDLWindow;
 

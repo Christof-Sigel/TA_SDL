@@ -83,6 +83,39 @@ CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation
 
 internal void SetupDebugRectBuffer(GLuint * DebugRectBuffer);
 
+internal void LoadInterfaceTextures(GameState * CurrentGameState)
+{
+    SetupTextureContainer(&CurrentGameState->ArmInterfaceTextures, 1024, 1024, 150, &CurrentGameState->GameArena);
+    HPIEntry UIFile = FindEntryInAllFiles("anims/ArmInt.GAF", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
+    if(UIFile.IsDirectory)
+    {
+	LogError("Unexpectedly found a directory while trying to load arm interface textures");
+    }
+    else if(!UIFile.Name)
+    {
+	LogError("Failed to get armInt.gaf");
+    }
+    else
+    {
+	LoadAllTexturesFromHPIEntry(&UIFile, &CurrentGameState->ArmInterfaceTextures, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
+    }
+
+    SetupTextureContainer(&CurrentGameState->CoreInterfaceTextures, 1024, 1024, 150, &CurrentGameState->GameArena);
+    UIFile = FindEntryInAllFiles("anims/CORInt.GAF", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
+    if(UIFile.IsDirectory)
+    {
+	LogError("Unexpectedly found a directory while trying to load core interface textures");
+    }
+    else if(!UIFile.Name)
+    {
+	LogError("Failed to get coreint.gaf");
+    }
+    else
+    {
+	LoadAllTexturesFromHPIEntry(&UIFile, &CurrentGameState->CoreInterfaceTextures, &CurrentGameState->TempArena, CurrentGameState->PaletteData);
+    }
+}
+
 internal void LoadCampaigns(HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, MemoryArena * CampaignArena, CampaignList * Campaigns)
 {
     HPIEntry CampaignDirectory = FindEntryInAllFiles("camps", GlobalArchiveCollection, TempArena);
@@ -185,8 +218,10 @@ extern "C"{
 	CurrentGameState->LoadGameMenu = LoadGUI("LoadGame.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 	CurrentGameState->SkirmishMenu = LoadGUI("Skirmish.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
 	CurrentGameState->OptionsMenu = LoadGUI("startopt.gui", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena , CurrentGameState->PaletteData, &CurrentGameState->LoadedFonts);
+
 	SetupDebugRectBuffer(&CurrentGameState->DebugRectDetails.VertexBuffer);
 	LoadCampaigns(&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena, &CurrentGameState->GameArena, &CurrentGameState->CampaignList);
+	LoadInterfaceTextures(CurrentGameState);
     }
 
     void GameTeardown(Memory * GameMemory);

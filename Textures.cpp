@@ -247,7 +247,6 @@ internal void LoadTexturesFromGafBuffer(u8 * Buffer,TextureContainer * TextureCo
 #include <math.h>
 internal void LoadPalette(GameState * CurrentGameState)
 {
-
     HPIEntry Palette = FindEntryInAllFiles("palettes/PALETTE.PAL",&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
     if(!Palette.Name)
     {
@@ -438,4 +437,15 @@ internal Texture * AddPCXToTextureContainer(TextureContainer * Textures, const c
     }
 
     return 0;
+}
+
+internal void DrawGafTexture(r32 X, r32 Y, const char * Name, TextureContainer * Container, Texture2DShaderDetails * ShaderDetails, s32 Index =0)
+{
+     Texture * Texture = GetTexture(Name, Container);
+     if(Index)
+	 GetTexture(Texture, Index);
+     r32 Width = Texture->Width * Container->TextureWidth;
+     r32 Height = Texture->Height * Container->TextureHeight;
+     DrawTexture2D(Container->Texture, X, Y, Width, Height, {{1,1,1}}, 1.0, ShaderDetails, Texture->U, Texture->V, Texture->Width, Texture->Height);
+
 }
