@@ -499,8 +499,8 @@ internal void LoadCommonUITextures(GameState * CurrentGameState)
 
 internal void RenderTAUIElement(TAUIElement * Element, s32 XOffset, s32 YOffset, Texture2DShaderDetails * ShaderDetails, TextureContainer * Font11, TextureContainer *Font12, TextureContainer * CommonUIElements, DebugRectShaderDetails * DebugRectDetails, TAUIElement * Container = 0)
 {
-    // if(!Element->Visible)
-//	return;
+     if(!Element->Visible)
+	 return;
 
     s32 X= Element->X + XOffset;
     s32 Y = Element->Y + YOffset;
