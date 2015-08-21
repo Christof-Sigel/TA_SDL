@@ -159,12 +159,12 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 	if(Input->KeyIsDown[SDLK_w])
 	{
 	    for(int i=0;i<3;i++)
-		CurrentGameState->CameraTranslation[i]-=DZ[i];
+		CurrentGameState->CameraTranslation[i]+=DY[i];
 	}
 	if(Input->KeyIsDown[SDLK_s])
 	{
 	    for(int i=0;i<3;i++)
-		CurrentGameState->CameraTranslation[i]+=DZ[i];
+		CurrentGameState->CameraTranslation[i]-=DY[i];
 	}
 	if(Input->KeyIsDown[SDLK_a])
 	{
@@ -179,12 +179,12 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 	if(Input->KeyIsDown[SDLK_q])
 	{
 	    for(int i=0;i<3;i++)
-		CurrentGameState->CameraTranslation[i]+=DY[i];
+		CurrentGameState->CameraTranslation[i]-=DZ[i];
 	}
 	if(Input->KeyIsDown[SDLK_e])
 	{
 	    for(int i=0;i<3;i++)
-		CurrentGameState->CameraTranslation[i]-=DY[i];
+		CurrentGameState->CameraTranslation[i]+=DZ[i];
 	}
     }
 
