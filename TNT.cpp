@@ -179,7 +179,7 @@ texture_done:
     return 1;
 }
 
-void UnloadTNT(TAMap * Map)
+internal inline void UnloadTNT(TAMap * Map)
 {
     if(Map && Map->MapVertexBuffer)
     {
