@@ -189,6 +189,7 @@ extern "C"{
 
     void GameSetup(Memory * GameMemory)
     {
+	LoadGLProcs();
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
 	if(!CurrentGameState->IsInitialised)
 	{

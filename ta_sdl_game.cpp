@@ -14,7 +14,7 @@
 #include "windows.h"
 #endif
 
-#include <GL/glew.h>
+#include <SDL2/SDL_opengl.h>
 #include "ta_sdl_game.h"
 #include "platform_code.cpp"
 
@@ -282,8 +282,7 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		break;
 	    case ELEMENT_NAME_START:
 	    {
-		const s32 MAX_STRING = 128;
-		char MapName[MAX_STRING];
+
 		TAUIElement * CoreButton = GetElementByName(ELEMENT_NAME_CORE, &CurrentGameState->CampaignMenu);
 		TAUIElement * CampaignElement = GetElementByName(ELEMENT_NAME_CAMPAIGN, &CurrentGameState->CampaignMenu);
 		TAUIListBox * CampaignListBox = &CampaignElement->ListBox;
@@ -303,28 +302,9 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		{
 		    Campaign = &CurrentGameState->CampaignList.ARMCampaigns[CampaignIndex];
 		}
-		UnloadTNT(&CurrentGameState->Map);
 
-		snprintf(MapName, MAX_STRING, "maps/%s", Campaign->Missions[MissionListBox->SelectedIndex].MissionFile);
-		size_t Len = strlen(MapName);
-		MapName[Len-1] = 't';
-		MapName[Len-2] = 'n';
-		MapName[Len-3] = 't';
-		HPIEntry Map = FindEntryInAllFiles(MapName,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
-		if(Map.Name)
-		{
-		    u8 * temp = PushArray(&CurrentGameState->TempArena,Map.File.FileSize,u8 );
+		LoadMap(&CurrentGameState->Map,Campaign->Missions[MissionListBox->SelectedIndex].MissionFile,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena,CurrentGameState->PaletteData);
 
-		    if(LoadHPIFileEntryData(Map,temp,&CurrentGameState->TempArena))
-		    {
-			LoadTNTFromBuffer(temp,&CurrentGameState->Map,CurrentGameState->PaletteData,&CurrentGameState->TempArena);
-		    }
-		    else
-			LogDebug("failed to load map buffer from hpi");
-		    PopArray(&CurrentGameState->TempArena,temp,Map.File.FileSize,u8 );
-		}
-		else
-		    LogDebug("failed to load map");
 
 	    }
 		CurrentGameState->State = STATE_RUNNING;
@@ -647,6 +627,7 @@ extern "C"
     void GameUpdateAndRender(InputState * Input, Memory * GameMemory);
     void GameUpdateAndRender(InputState * Input, Memory * GameMemory)
     {
+	LoadGLProcs();
 	GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
 	if(!CurrentGameState->IsInitialised)
 	{

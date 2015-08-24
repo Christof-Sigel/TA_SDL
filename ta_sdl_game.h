@@ -58,17 +58,6 @@ const int MAX_SHADER_FILENAME = 50;
 #include "GL.h"
 #include "file_formats.h"
 
-struct Unit
-{
-    UnitScript * Script;
-    ScriptStatePool ScriptPool;
-    char * Name;
-    UnitDetails * Details;
-    UnitSide Side;
-    r32 Health, BuildPercent;
-    s32 PAD;
-};
-
 
 struct InputState
 {

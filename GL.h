@@ -1,4 +1,6 @@
 #include <math.h>
+#include "glimports.cpp"
+#include <gl/Glu.h>
 
 struct Matrix
 {
@@ -9,7 +11,7 @@ struct Matrix
 	for(int i=0;i<4;i++)
 	    Contents[i*4+i]=1;
     }
-    
+
     void SetProjection(float VerticalFieldOfView,float AspectRatio,float NearPlane,float FarPlane)
     {
 	SetIdentity();
@@ -23,15 +25,15 @@ struct Matrix
 	Contents[2*4+3]=-(2*NearPlane*FarPlane)/frustumlength;
 	Contents[3*4+2]=-1;
     }
-    
+
     void SetTranslation(float x, float y, float z)
     {
 	SetIdentity();
 	float pos[]={x,y,z};
 	for(int i=0;i<3;i++)
-	    Contents[i*4+3] = pos[i];   
+	    Contents[i*4+3] = pos[i];
     }
-    
+
     void SetRotation(float x, float y, float z, float rad)
     {
 	SetIdentity();
@@ -42,7 +44,7 @@ struct Matrix
 	float cosine=(float)cos(rad);
 	float sine=(float)sin(rad);
 
-    
+
 	Contents[0]=cosine+vector[0]*vector[0]*(1-cosine);
 	Contents[1]=vector[0]*vector[1]*(1-cosine)-vector[2]*sine;
 	Contents[2]=vector[0]*vector[2]*(1-cosine)+vector[1]*sine;
@@ -50,7 +52,7 @@ struct Matrix
 	Contents[4]=vector[1]*vector[0]*(1-cosine)+vector[2]*sine;
 	Contents[5]=cosine+vector[1]*vector[1]*(1-cosine);
 	Contents[6]=vector[1]*vector[2]*(1-cosine)-vector[0]*sine;
-	
+
 	Contents[8]=vector[2]*vector[0]*(1-cosine)-vector[1]*sine;
 	Contents[9]=vector[2]*vector[1]*(1-cosine)+vector[0]*sine;
 	Contents[10]=cosine+vector[2]*vector[2]*(1-cosine);
@@ -94,14 +96,14 @@ struct Matrix
 	temp.SetRotation(x,y,z,rad);
 	*this = temp* (*this);
     }
-    
+
     void Move(float dx,float dy, float dz)
     {
 	float pos[]={dx,dy,dz};
 	for(int i=0;i<3;i++)
 	    Contents[i*4+3]+=pos[i];
     }
-    
+
     Matrix operator* (const Matrix & other)
     {
 	Matrix ret;
@@ -114,7 +116,7 @@ struct Matrix
 	    }
 	return ret;
     }
-    
+
     Matrix()
     {
 	SetIdentity();
@@ -125,13 +127,13 @@ struct Matrix
 	for(int i=0;i<16;i++)
 	    Contents[i]=other.Contents[i];
     }
-    
+
     Matrix(const GLfloat array[])
     {
 	for(int i=0;i<16;i++)
 	    Contents[i]=array[i];
     }
-    
+
     Matrix & operator= (const Matrix & other)
     {
 	if(this != &other)

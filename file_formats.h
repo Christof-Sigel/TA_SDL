@@ -610,12 +610,100 @@ struct ScriptStatePool
     s32 PAD;
 };
 
+//Units
+enum UnitCommandType
+{
+    UNIT_COMMAND_MOVE,
+    UNIT_COMMAND_PATROL,
+    UNIT_COMMAND_ATTACK,
+    UNIT_COMMAND_WAIT,
+    UNIT_COMMAND_BUILD,
+    UNIT_COMMAND_WAIT_ATTACKED
+};
+
+struct UnitType
+{
+    Object3d * Model;
+    UnitScript * Script;
+    UnitDetails * Details;
+};
+
+
+struct PatrolArguments
+{
+    s32 X,Y,NextOffset;
+};
+
+struct MoveArguments
+{
+    s32 X,Y;
+};
+
+const s32 MAX_IDENT=16;
+struct AttackArguments
+{
+    char Name[MAX_IDENT];
+};
+
+struct WaitArguments
+{
+    r32 Seconds;
+};
+
+struct BuildArguments
+{
+    UnitType * Type;
+    union
+    {
+	struct
+	{
+	s32 X,Y;
+	};
+	s32 Number;
+    };
+};
+
+struct WaitAttackedArguments
+{
+    char Name[MAX_IDENT];
+};
+
+struct UnitCommand
+{
+    union
+    {
+	PatrolArguments PatrolArguments;
+	MoveArguments MoveArguments;
+	AttackArguments AttackArguments;
+	WaitArguments WaitArguments;
+	WaitAttackedArguments WaitAttackedArguments;
+	BuildArguments BuildArguments;
+    };
+    UnitCommandType Command;
+};
+
+
+const s32 MAX_UNIT_COMMANDS = 32;
+struct Unit
+{
+    UnitType * Type;
+    ScriptStatePool ScriptPool;
+    UnitSide Side;
+    r32 Health, BuildPercent;
+    s32 NumberOfCommands;
+    UnitCommand Commands[MAX_UNIT_COMMANDS];
+    char Name[MAX_IDENT];
+};
+
 //TNT
+
+const s32 MAX_INITIAL_UNITS = 128;
 struct TAMap
 {
     GLuint MapVertexBuffer, MapTexture, MinimapTexture,VertexBuffer;
     int NumTriangles;
     s32 MinimapHeight,MinimapWidth;
+    s32 TidalStrength, SolarStrength, MinWindSpeed, MaxWindSpeed, Gravity, WaterDamage;
 };
 
 

@@ -47,13 +47,6 @@ internal b32 SetupSDLWindow(GameState * CurrentGameState)
 
     GLint GLMajorVer, GLMinorVer;
 
-    GLenum ErrorValue = glGetError();
-    if(ErrorValue!=GL_NO_ERROR)
-    {
-	LogError("failed before create context : %s", gluErrorString(ErrorValue));
-    }
-
-
     SDL_GLContext gContext = SDL_GL_CreateContext( CurrentGameState->MainSDLWindow);
     SDL_GL_MakeCurrent (CurrentGameState->MainSDLWindow,gContext);
     if( SDL_GL_SetSwapInterval( 1 ) < 0 )
@@ -63,23 +56,14 @@ internal b32 SetupSDLWindow(GameState * CurrentGameState)
 
     glGetIntegerv(GL_MAJOR_VERSION, &GLMajorVer);
     glGetIntegerv(GL_MINOR_VERSION, &GLMinorVer);
-    LogDebug("OpenGL Version %d.%d",GLMajorVer,GLMinorVer);
 
 
-    ErrorValue = glGetError();
+    GLenum ErrorValue = glGetError();
     if(ErrorValue!=GL_NO_ERROR)
     {
 	LogError("failed before glewInit : %s",gluErrorString(ErrorValue));
     }
 
-
-    glewExperimental = GL_TRUE;
-    GLenum glewError = glewInit();
-    if( glewError != GLEW_OK )
-    {
-	LogError("Error initializing GLEW! %s", glewGetErrorString( glewError ));
-	return 0;
-    }
 
 
     //as we need to use glewExperimental - known issue (it segfaults otherwise!) - we encounter

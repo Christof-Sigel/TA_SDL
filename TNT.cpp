@@ -51,7 +51,6 @@ internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, Mem
     {
 	return 0;
     }
-    LogDebug("%dx%d",Header->Width,Header->Height);
     u16  * TileIndices = (u16 *)(Buffer + Header->MapDataOffset);//these map to 32x32 tiles NOT 16x16 half tiles
     u32 NumberOfHalfTiles = Header->Width*Header->Height;
     FILE_TNTAttribute * Attributes=(FILE_TNTAttribute *)(Buffer + Header->MapAttributeOffset);//half tiles
@@ -222,4 +221,35 @@ internal inline void UnloadTNT(TAMap * Map)
     //glDeleteBuffers(1, &Map->MapVertexBuffer);
     //glDeleteTextures(1,&Map->MapTexture);
     }
+}
+
+
+internal void LoadMap(TAMap * Map, const char * OtaName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, u8* PaletteData)
+{
+    const s32 MAX_STRING = 128;
+    char MapName[MAX_STRING];
+
+    UnloadTNT(Map);
+
+
+    snprintf(MapName, MAX_STRING, "maps/%s", OtaName);
+    size_t Len = strlen(MapName);
+    MapName[Len-1] = 't';
+    MapName[Len-2] = 'n';
+    MapName[Len-3] = 't';
+    HPIEntry TNT = FindEntryInAllFiles(MapName,GlobalArchiveCollection, TempArena);
+    if(TNT.Name)
+    {
+	u8 * temp = PushArray(TempArena,TNT.File.FileSize,u8 );
+
+	if(LoadHPIFileEntryData(TNT,temp,TempArena))
+	{
+	    LoadTNTFromBuffer(temp,Map,PaletteData,TempArena);
+	}
+	else
+	    LogDebug("failed to load map buffer from hpi");
+	PopArray(TempArena,temp,TNT.File.FileSize,u8 );
+    }
+    else
+	LogDebug("failed to load map");
 }

@@ -1,8 +1,9 @@
-#include <GL/glew.h>
 #pragma warning(push)
 #pragma warning(disable: 4668 4820)
+#include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_loadso.h>
+
 #pragma warning(pop)
 
 #include "ta_sdl_platform.h"
@@ -36,7 +37,6 @@ internal u64  GameLibraryObjectModifyTime=0;
 
 internal void LoadGameLibrary()
 {
-
     GameLibraryObjectModifyTime = GetFileModifiedTime(GAME_LIBRARY_OBJECT);
 #ifdef __WINDOWS__
     CopyFile(GAME_LIBRARY_OBJECT, TEMP_GAME_LIBRARY_OBJECT, FALSE);
@@ -123,6 +123,8 @@ int main(int argc, char * argv[])
 
     if(!SetupSDLWindow(CurrentGameState))
 	return 1;
+
+    LoadGLProcs();
 
     GameSetup(&GameMemory);
     SDL_Event e;
