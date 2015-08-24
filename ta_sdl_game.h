@@ -106,7 +106,6 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 
 #define VERBOSE_ALLOCATIONS 0
 
-#if VERBOSE_ALLOCATIONS
 #define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type),__func__,__LINE__,__FILE__)
 #define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (Count)*sizeof(type),__func__,__LINE__,__FILE__)
 #define PushSize(Arena, Size) PushSize_(Arena, Size,__func__,__LINE__,__FILE__)
@@ -114,13 +113,19 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 #define PushSubArena(Arena, Size) PushSubArena_(Arena,Size,__func__,__LINE__,__FILE__)
 #define PopSubArena(Arena, SubArena) PopSubArena_(Arena, SubArena,__func__,__LINE__,__FILE__)
 
+
+#pragma warning(push)
+#pragma warning(disable: 4100)
 internal inline void *
     PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, const char * file)
 {
+#if VERBOSE_ALLOCATIONS
+    LogDebug("Allocating %d (on %d) from %s in %s:%d",Size,Arena,caller, file,line);
+#endif
     if(Size ==0)
 	return 0;
+
     Assert((Arena->Used + Size) <= Arena->Size);
-    printf("Allocating %d from %s in %s:%d\n",Size,caller, file,line);
     void *Result = Arena->Base + Arena->Used;
     Arena->Used += Size;
 
@@ -129,65 +134,30 @@ internal inline void *
 
 internal inline MemoryArena * PushSubArena_(MemoryArena * Arena, memory_index Size, const char * caller, int line, const char * file)
 {
-    MemoryArena * Result = (MemoryArena*)PushSize_(Arena, Size+sizeof(MemoryArena),  caller,  line, file);
-    InitializeArena(Result, Size, Result+sizeof(MemoryArena));
+    MemoryArena * Result = (MemoryArena*)PushSize_(Arena, Size+sizeof(MemoryArena), caller, line, file);
+    InitializeArena(Result, Size, ((u8*)Result)+sizeof(MemoryArena));
     return Result;
 }
-
 
 internal inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size, const char * caller, int line, const char * file)
 {
-    printf("Popping %d from %s in %s:%d\n",Size,caller, file,line);
-    Assert(((u64 )Memory + Size == Arena->Used + (us64 )Arena->Base);
-    Arena->Used -=Size;
-}
-
-internal inline void PopSubArena_(MemoryArena * Arena, MemoryArena * SubArena ,const char * caller, int line, const char * file)
-{
-    PopSize_(Arena, SubArena, SubArena->Size+sizeof(MemoryArena), caller,  line, file);
-}
-
-
-#else
-
-#define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type))
-#define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (u64)(Count)*sizeof(type))
-#define PushSize(Arena, Size) PushSize_(Arena, Size)
-#define PopArray(Arena, Memory, Count, type) PopSize_(Arena,Memory,(u64)(Count)*sizeof(type))
-
-internal inline void *
-PushSize_(MemoryArena *Arena, memory_index Size)
-{
-    if(Size ==0)
-	return 0;
-    Assert((Arena->Used + Size) <= Arena->Size);
-    void *Result = Arena->Base + Arena->Used;
-    Arena->Used += Size;
-
-    return(Result);
-}
-
-internal inline MemoryArena * PushSubArena(MemoryArena * Arena, memory_index Size)
-{
-    MemoryArena * Result = (MemoryArena*)PushSize_(Arena, Size+sizeof(MemoryArena));
-    InitializeArena(Result, Size, Result+sizeof(MemoryArena));
-    return Result;
-}
-
-internal inline void PopSize_(MemoryArena * Arena, void * Memory, memory_index Size)
-{
+#if VERBOSE_ALLOCATIONS
+    LogDebug("Popping %d (on %d) from %s in %s:%d",Size,Arena, caller, file,line);
+#endif
+    if(Size == 0)
+	LogError("Popping memory size 0");
     Assert((u64 )Memory + Size == Arena->Used + (u64 )Arena->Base);
 
     Arena->Used -=Size;
 }
 
-internal inline void PopSubArena(MemoryArena * Arena, MemoryArena * SubArena)
+internal inline void PopSubArena_(MemoryArena * Arena, MemoryArena * SubArena ,const char * caller, int line, const char * file)
 {
-    PopSize_(Arena, SubArena, SubArena->Size+sizeof(MemoryArena));
+    PopSize_(Arena, SubArena, SubArena->Size+sizeof(MemoryArena),caller, line, file);
 }
 
+#pragma warning(pop)
 
-#endif
 
 
 struct UnitShaderDetails
