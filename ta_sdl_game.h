@@ -3,7 +3,7 @@
 // _snprintf return value for buffer size too small IS NOT WHAT WE EXPECT!!!
 #ifdef _MSC_VER
 
-#define Assert(Expression) if(!(Expression)) {__debugbreak();}
+#define Assert(Expression) if(!(Expression)) {*(s32*)0 = 0;}
 #else
 #define Assert(Expression) if(!(Expression)) {__builtin_trap();}
 #endif
