@@ -310,7 +310,7 @@ internal void DrawFNTText(r32 X, r32 Y, const char * Text, FNTFont * Font, Textu
     {
     FNTGlyph * Char = &Font->Characters[*c];
 
-    DrawTexture2D(Font->Texture, PrintX, PrintY , Char->Width, Font->Height , Color, Alpha, ShaderDetails, Char->U, 0, Char->TextureWidth, 1);
+    DrawTexture2D(Font->Texture, PrintX, PrintY , (r32)Char->Width, (r32)Font->Height , Color, Alpha, ShaderDetails, Char->U, 0, Char->TextureWidth, 1);
     PrintX+= Char->Width;
     if(*c =='\n')
     {
