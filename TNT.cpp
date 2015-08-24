@@ -224,13 +224,12 @@ internal inline void UnloadTNT(TAMap * Map)
 }
 
 
-internal void LoadMap(TAMap * Map, const char * OtaName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, u8* PaletteData)
+internal void LoadCampaignMap(TAMap * Map, const char * OtaName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, u8* PaletteData)
 {
     const s32 MAX_STRING = 128;
     char MapName[MAX_STRING];
 
     UnloadTNT(Map);
-
 
     snprintf(MapName, MAX_STRING, "maps/%s", OtaName);
     size_t Len = strlen(MapName);

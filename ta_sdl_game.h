@@ -236,6 +236,7 @@ struct GameState
 
     int ScreenWidth,ScreenHeight;
     TAMap Map;
+    UnitTypeList UnitTypeList;
 
 
     //Test data

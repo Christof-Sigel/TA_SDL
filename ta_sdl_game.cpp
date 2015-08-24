@@ -303,7 +303,8 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		    Campaign = &CurrentGameState->CampaignList.ARMCampaigns[CampaignIndex];
 		}
 
-		LoadMap(&CurrentGameState->Map,Campaign->Missions[MissionListBox->SelectedIndex].MissionFile,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena,CurrentGameState->PaletteData);
+		LoadAllUnitTypes(&CurrentGameState->UnitTypeList, &CurrentGameState->GameArena,&CurrentGameState->TempArena,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->UnitTextures);
+		LoadCampaignMap(&CurrentGameState->Map,Campaign->Missions[MissionListBox->SelectedIndex].MissionFile,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena,CurrentGameState->PaletteData);
 
 
 	    }

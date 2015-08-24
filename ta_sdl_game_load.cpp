@@ -25,7 +25,6 @@ CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation
 
     }
 
-
     CurrentGameState->MapShader=LoadShaderProgram("shaders/map.vs.glsl","shaders/map.fs.glsl",&CurrentGameState->ShaderGroup);
 
     if(CurrentGameState->MapShader->ProgramID)

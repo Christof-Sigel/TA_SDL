@@ -623,11 +623,17 @@ enum UnitCommandType
 
 struct UnitType
 {
-    Object3d * Model;
-    UnitScript * Script;
-    UnitDetails * Details;
+    Object3d Model;
+    UnitScript Script;
+    UnitDetails Details;
 };
 
+const s32 MAX_UNIT_TYPES = 1024;
+struct UnitTypeList
+{
+    UnitType Types[MAX_UNIT_TYPES];
+    s32 NumberOfUnitTypes;
+};
 
 struct PatrolArguments
 {
