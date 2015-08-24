@@ -131,10 +131,11 @@ internal void LoadCampaigns(HPIFileCollection * GlobalArchiveCollection, MemoryA
 	    if(!CampaignDirectory.Directory.Entries[i].IsDirectory)
 	    {
 		HPIEntry * Entry = &CampaignDirectory.Directory.Entries[i];
-		char * CampaignFileBuffer = PushArray(TempArena, Entry->File.FileSize, char);
-		if(LoadHPIFileEntryData(*Entry, (u8*)CampaignFileBuffer, TempArena))
+		char * CampaignFileBufferData = PushArray(TempArena, Entry->File.FileSize, char);
+		if(LoadHPIFileEntryData(*Entry, (u8*)CampaignFileBufferData, TempArena))
 		{
 		    MemoryArena * Arena = PushSubArena(TempArena, 64*1024);
+		    char * CampaignFileBuffer = CampaignFileBufferData;
 		    TDFElement * First = LoadTDFElementsFromBuffer(&CampaignFileBuffer, CampaignFileBuffer + Entry->File.FileSize,Arena);
 		    char * Side = GetStringValue(First,"campaignside");
 		    Campaign * Campaign;
@@ -167,18 +168,16 @@ internal void LoadCampaigns(HPIFileCollection * GlobalArchiveCollection, MemoryA
 			Campaign->Missions[j].MissionName = PushArray(CampaignArena, NameLen, char);
 			memcpy(Campaign->Missions[j].MissionName, MissionName, NameLen);
 		    }
-
-
 		    PopSubArena(TempArena, Arena);
 		}
-//		if(CampaignFileBuffer)
-//		PopArray(TempArena, CampaignFileBuffer, Entry->File.FileSize, char);
+		if(CampaignFileBufferData)
+		    PopArray(TempArena, CampaignFileBufferData, Entry->File.FileSize, char);
 	    }
 	}
     }
 
 
-    //UnloadCompositeEntry(&CampaignDirectory, TempArena);
+    UnloadCompositeEntry(&CampaignDirectory, TempArena);
 }
 
 
