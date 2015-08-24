@@ -579,8 +579,10 @@ internal void SetupGameState( GameState * CurrentGameState)
 //	CurrentGameState->CameraXRotation += 0.1f;
 
     CurrentGameState->CameraTranslation[0] =4.0f;
-    CurrentGameState->CameraTranslation[1] =40.0f;
     CurrentGameState->CameraTranslation[2] =50.0f;
+
+
+    CurrentGameState->CameraTranslation[1] = 280.0f;
 
 
     //GL Setup:
@@ -664,8 +666,9 @@ extern "C"
 	switch(CurrentGameState->State)
 	{
 	case STATE_RUNNING:
-	    CurrentGameState->CameraXRotation = -0.45f * PI;
+	    CurrentGameState->CameraXRotation = -0.5f * PI;
 	    CurrentGameState->CameraYRotation = 0.0;
+
 	    CurrentGameState->ViewMatrix = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
 	    //TODO(Christof): Update game state
 	[[clang::fallthrough]];
@@ -674,7 +677,7 @@ extern "C"
 	    glUseProgram(CurrentGameState->MapShader->ProgramID);
 	    CurrentGameState->ProjectionMatrix.Upload(GetUniformLocation(CurrentGameState->MapShader,"Projection"));
 	    CurrentGameState->ViewMatrix.Upload(GetUniformLocation(CurrentGameState->MapShader,"View"));
-	    CurrentGameState->Map.Render(CurrentGameState->MapShader);
+	    RenderMap(&CurrentGameState->Map,CurrentGameState->MapShader);
 
 	}
 	break;
@@ -697,11 +700,11 @@ extern "C"
 	{
 	    r32 X = 128;
 	    s32 SideOffset = 0;
-	    DrawDebugRect(&CurrentGameState->DebugRectDetails, 0 , 0, 128, CurrentGameState->ScreenHeight, {{0.0,0.0,0}} , 2.0f, 1.0f, {{0.0,0.0,0}} , 1.0f );
+	    DrawDebugRect(&CurrentGameState->DebugRectDetails, 0 , 0, 128, (r32)CurrentGameState->ScreenHeight, {{0.0,0.0,0}} , 2.0f, 1.0f, {{0.0,0.0,0}} , 1.0f );
 	    while (X< CurrentGameState->ScreenWidth)
 	    {
 	    DrawGafTexture(X,0,"panelbot", &CurrentGameState->ArmInterfaceTextures, &CurrentGameState->DrawTextureShaderDetails);
-	    DrawGafTexture(X,CurrentGameState->ScreenHeight - 33,"panelbot", &CurrentGameState->ArmInterfaceTextures, &CurrentGameState->DrawTextureShaderDetails);
+	    DrawGafTexture(X,(r32)CurrentGameState->ScreenHeight - 33,"panelbot", &CurrentGameState->ArmInterfaceTextures, &CurrentGameState->DrawTextureShaderDetails);
 	    X+= 513.0f;
 	    }
 	    DrawGafTexture(128,0,"paneltop", &CurrentGameState->ArmInterfaceTextures, &CurrentGameState->DrawTextureShaderDetails);
@@ -747,6 +750,7 @@ snprintf(Temp, MAX_STRING, "%.0f",EnergyProd);
 	    DrawFNTText( 608,16, Temp, SmallFont, &CurrentGameState->DrawTextureShaderDetails,  {{255/255.0f,71/255.0f,0}});
 
 	    DrawDebugRect(&CurrentGameState->DebugRectDetails, 470 , 12, 125* ((r32)EnergyCurrent/EnergyMax), 2, {{1,1,0}} , 2.0f );
+	    DrawMiniMap(&CurrentGameState->Map, 0,0,128,128, {{1,1,1}}, 0.8f, &CurrentGameState->DrawTextureShaderDetails);
 	}
 	break;
 	case STATE_MAIN_MENU:

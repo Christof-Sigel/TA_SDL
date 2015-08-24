@@ -615,18 +615,7 @@ struct TAMap
 {
     GLuint MapVertexBuffer, MapTexture, MinimapTexture,VertexBuffer;
     int NumTriangles;
-    void Render(ShaderProgram * MapShader)
-    {
-	glUseProgram(MapShader->ProgramID);
-	glBindTexture(GL_TEXTURE_2D,MapTexture);
-	glBindVertexArray(MapVertexBuffer);
-	glDrawArrays(GL_TRIANGLES, 0, NumTriangles*3);
-    }
-
-    void RenderMiniMap()
-    {
-	//TODO(Christof): Render into TAUI elements
-    }
+    s32 MinimapHeight,MinimapWidth;
 };
 
 

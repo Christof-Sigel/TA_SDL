@@ -30,6 +30,20 @@ internal inline float GetHeightFor(u32 X, u32 Y, FILE_TNTAttribute * Attributes,
     return result;
 }
 
+void RenderMap(TAMap * Map, ShaderProgram * MapShader)
+{
+    glUseProgram(MapShader->ProgramID);
+    glBindTexture(GL_TEXTURE_2D,Map->MapTexture);
+    glBindVertexArray(Map->MapVertexBuffer);
+    glDrawArrays(GL_TRIANGLES, 0, Map->NumTriangles*3);
+}
+
+void DrawMiniMap(TAMap * Map, r32 X, r32 Y, r32 Width, r32 Height, Color Color, r32 Alpha, Texture2DShaderDetails * ShaderDetails)
+{
+    DrawTexture2D(Map->MinimapTexture, X, Y, Width, Height, Color, Alpha,  ShaderDetails,0,0, 1,1);
+}
+
+
 internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, MemoryArena * TempArena)
 {
     FILE_TNTHeader * Header = (FILE_TNTHeader *)Buffer;
@@ -44,10 +58,32 @@ internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, Mem
     FILE_TNTTile * Tiles=(FILE_TNTTile *)(Buffer + Header->TileGraphicsOffset);
     //TODO(Christof): Figure out how to deal with the features (upright billboard perhaps?) FILE_TNTFeature * Features=(FILE_TNTFeature*)(Buffer + Header->FeaturesOffset);
 
-    u32 MinimapWidth, MinimapHeight;
-    MinimapWidth = *(u32 *)(Buffer + Header->MiniMapOffset);
-    MinimapHeight = *(u32 *)(Buffer + Header->MiniMapOffset+4);
-    //Not using Minimap Data at the moment - silence some compiler warnings u8 * MinimapData = (u8 *)(Buffer + Header->MiniMapOffset + 8);
+
+    Result->MinimapWidth = (s32)*(u32 *)(Buffer + Header->MiniMapOffset);
+    Result->MinimapHeight = (s32)*(u32 *)(Buffer + Header->MiniMapOffset+4);
+
+
+    u8 * MinimapData = (u8 *)(Buffer + Header->MiniMapOffset + 8);
+    u8 * MinimapTexture = PushArray(TempArena, Result->MinimapWidth *  Result->MinimapHeight * 4, u8);
+    for(s32 y=0;y < Result->MinimapHeight;y++)
+    {
+	for(s32 x = 0;x<Result->MinimapWidth;x++)
+	{
+	    MinimapTexture[(x+y*Result->MinimapWidth)*4+0]=PaletteData[(MinimapData[x+y*Result->MinimapWidth])*4+0];
+	    MinimapTexture[(x+y*Result->MinimapWidth)*4+1]=PaletteData[(MinimapData[x+y*Result->MinimapWidth])*4+1];
+	    MinimapTexture[(x+y*Result->MinimapWidth)*4+2]=PaletteData[(MinimapData[x+y*Result->MinimapWidth])*4+2];
+	    MinimapTexture[(x+y*Result->MinimapWidth)*4+3]=255;
+	}
+    }
+
+    if(!Result->MinimapTexture)
+	glGenTextures(1,&Result->MinimapTexture);
+    glBindTexture(GL_TEXTURE_2D,Result->MinimapTexture);
+    glEnable(GL_TEXTURE_2D);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,Result->MinimapWidth, Result->MinimapHeight,0, GL_RGBA, GL_UNSIGNED_BYTE, MinimapTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    PopArray(TempArena, MinimapTexture, Result->MinimapHeight* Result->MinimapWidth * 4, u8);
 
     //TODO(Christof): TA Apparently uses 0xDD to denote transparency, need to deal with this here
 
