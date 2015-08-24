@@ -633,6 +633,7 @@ struct UnitTypeList
 {
     UnitType Types[MAX_UNIT_TYPES];
     s32 NumberOfUnitTypes;
+    s32 PAD;
 };
 
 struct PatrolArguments
@@ -656,15 +657,17 @@ struct WaitArguments
     r32 Seconds;
 };
 
+struct Position
+{
+    s32 X,Y;
+};
+
 struct BuildArguments
 {
     UnitType * Type;
     union
     {
-	struct
-	{
-	s32 X,Y;
-	};
+	Position Position;
 	s32 Number;
     };
 };
@@ -686,6 +689,7 @@ struct UnitCommand
 	BuildArguments BuildArguments;
     };
     UnitCommandType Command;
+    s32 PAD;
 };
 
 

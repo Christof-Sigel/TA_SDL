@@ -96,9 +96,9 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 #define VERBOSE_ALLOCATIONS 0
 
 #define PushStruct(Arena, type) (type *)PushSize_(Arena, sizeof(type),__func__,__LINE__,__FILE__)
-#define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (Count)*sizeof(type),__func__,__LINE__,__FILE__)
+#define PushArray(Arena, Count, type) (type *)PushSize_(Arena, (u64)(Count)*sizeof(type),__func__,__LINE__,__FILE__)
 #define PushSize(Arena, Size) PushSize_(Arena, Size,__func__,__LINE__,__FILE__)
-#define PopArray(Arena, Memory, Count, type) PopSize_(Arena,Memory,(Count)*sizeof(type),__func__,__LINE__,__FILE__)
+#define PopArray(Arena, Memory, Count, type) PopSize_(Arena,Memory,(u64)(Count)*sizeof(type),__func__,__LINE__,__FILE__)
 #define PushSubArena(Arena, Size) PushSubArena_(Arena,Size,__func__,__LINE__,__FILE__)
 #define PopSubArena(Arena, SubArena) PopSubArena_(Arena, SubArena,__func__,__LINE__,__FILE__)
 

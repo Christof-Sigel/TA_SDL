@@ -30,7 +30,7 @@ internal inline float GetHeightFor(u32 X, u32 Y, FILE_TNTAttribute * Attributes,
     return result;
 }
 
-void RenderMap(TAMap * Map, ShaderProgram * MapShader)
+internal void RenderMap(TAMap * Map, ShaderProgram * MapShader)
 {
     glUseProgram(MapShader->ProgramID);
     glBindTexture(GL_TEXTURE_2D,Map->MapTexture);
@@ -38,7 +38,7 @@ void RenderMap(TAMap * Map, ShaderProgram * MapShader)
     glDrawArrays(GL_TRIANGLES, 0, Map->NumTriangles*3);
 }
 
-void DrawMiniMap(TAMap * Map, r32 X, r32 Y, r32 Width, r32 Height, Color Color, r32 Alpha, Texture2DShaderDetails * ShaderDetails)
+internal void DrawMiniMap(TAMap * Map, r32 X, r32 Y, r32 Width, r32 Height, Color Color, r32 Alpha, Texture2DShaderDetails * ShaderDetails)
 {
     DrawTexture2D(Map->MinimapTexture, X, Y, Width, Height, Color, Alpha,  ShaderDetails,0,0, 1,1);
 }
