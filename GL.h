@@ -1,6 +1,8 @@
 #include <math.h>
+#include <GL/glx.h>
 #include "glimports.cpp"
-#include <gl/Glu.h>
+
+#include <GL/glu.h>
 
 struct Matrix
 {

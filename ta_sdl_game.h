@@ -105,6 +105,8 @@ InitializeArena(MemoryArena *Arena, memory_index Size, void *Base)
 
 #pragma warning(push)
 #pragma warning(disable: 4100)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 internal inline void *
     PushSize_(MemoryArena *Arena, memory_index Size, const char * caller, int line, const char * file)
 {
@@ -146,7 +148,7 @@ internal inline void PopSubArena_(MemoryArena * Arena, MemoryArena * SubArena ,c
 }
 
 #pragma warning(pop)
-
+#pragma clang diagnostic pop
 
 
 struct UnitShaderDetails

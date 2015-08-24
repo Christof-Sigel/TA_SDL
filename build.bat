@@ -1,5 +1,5 @@
 @echo off
-python glimports.py
+python glimports.py wglGetProcAddress
 
 REM TODO(Christof): enable warning 4505 when we are using the unit stuff again so we don't miss unreferenced functions
 REM maybe also 4710 (function not inlined)
