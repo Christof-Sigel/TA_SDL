@@ -61,8 +61,68 @@ internal UnitType * GetUnitType(const char * Name, UnitTypeList * UnitTypeList)
 {
     for(s32 i=0;i<UnitTypeList->NumberOfUnitTypes;i++)
     {
-	if(CaseInsensitiveMatch(Name, UnitTypeList->Types[i].Details.GetString("UnitName")))
+	char * UnitType = UnitTypeList->Types[i].Details.GetString("UnitName");
+	if(CaseInsensitiveMatch(Name, UnitType))
 	    return &UnitTypeList->Types[i];
     }
     return 0;
+}
+
+
+
+internal Unit * CreateNewUnit(const char * UnitTypeName, UnitTypeList * UnitTypeList, MemoryArena * UnitArena, Unit * UnitList, s32 * NumberOfUnits, TAMap * Map, r32 X, r32 Y)
+{
+     s32 MapX = X/16;
+    s32 MapY = Y/16;
+    X = X /16*GL_UNIT_PER_MAP_TILE;
+    Y = Y /16*GL_UNIT_PER_MAP_TILE;
+
+    Assert(*NumberOfUnits < MAX_TOTAL_UNITS);
+    UnitType * Type = GetUnitType(UnitTypeName, UnitTypeList);
+    Unit * Result = &UnitList[(*NumberOfUnits)++];
+    *Result = {};
+    Result->X = X;
+    Result->Y = Y;
+
+    if(MapX >= Map->Width)
+	MapX = Map->Width -1;
+    if(MapX <0)
+	MapX = 0;
+    if(MapY < 0)
+	MapY =0;
+    if(MapY >= Map->Height)
+	MapY = Map->Height -1;
+    Result->Z = Map->HeightMap[MapX + MapY*Map->Width];
+    Result->Type = Type;
+    InitTransformationDetails(&Type->Model, &Result->TransformationDetails, UnitArena);
+    StartNewEntryPoint(&Result->ScriptPool, &Type->Script, "Create", 0,0, &Result->TransformationDetails);
+    return Result;
+}
+
+
+internal void UpdateAndRenderUnit(Unit * Unit, b32 Animate, UnitShaderDetails * UnitShaderDetails, u8* PaletteData, TextureContainer * UnitTextures, MemoryArena * TempArena, GLuint DebugAxisBuffer)
+{
+    for(int i=0;i<Unit->ScriptPool.NumberOfScripts;i++)
+    {
+	RunScript(&Unit->Type->Script, &Unit->ScriptPool.Scripts[i], &Unit->Type->Model, &Unit->ScriptPool);
+    }
+    CleanUpScriptPool(&Unit->ScriptPool);
+
+    UpdateTransformationDetails(&Unit->Type->Model,&Unit->TransformationDetails,1.0f/60.0f, Animate);
+
+    Matrix ModelMatrix;
+
+
+//    ModelMatrix.SetTranslation(Unit->X,44.5f,Unit->Y);
+
+    r32 XRot = -0.15*PI;
+    //if(Unit->Type->Details.GetInt("Upright") != 1)
+	XRot =0;
+    ModelMatrix.Rotate(0,1,0, Unit->Rotation[1]);//Unit->Rotation[1]);
+    ModelMatrix.Rotate(1,0,0,  Unit->Rotation[0]+XRot);
+    ModelMatrix.Rotate(0,0,1,  Unit->Rotation[2]);
+
+    ModelMatrix.Move(Unit->X,Unit->Z,Unit->Y );
+    RenderObject3d(&Unit->Type->Model,&Unit->TransformationDetails,UnitShaderDetails->ModelMatrixLocation,PaletteData,DebugAxisBuffer, Unit->Side, UnitTextures,TempArena,Matrix(),ModelMatrix);
+
 }

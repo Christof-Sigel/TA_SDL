@@ -56,7 +56,6 @@ internal void DisplayMissions(TAUIElement * Root, CampaignList * Campaigns, Memo
     {
 	MissionListBox->ItemStrings[i] = Campaign->Missions[i].MissionName;
     }
-
 }
 
 internal void DisplayCampaigns(TAUIElement * Root, CampaignList * Campaigns, MemoryArena * TempArena)
@@ -302,11 +301,12 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		{
 		    Campaign = &CurrentGameState->CampaignList.ARMCampaigns[CampaignIndex];
 		}
-
+		CurrentGameState->NumberOfUnits=0;
 		LoadAllUnitTypes(&CurrentGameState->UnitTypeList, &CurrentGameState->GameArena,&CurrentGameState->TempArena,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->UnitTextures);
-		LoadCampaignMap(&CurrentGameState->Map,Campaign->Missions[MissionListBox->SelectedIndex].MissionFile,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena,CurrentGameState->PaletteData);
+		Position StartingLoc = LoadCampaignMap(&CurrentGameState->Map,Campaign->Missions[MissionListBox->SelectedIndex].MissionFile,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena,CurrentGameState->PaletteData, &CurrentGameState->GameArena,CurrentGameState->UnitList, & CurrentGameState->NumberOfUnits, &CurrentGameState->UnitTypeList);
 
-
+		CurrentGameState->CameraTranslation[0] = StartingLoc.X;
+		CurrentGameState->CameraTranslation[2] = StartingLoc.Y;
 	    }
 		CurrentGameState->State = STATE_RUNNING;
 		break;
@@ -637,22 +637,50 @@ extern "C"
 
 	HandleInput(Input,CurrentGameState);
 	glEnable(GL_CULL_FACE);
-	//glDisable(GL_CULL_FACE);
+//	glDisable(GL_CULL_FACE);
 //	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
-
+	b32 Animate = CurrentGameState->NumberOfFrames%10==0;
 	switch(CurrentGameState->State)
 	{
 	case STATE_RUNNING:
-	    CurrentGameState->CameraXRotation = -0.5f * PI;
-	    CurrentGameState->CameraYRotation = 0.0;
+	{
+	    //CurrentGameState->CameraXRotation = -0.5f * PI;
+	    //CurrentGameState->CameraYRotation = 0.0;
+	    if(CurrentGameState->CameraTranslation[1] <0)
+		CurrentGameState->CameraTranslation[1] =0;
 
 	    CurrentGameState->ViewMatrix = FPSViewMatrix(CurrentGameState->CameraTranslation, CurrentGameState->CameraXRotation, CurrentGameState->CameraYRotation);
+	    glUseProgram(CurrentGameState->UnitShaderDetails.Shader->ProgramID);
+	    glBindTexture(GL_TEXTURE_2D,CurrentGameState->UnitTextures.Texture);
+	    CurrentGameState->ViewMatrix.Upload(CurrentGameState->UnitShaderDetails.ViewMatrixLocation);
+	    CurrentGameState->ProjectionMatrix.Upload(CurrentGameState->UnitShaderDetails.ProjectionMatrixLocation);
 	    //TODO(Christof): Update game state
+	    #if 0
+	    Matrix ModelMatrix;
+	    for(s32 x=0;x<CurrentGameState->Map.Width;x+=2)
+	    {
+		for(s32 y=0;y<CurrentGameState->Map.Height;y+=2)
+		{
+		    ModelMatrix.SetTranslation(x*GL_UNIT_PER_MAP_TILE,CurrentGameState->Map.HeightMap[x+y*CurrentGameState->Map.Width],y*GL_UNIT_PER_MAP_TILE);
+		    ModelMatrix.Upload(CurrentGameState->UnitShaderDetails.ModelMatrixLocation);
+		    //Debug Axis rendering
+		    glBindVertexArray(CurrentGameState->DebugAxisBuffer);
+		    glDrawArrays(GL_LINES, 0, 3*2);
+		}
+	    }
+	    #endif
+
+
+	    for(s32 i=0;i<CurrentGameState->NumberOfUnits;i++)
+	    {
+		UpdateAndRenderUnit(&CurrentGameState->UnitList[i], Animate, &CurrentGameState->UnitShaderDetails, CurrentGameState->PaletteData, &CurrentGameState->UnitTextures, &CurrentGameState->TempArena, CurrentGameState->DebugAxisBuffer);
+	    }
+	}
 	[[clang::fallthrough]];
 	case STATE_PAUSED:
 	{
@@ -697,6 +725,21 @@ extern "C"
 	    FNTFont * SmallFont = GetFont(&CurrentGameState->LoadedFonts, "SMLFont", &CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena);
 	    u32 EnergyMax = 1000, EnergyCurrent = 500, MetalMax =1000, MetalCurrent = 500;
 	    r32 EnergyProd = 1427, EnergyUse = 139, MetalProd = 11.6f, MetalUse = 17.5f;
+
+	    EnergyProd = EnergyUse = MetalUse = MetalProd = 0;
+	    for(s32 i = 0;i<CurrentGameState->NumberOfUnits;i++)
+	    {
+		if(CurrentGameState->UnitList[i].Side == 0)
+		{
+		EnergyProd += CurrentGameState->UnitList[i].Type->Details.GetFloat("EnergyMake");
+		EnergyUse += CurrentGameState->UnitList[i].Type->Details.GetFloat("EnergyUse");
+		MetalProd += CurrentGameState->UnitList[i].Type->Details.GetFloat("MetalMake");
+		MetalUse += CurrentGameState->UnitList[i].Type->Details.GetFloat("MetalUse");
+		EnergyMax += CurrentGameState->UnitList[i].Type->Details.GetFloat("EnergyStorage");
+		MetalMax += CurrentGameState->UnitList[i].Type->Details.GetFloat("MetalStorage");
+		}
+	    }
+
 	    const s32 MAX_STRING = 12;
 	    char Temp[MAX_STRING];
 

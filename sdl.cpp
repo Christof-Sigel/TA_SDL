@@ -47,8 +47,8 @@ internal b32 SetupSDLWindow(GameState * CurrentGameState)
 
     GLint GLMajorVer, GLMinorVer;
 
-    SDL_GLContext gContext = SDL_GL_CreateContext( CurrentGameState->MainSDLWindow);
-    SDL_GL_MakeCurrent (CurrentGameState->MainSDLWindow,gContext);
+    CurrentGameState->glContext = SDL_GL_CreateContext( CurrentGameState->MainSDLWindow);
+    SDL_GL_MakeCurrent (CurrentGameState->MainSDLWindow,CurrentGameState->glContext);
     if( SDL_GL_SetSwapInterval( 1 ) < 0 )
     {
 	LogWarning("Warning: Unable to set VSync! SDL Error: %s",SDL_GetError());

@@ -34,7 +34,7 @@ struct FILE_Object3dPrimitive
     //Apparently Cavedog editor specific:
     s32 Unknown_1;
     s32 Unknown_2;
-    s32 Unknown_3;    
+    s32 Unknown_3;
 };
 
 struct FILE_FNT
@@ -154,22 +154,22 @@ struct FILE_TNTHeader
     u32 pad4;
 };
 
+struct FILE_TNTFeature
+{
+    u32 Index;
+    char FeatureName[128];
+};
+
 struct FILE_TNTAttribute
 {
     u8 Height;
-    u16  FeatureIndex;
+    u16 FeatureIndex;
     u8 pad;//probably padding, not entirely clear
 };
 
 struct FILE_TNTTile
 {
     u8 TileData[32*32];
-};
-
-struct FILE_TNTFeature
-{
-    u32 Index;//this apparently matches the index used to get to this entry?
-    char name[128];
 };
 
 struct FILE_CobHeader
@@ -188,7 +188,3 @@ struct FILE_CobHeader
 };
 
 #pragma pack(pop)
-
-
-
-

@@ -192,8 +192,11 @@ enum State
     STATE_QUIT,
 };
 
+const s32 MAX_TOTAL_UNITS = 1024;
+
 struct GameState
 {
+    SDL_GLContext glContext;
     UnitShaderDetails UnitShaderDetails;
     UnitBuildShaderDetails UnitBuildShaderDetails;
     ShaderProgram * MapShader;
@@ -239,6 +242,9 @@ struct GameState
     int ScreenWidth,ScreenHeight;
     TAMap Map;
     UnitTypeList UnitTypeList;
+
+    Unit UnitList[MAX_TOTAL_UNITS];
+    s32 NumberOfUnits;
 
 
     //Test data

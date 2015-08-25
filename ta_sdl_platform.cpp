@@ -165,6 +165,7 @@ int main(int argc, char * argv[])
 	}
     }
     GameTeardown(&GameMemory);
+    SDL_GL_DeleteContext(CurrentGameState->glContext);
     SDL_DestroyWindow(CurrentGameState->MainSDLWindow);
     SDL_Quit();
 

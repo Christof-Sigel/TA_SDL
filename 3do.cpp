@@ -1,3 +1,5 @@
+#define DEBUG_AXIS 0
+
 internal void FillObject3dData(GLfloat* Data, int CurrentTriangle,int * VertexIndices, Object3d * Object, Object3dPrimitive * Primitive,u8 * PaletteData)
 {
     int Offset=CurrentTriangle*(3+3)*3;
@@ -428,8 +430,24 @@ internal b32 Object3dRenderingPrep(Object3d * Object,u8 * PaletteData,s32 Side, 
 	}
 
 	glBindVertexArray(Object->VertexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER,TransformationDetails->TextureCoordBuffer);
-	glBufferSubData(GL_ARRAY_BUFFER, 0,(s64)sizeof(GLfloat)*4*(u32)Object->NumTriangles * 3 ,TextureData);
+
+	if(TransformationDetails->TextureCoordBuffer)
+	{
+	    glBindBuffer(GL_ARRAY_BUFFER,TransformationDetails->TextureCoordBuffer);
+	    glBufferSubData(GL_ARRAY_BUFFER, 0,(s64)sizeof(GLfloat)*4*(u32)Object->NumTriangles * 3 ,TextureData);
+	}
+	else
+	{
+	    glGenBuffers(1,&TransformationDetails->TextureCoordBuffer);
+
+	    glBindBuffer(GL_ARRAY_BUFFER,TransformationDetails->TextureCoordBuffer);
+	    glBufferData(GL_ARRAY_BUFFER,(s64)sizeof(GLfloat)*(u32)Object->NumTriangles*(4)*3,TextureData,GL_STATIC_DRAW);
+
+	    glVertexAttribPointer(1,4,GL_FLOAT,GL_FALSE,sizeof(GLfloat)*(4),0);
+	    glEnableVertexAttribArray(1);
+
+	}
+
 
 	if(TextureData)
 	    PopArray(TempArena,TextureData ,Object->NumTriangles * (4)*3, GLfloat);
@@ -626,7 +644,7 @@ internal inline void RenderObject3d(Object3d * Object,Object3dTransformationDeta
 	LogError("failed to render : %s",gluErrorString(ErrorValue));
     }
 
-#if 0
+#if DEBUG_AXIS
     //Debug Axis rendering
     glBindVertexArray(DebugAxisBuffer);
     glDrawArrays(GL_LINES, 0, 3*2);

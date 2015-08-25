@@ -44,7 +44,7 @@ internal void DrawMiniMap(TAMap * Map, r32 X, r32 Y, r32 Width, r32 Height, Colo
 }
 
 
-internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, MemoryArena * TempArena)
+internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, MemoryArena * TempArena, MemoryArena * GameArena)
 {
     FILE_TNTHeader * Header = (FILE_TNTHeader *)Buffer;
     if(Header->IDVersion != TNT_HEADER_ID)
@@ -60,7 +60,7 @@ internal b32 LoadTNTFromBuffer(u8 * Buffer, TAMap * Result,u8 * PaletteData, Mem
 
     Result->MinimapWidth = (s32)*(u32 *)(Buffer + Header->MiniMapOffset);
     Result->MinimapHeight = (s32)*(u32 *)(Buffer + Header->MiniMapOffset+4);
-
+    Result->SeaLevel = Header->SeaLevel;
 
     u8 * MinimapData = (u8 *)(Buffer + Header->MiniMapOffset + 8);
     u8 * MinimapTexture = PushArray(TempArena, Result->MinimapWidth *  Result->MinimapHeight * 4, u8);
@@ -137,51 +137,61 @@ texture_done:
     const int NUM_FLOATS_PER_HALFTILE=2*3*(3+2);//2 triangles per half tile, 3 verts per tri, 3 poscoords + 2 texcoords per vert
     GLfloat * PositionAndTexture = PushArray(TempArena,NumberOfHalfTiles*NUM_FLOATS_PER_HALFTILE,GLfloat);
 
-    float UnitsPerTile=6.0;
     //TODO(Christof): Store heightmap at least for collision stuff later?
+    Result->HeightMap = PushArray(GameArena, Header->Width * Header->Height * 4, r32);
+    Result->Width = (s32)Header->Width;
+    Result->Height = (s32)Header->Height;
+
+    FILE_TNTFeature * Features = (FILE_TNTFeature*)(Buffer + Header->FeaturesOffset);
+
     for(u32 X=0;X<Header->Width;X++)
     {
 	for(u32 Y=0;Y<Header->Height;Y++)
 	{
+	    if(Attributes[X+Y*Header->Height].FeatureIndex< 0xFFFC)
+	    {
+		LogDebug("Feature %s", Features[Attributes[X+Y*Header->Height].FeatureIndex].FeatureName);
+	    }
+	    Result->HeightMap[X+Y*Result->Width] = GetHeightFor(X-1,Y-1,Attributes,Header->Width,Header->Height);
 	    float Height=GetHeightFor(X-1,Y-1,Attributes,Header->Width,Header->Height);
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+0]=X*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+0]=X*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+1]=Height;
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+2]=Y*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+2]=Y*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+3]=GetTileXTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],X%2/2.0f,TileTextureSide);
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+4]=GetTileYTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],Y%2/2.0f,TileTextureSide);
 
 	    Height=GetHeightFor(X,Y,Attributes,Header->Width,Header->Height);
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+5]=(X+1)*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+5]=(X+1)*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+6]=Height;
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+7]=(Y+1)*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+7]=(Y+1)*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+8]=GetTileXTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],X%2?1.0f:0.5f,TileTextureSide);
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+9]=GetTileYTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],Y%2?1.0f:0.5f,TileTextureSide);
 
 	    Height=GetHeightFor(X,Y-1,Attributes,Header->Width,Header->Height);
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+10]=(X+1)*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+10]=(X+1)*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+11]=Height;
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+12]=Y*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+12]=Y*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+13]=GetTileXTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],X%2?1.0f:0.5f,TileTextureSide);
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+14]=GetTileYTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],Y%2/2.0f,TileTextureSide);
 
 	    Height=GetHeightFor(X-1,Y-1,Attributes,Header->Width,Header->Height);
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+15]=X*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+15]=X*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+16]=Height;
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+17]=Y*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+17]=Y*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+18]=GetTileXTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],X%2/2.0f,TileTextureSide);
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+19]=GetTileYTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],Y%2/2.0f,TileTextureSide);
 
 	    Height=GetHeightFor(X-1,Y,Attributes,Header->Width,Header->Height);
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+20]=X*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+20]=X*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+21]=Height;
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+22]=(Y+1)*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+22]=(Y+1)*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+23]=GetTileXTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],X%2/2.0f,TileTextureSide);
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+24]=GetTileYTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],Y%2?1.0f:0.5f,TileTextureSide);
 
 	    Height=GetHeightFor(X,Y,Attributes,Header->Width,Header->Height);
-	     PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+25]=(X+1)*UnitsPerTile;
+	     PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+25]=(X+1)*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+26]=Height;
-	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+27]=(Y+1)*UnitsPerTile;
+	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+27]=(Y+1)*GL_UNIT_PER_MAP_TILE;
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+28]=GetTileXTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],X%2?1.0f:0.5f,TileTextureSide);
 	    PositionAndTexture[X*NUM_FLOATS_PER_HALFTILE+Y*Header->Width*NUM_FLOATS_PER_HALFTILE+29]=GetTileYTex(TileIndices[X/2+(Y/2)*(Header->Width/2)],Y%2?1.0f:0.5f,TileTextureSide);
 
@@ -224,7 +234,9 @@ internal inline void UnloadTNT(TAMap * Map)
 }
 
 
-internal void LoadCampaignMap(TAMap * Map, const char * OtaName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, u8* PaletteData)
+internal Unit * CreateNewUnit(const char * UnitTypeName, UnitTypeList * UnitTypeList, MemoryArena * UnitArena, Unit * UnitList, s32 * NumberOfUnits, TAMap * Map, r32 X, r32 Y);
+
+internal Position LoadCampaignMap(TAMap * Map, const char * OtaName, HPIFileCollection * GlobalArchiveCollection, MemoryArena * TempArena, u8* PaletteData, MemoryArena * GameArena, Unit * UnitList, s32 * NumberOfUnits, UnitTypeList * UnitTypeList)
 {
     const s32 MAX_STRING = 128;
     char MapName[MAX_STRING];
@@ -243,7 +255,7 @@ internal void LoadCampaignMap(TAMap * Map, const char * OtaName, HPIFileCollecti
 
 	if(LoadHPIFileEntryData(TNT,temp,TempArena))
 	{
-	    LoadTNTFromBuffer(temp,Map,PaletteData,TempArena);
+	    LoadTNTFromBuffer(temp,Map,PaletteData,TempArena, GameArena);
 	}
 	else
 	    LogDebug("failed to load map buffer from hpi");
@@ -251,4 +263,40 @@ internal void LoadCampaignMap(TAMap * Map, const char * OtaName, HPIFileCollecti
     }
     else
 	LogDebug("failed to load map");
+
+    Position StartingPosition= {};
+
+    snprintf(MapName, MAX_STRING, "maps/%s", OtaName);
+    HPIEntry OTA = FindEntryInAllFiles(MapName,GlobalArchiveCollection, TempArena);
+    if(OTA.Name)
+    {
+	u8 * temp = PushArray(TempArena,OTA.File.FileSize,u8 );
+
+	if(LoadHPIFileEntryData(OTA,temp,TempArena))
+	{
+	    MemoryArena * Arena = PushSubArena(TempArena, 1024*1024);
+	    char * MapDataBuffer = (char*)temp;
+	    TDFElement * First = LoadTDFElementsFromBuffer(&MapDataBuffer, MapDataBuffer + OTA.File.FileSize,Arena);
+	    TDFElement * Units = GetSubElement(GetSubElement(First,"Schema 0"), "units")->Child;
+	    s32 NumberOfMapUnits =  CountElements(Units);
+	    for(s32 i=0;i < NumberOfMapUnits;i++)
+	    {
+		TDFElement * CurrentUnit = GetNthElement(Units,i);
+		char * UnitType = GetStringValue(CurrentUnit,"Unitname");
+		Unit * Unit = CreateNewUnit(UnitType,UnitTypeList,GameArena, UnitList, NumberOfUnits, Map, (r32)GetIntValue(CurrentUnit,"XPos"), (r32)GetIntValue(CurrentUnit,"ZPos"));
+		Unit->Rotation[1] = (180-GetIntValue(CurrentUnit,"Angle"))*PI/180;
+		Unit->Side = GetIntValue(CurrentUnit, "Player")-1;
+	    }
+	    StartingPosition.X = GetIntValue(GetSubElement(GetSubElement(GetSubElement(First, "Schema 0"),"specials"), "special0"), "XPos") /16*GL_UNIT_PER_MAP_TILE;
+	    StartingPosition.Y = GetIntValue(GetSubElement(GetSubElement(GetSubElement(First, "Schema 0"),"specials"), "special0"), "ZPos") /16*GL_UNIT_PER_MAP_TILE;
+	    PopSubArena(TempArena, Arena);
+	}
+	else
+	    LogDebug("failed to load map buffer from hpi");
+	PopArray(TempArena,temp,OTA.File.FileSize,u8 );
+    }
+    else
+	LogDebug("failed to load mission data");
+
+    return StartingPosition;
 }

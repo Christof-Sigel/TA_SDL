@@ -190,6 +190,7 @@ internal const char * UnitVariableNames[]=
 
 //TNT
 const int TNT_HEADER_ID=0x2000;
+const r32 GL_UNIT_PER_MAP_TILE = 6;
 
 
 ////////// Structs ////////
@@ -698,11 +699,13 @@ struct Unit
 {
     UnitType * Type;
     ScriptStatePool ScriptPool;
-    UnitSide Side;
+    s32 Side;
     r32 Health, BuildPercent;
-    s32 NumberOfCommands;
+    s32 NumberOfCommands, X, Y, Z;
+    r32 Rotation[3];
     UnitCommand Commands[MAX_UNIT_COMMANDS];
     char Name[MAX_IDENT];
+    Object3dTransformationDetails TransformationDetails;
 };
 
 //TNT
@@ -712,8 +715,9 @@ struct TAMap
 {
     GLuint MapVertexBuffer, MapTexture, MinimapTexture,VertexBuffer;
     int NumTriangles;
-    s32 MinimapHeight,MinimapWidth;
-    s32 TidalStrength, SolarStrength, MinWindSpeed, MaxWindSpeed, Gravity, WaterDamage;
+    s32 MinimapHeight,MinimapWidth,Width,Height;
+    s32 TidalStrength, SolarStrength, MinWindSpeed, MaxWindSpeed, Gravity, WaterDamage, SeaLevel;
+    r32 * HeightMap;
 };
 
 

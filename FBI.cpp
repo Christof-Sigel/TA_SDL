@@ -3,7 +3,7 @@ int UnitDetails::GetInt(const char * Name)
     char * Value=GetString(Name);
     if(Value)
 	return atoi(Value);
-    return -1;
+    return 0;
 }
 
 float UnitDetails::GetFloat(const char * Name)
@@ -11,7 +11,7 @@ float UnitDetails::GetFloat(const char * Name)
     char * Value= GetString(Name);
     if(Value)
 	return (float)atof(Value);
-    return -1;
+    return 0;
 }
 
 char * UnitDetails::GetString(const char * Name)
