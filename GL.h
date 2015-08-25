@@ -1,5 +1,7 @@
 #include <math.h>
+#ifdef __LINUX__
 #include <GL/glx.h>
+#endif
 #include "glimports.cpp"
 
 #include <GL/glu.h>

@@ -1,5 +1,5 @@
 #!/bin/bash
-python glimports.py glXGetProcAddress
+python glimports.py glXGetProcAddress "const GLubyte *"
 IGNORE_WARNINGS="-Wno-c++98-compat-pedantic -Wno-old-style-cast -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-anonymous-struct -Wno-cast-align -Wno-unknown-pragmas -Wno-unused-function"
 #TODO(Christof): re-enable -Wunused-function when we start using all the unit stuff again
 #clang++ -lSDL2 -ggdb -Wall -lGLEW -lGLU -lGL -lz -lpng ta_sdl.cpp $IGNORE_WARNINGS -D__CSGL_DEBUG__ -o ta_sdl
