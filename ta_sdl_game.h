@@ -157,7 +157,7 @@ struct UnitShaderDetails
     GLint ProjectionMatrixLocation;
     GLint ModelMatrixLocation;
     GLint ViewMatrixLocation;
-    s32 PAD;
+    GLint SeaLevelLocation;
 };
 
 struct UnitBuildShaderDetails
@@ -245,6 +245,7 @@ struct GameState
 
     Unit UnitList[MAX_TOTAL_UNITS];
     s32 NumberOfUnits;
+    GLuint MapSeaLevelLocation;
 
 
     //Test data

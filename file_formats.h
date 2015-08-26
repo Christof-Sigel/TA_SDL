@@ -660,7 +660,7 @@ struct WaitArguments
 
 struct Position
 {
-    s32 X,Y;
+    r32 X,Y;
 };
 
 struct BuildArguments
@@ -701,7 +701,8 @@ struct Unit
     ScriptStatePool ScriptPool;
     s32 Side;
     r32 Health, BuildPercent;
-    s32 NumberOfCommands, X, Y, Z;
+    s32 NumberOfCommands;
+    r32 X, Y, Z;
     r32 Rotation[3];
     UnitCommand Commands[MAX_UNIT_COMMANDS];
     char Name[MAX_IDENT];
@@ -716,7 +717,8 @@ struct TAMap
     GLuint MapVertexBuffer, MapTexture, MinimapTexture,VertexBuffer;
     int NumTriangles;
     s32 MinimapHeight,MinimapWidth,Width,Height;
-    s32 TidalStrength, SolarStrength, MinWindSpeed, MaxWindSpeed, Gravity, WaterDamage, SeaLevel;
+    s32 TidalStrength, SolarStrength, MinWindSpeed, MaxWindSpeed, Gravity, WaterDamage;
+    r32 SeaLevel;
     r32 * HeightMap;
 };
 

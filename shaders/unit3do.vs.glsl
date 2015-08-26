@@ -7,6 +7,7 @@ layout(location=2) in vec3 VColor;
 //out vec3 FPosition;
 out vec3 FColor;
 out vec4 FTexCoord;
+out vec3 FPos;
 
 uniform mat4 ModelMatrix;
 uniform mat4 ViewMatrix;
@@ -18,6 +19,7 @@ void main(void)
     //    FPosition=(ModelViewMatrix*vec4(VPosition,1.0)).xyz;
     // FPosition=vec3(VTexCoord,1);
     FTexCoord=VTexCoord;
+    FPos=(ModelMatrix*vec4(VPosition,1.0)).xyz;
     gl_Position=ProjectionMatrix*(ViewMatrix*ModelMatrix*vec4(VPosition,1.0));
     // gl_Position=vec4(VPosition,1);
 }

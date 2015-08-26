@@ -14,7 +14,7 @@ internal inline GLuint LoadShader(GLenum Type,MemoryMappedFile ShaderFile, const
     glGetShaderiv(ShaderID,GL_COMPILE_STATUS,&ShaderSuccess);
     if(ShaderSuccess != GL_TRUE)
     {
-	const int MAX_SHADER_LOG_LENGTH = 256;
+	const int MAX_SHADER_LOG_LENGTH = 1024;
 	int LogLen;
 	glGetShaderiv(ShaderID,GL_INFO_LOG_LENGTH,&LogLen);
 	//GLchar * ShaderLog = (GLchar *)alloca(LogLen);

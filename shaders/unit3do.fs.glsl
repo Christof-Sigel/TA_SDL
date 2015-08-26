@@ -5,6 +5,8 @@ in vec4 FTexCoord;
 in vec3 FColor;
 out vec4 out_Color;
 uniform sampler2D UnitTexture;
+uniform float SeaLevel;
+in vec3 FPos;
 
 void main(void)
 {
@@ -21,6 +23,11 @@ void main(void)
 	out_Color=vec4(FColor,1);
 
 //	out_Color=vec4(FTexCoord.x,0,1.0f,1);
+    }
+     if(FPos.y <= SeaLevel)
+    {
+//	out_Color = mix(out_Color,vec4(0.0,0,1.0,1.0),0.5);
+	out_Color=vec4(1,0,1,1);
     }
     //out_Color=vec4(0,0,1,1);
 }

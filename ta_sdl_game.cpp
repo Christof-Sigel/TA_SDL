@@ -303,7 +303,7 @@ internal void HandleInput(InputState * Input, GameState * CurrentGameState)
 		}
 		CurrentGameState->NumberOfUnits=0;
 		LoadAllUnitTypes(&CurrentGameState->UnitTypeList, &CurrentGameState->GameArena,&CurrentGameState->TempArena,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->UnitTextures);
-		Position StartingLoc = LoadCampaignMap(&CurrentGameState->Map,Campaign->Missions[MissionListBox->SelectedIndex].MissionFile,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena,CurrentGameState->PaletteData, &CurrentGameState->GameArena,CurrentGameState->UnitList, & CurrentGameState->NumberOfUnits, &CurrentGameState->UnitTypeList);
+		Position StartingLoc = LoadCampaignMap(&CurrentGameState->Map,Campaign->Missions[MissionListBox->SelectedIndex].MissionFile,&CurrentGameState->GlobalArchiveCollection, &CurrentGameState->TempArena,CurrentGameState->PaletteData, &CurrentGameState->GameArena,CurrentGameState->UnitList, & CurrentGameState->NumberOfUnits, &CurrentGameState->UnitTypeList, &CurrentGameState->UnitShaderDetails,CurrentGameState->MapSeaLevelLocation);
 
 		CurrentGameState->CameraTranslation[0] = StartingLoc.X;
 		CurrentGameState->CameraTranslation[2] = StartingLoc.Y;
@@ -584,7 +584,7 @@ internal void InitialiseGame(Memory * GameMemory)
     GameState * CurrentGameState = (GameState*)GameMemory->PermanentStore;
     CurrentGameState->IsInitialised=1;
     InitializeArena(&CurrentGameState->GameArena,GameMemory->PermanentStoreSize-sizeof(GameState),GameMemory->PermanentStore+sizeof(GameState));
-    InitializeArena(&CurrentGameState->TempArena,GameMemory->TransientStoreSize-sizeof(GameState),GameMemory->TransientStore);
+    InitializeArena(&CurrentGameState->TempArena,GameMemory->TransientStoreSize,GameMemory->TransientStore);
     SetupGameState(CurrentGameState);
 }
 
@@ -731,12 +731,12 @@ extern "C"
 	    {
 		if(CurrentGameState->UnitList[i].Side == 0)
 		{
-		EnergyProd += CurrentGameState->UnitList[i].Type->Details.GetFloat("EnergyMake");
-		EnergyUse += CurrentGameState->UnitList[i].Type->Details.GetFloat("EnergyUse");
-		MetalProd += CurrentGameState->UnitList[i].Type->Details.GetFloat("MetalMake");
-		MetalUse += CurrentGameState->UnitList[i].Type->Details.GetFloat("MetalUse");
-		EnergyMax += CurrentGameState->UnitList[i].Type->Details.GetFloat("EnergyStorage");
-		MetalMax += CurrentGameState->UnitList[i].Type->Details.GetFloat("MetalStorage");
+		    EnergyProd += CurrentGameState->UnitList[i].Type->Details.GetFloat("EnergyMake");
+		    EnergyUse += CurrentGameState->UnitList[i].Type->Details.GetFloat("EnergyUse");
+		    MetalProd += CurrentGameState->UnitList[i].Type->Details.GetFloat("MetalMake");
+		    MetalUse += CurrentGameState->UnitList[i].Type->Details.GetFloat("MetalUse");
+		    EnergyMax += CurrentGameState->UnitList[i].Type->Details.GetInt("EnergyStorage");
+		    MetalMax += CurrentGameState->UnitList[i].Type->Details.GetInt("MetalStorage");
 		}
 	    }
 

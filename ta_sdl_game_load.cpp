@@ -12,6 +12,8 @@ internal void ReloadShaders(Memory * GameMemory)
         CurrentGameState->UnitShaderDetails.ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitShaderDetails.Shader,"ProjectionMatrix");
 	CurrentGameState->UnitShaderDetails.ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitShaderDetails.Shader,"ModelMatrix");
 	CurrentGameState->UnitShaderDetails.ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitShaderDetails.Shader,"ViewMatrix");
+
+	CurrentGameState->UnitShaderDetails.SeaLevelLocation = GetUniformLocation(CurrentGameState->UnitShaderDetails.Shader,"SeaLevel");
     }
 
     CurrentGameState->UnitBuildShaderDetails.Shader = LoadShaderProgram("shaders/unit3dobuild.vs.glsl","shaders/unit3dobuild.fs.glsl",&CurrentGameState->ShaderGroup);
@@ -20,8 +22,8 @@ internal void ReloadShaders(Memory * GameMemory)
 	glUseProgram(CurrentGameState->UnitBuildShaderDetails.Shader->ProgramID);
 	glUniform1i(GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"UnitTexture"),0);
         CurrentGameState->UnitBuildShaderDetails.ProjectionMatrixLocation = GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"ProjectionMatrix");
-CurrentGameState->UnitBuildShaderDetails.ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"ModelMatrix");
-CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"ViewMatrix");
+	CurrentGameState->UnitBuildShaderDetails.ModelMatrixLocation = GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"ModelMatrix");
+	CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation(CurrentGameState->UnitBuildShaderDetails.Shader,"ViewMatrix");
 
     }
 
@@ -31,6 +33,8 @@ CurrentGameState->UnitBuildShaderDetails.ViewMatrixLocation = GetUniformLocation
     {
 	glUseProgram(CurrentGameState->MapShader->ProgramID);
 	glUniform1i(GetUniformLocation(CurrentGameState->MapShader,"Texture"),0);
+
+	CurrentGameState->MapSeaLevelLocation = GetUniformLocation(CurrentGameState->UnitShaderDetails.Shader,"SeaLevel");
     }
 
     GLint viewport[4];

@@ -72,8 +72,8 @@ internal UnitType * GetUnitType(const char * Name, UnitTypeList * UnitTypeList)
 
 internal Unit * CreateNewUnit(const char * UnitTypeName, UnitTypeList * UnitTypeList, MemoryArena * UnitArena, Unit * UnitList, s32 * NumberOfUnits, TAMap * Map, r32 X, r32 Y)
 {
-     s32 MapX = X/16;
-    s32 MapY = Y/16;
+    s32 MapX = (s32)(X/16);
+    s32 MapY = (s32)(Y/16);
     X = X /16*GL_UNIT_PER_MAP_TILE;
     Y = Y /16*GL_UNIT_PER_MAP_TILE;
 
@@ -116,7 +116,7 @@ internal void UpdateAndRenderUnit(Unit * Unit, b32 Animate, UnitShaderDetails * 
 //    ModelMatrix.SetTranslation(Unit->X,44.5f,Unit->Y);
 
     r32 XRot = -0.15*PI;
-    //if(Unit->Type->Details.GetInt("Upright") != 1)
+    if(Unit->Type->Details.GetInt("Upright") != 1)
 	XRot =0;
     ModelMatrix.Rotate(0,1,0, Unit->Rotation[1]);//Unit->Rotation[1]);
     ModelMatrix.Rotate(1,0,0,  Unit->Rotation[0]+XRot);
